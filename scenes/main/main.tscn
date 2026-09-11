@@ -1,0 +1,76 @@
+[gd_scene load_steps=5 format=3 uid="uid://b8mainuidxxxx"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" uid="uid://b8playeruidxxx" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://b8rockuidxxxx" path="res://scenes/cave/rock.tscn" id="3_rock"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
+size = Vector2(480, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
+size = Vector2(16, 288)
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Cave" type="Node2D" parent="."]
+
+[node name="Floor" type="Polygon2D" parent="Cave"]
+color = Color(0.15, 0.12, 0.18, 1)
+polygon = PackedVector2Array(0, 0, 480, 0, 480, 288, 0, 288)
+
+[node name="Rocks" type="Node2D" parent="Cave"]
+
+[node name="Rock1" parent="Cave/Rocks" instance=ExtResource("3_rock")]
+position = Vector2(120, 80)
+
+[node name="Rock2" parent="Cave/Rocks" instance=ExtResource("3_rock")]
+position = Vector2(140, 80)
+
+[node name="Rock3" parent="Cave/Rocks" instance=ExtResource("3_rock")]
+position = Vector2(320, 100)
+
+[node name="CopperRock1" parent="Cave/Rocks" instance=ExtResource("3_rock")]
+position = Vector2(120, 200)
+is_copper = true
+
+[node name="CopperRock2" parent="Cave/Rocks" instance=ExtResource("3_rock")]
+position = Vector2(360, 200)
+is_copper = true
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(240, 144)
+
+[node name="WorldBoundary" type="StaticBody2D" parent="."]
+
+[node name="TopWall" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(240, -8)
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="TopWallVisual" type="Polygon2D" parent="WorldBoundary"]
+color = Color(0.3, 0.25, 0.35, 1)
+polygon = PackedVector2Array(0, -16, 480, -16, 480, 0, 0, 0)
+
+[node name="BottomWall" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(240, 296)
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="BottomWallVisual" type="Polygon2D" parent="WorldBoundary"]
+color = Color(0.3, 0.25, 0.35, 1)
+polygon = PackedVector2Array(0, 288, 480, 288, 480, 304, 0, 304)
+
+[node name="LeftWall" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(-8, 144)
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="LeftWallVisual" type="Polygon2D" parent="WorldBoundary"]
+color = Color(0.3, 0.25, 0.35, 1)
+polygon = PackedVector2Array(-16, 0, 0, 0, 0, 288, -16, 288)
+
+[node name="RightWall" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(488, 144)
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="RightWallVisual" type="Polygon2D" parent="WorldBoundary"]
+color = Color(0.3, 0.25, 0.35, 1)
+polygon = PackedVector2Array(480, 0, 496, 0, 496, 288, 480, 288)

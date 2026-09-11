@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://b8rockuidxxxx"]
+
+[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rock"]
+size = Vector2(16, 16)
+
+[node name="Rock" type="StaticBody2D"]
+script = ExtResource("1_rock")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_rock")
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+color = Color(0.4, 0.4, 0.45, 1)
+polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
