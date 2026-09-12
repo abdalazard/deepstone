@@ -99,10 +99,10 @@ func toggle() -> void:
 	inventory_panel.visible = !inventory_panel.visible
 
 func _on_resources_changed() -> void:
-	# Update Inventory Panel
-	load_label.text = "Carga (Peso): " + str(Inventory.current_load) + "/" + str(Inventory.MAX_CAPACITY)
-	iron_label.text = "Ferro: " + str(Inventory.iron)
-	gold_label.text = "Ouro: " + str(Inventory.gold)
+	if is_instance_valid(iron_label):
+		iron_label.text = "Ferro: " + str(Inventory.iron) + "/20"
+	if is_instance_valid(gold_label):
+		gold_label.text = "Ouro: " + str(Inventory.gold) + "/20"
 	
 	# Update Slots Qty
 	slots[0].qty.text = "" # Pickaxe is infinite

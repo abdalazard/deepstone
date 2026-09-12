@@ -55,7 +55,7 @@ func _physics_process(delta: float) -> void:
 		for i in get_slide_collision_count():
 			var c = get_slide_collision(i)
 			var collider = c.get_collider()
-			if collider is RigidBody2D and collider.has_method("is_resource"):
+			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
 				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
@@ -126,7 +126,7 @@ func _try_chest_interaction() -> bool:
 	if has_node("PickupArea"):
 		for body in $PickupArea.get_overlapping_bodies():
 			if body.has_method("is_chest"):
-				if not body.is_closed and Inventory.current_load > 0:
+				if not body.is_closed and (Inventory.iron > 0 or Inventory.gold > 0):
 					var dropped = Inventory.remove_all()
 					body.deposit(dropped)
 				elif body.is_closed:

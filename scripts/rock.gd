@@ -43,6 +43,9 @@ func _ready() -> void:
 		freeze = true
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 
+func is_ore() -> bool:
+	return is_copper
+
 func hit() -> void:
 	if hp <= 0: return
 	
