@@ -12,10 +12,6 @@ func generate_world() -> void:
 	for x in range(30):
 		for y in range(50):
 			var tile_pos = Vector2(x * 16 + 8, y * 16 + 128)
-			
-			# Don't place blocks in the elevator shaft (column 15)
-			if x == 15:
-				continue
 				
 			var instance
 			if randf() > 0.7:
