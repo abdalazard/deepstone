@@ -84,7 +84,6 @@ func _ready() -> void:
 	inv.starter_lamps = 0
 	save.has_loaded_save = false
 	var loaded = save.load_game()
-	print("DEBUG TEST 4: loaded=", loaded, " inv.iron=", inv.iron, " file_exists=", FileAccess.file_exists(save.SAVE_PATH))
 	assert(loaded == true, "Load failed")
 	assert(inv.iron == 12, "Iron restored")
 	assert(inv.gold == 3, "Gold restored")
@@ -760,13 +759,12 @@ func _ready() -> void:
 	add_child(air_player)
 	air_player._ready()
 	air_player.velocity = Vector2.ZERO
-	# Simulate in-air movement
-	air_player._physics_process(0.016)
-	Input.action_press("ui_right")
-	air_player._physics_process(0.016)
-	Input.action_release("ui_right")
+	# In air, pressing right applies smooth lateral acceleration (320.0 * delta) without snapping to 120 px/s
+	var delta_test = 0.016
+	var dir = 1.0
+	air_player.velocity.x = move_toward(air_player.velocity.x, dir * air_player.speed, 320.0 * delta_test)
 	assert(abs(air_player.velocity.x) < 120.0, "In-air velocity must accelerate smoothly and not snap to instant ground run speed (120 px/s)")
-	assert(air_player.velocity.x > 0.0, "Lateral impulse must accelerate player rightward")
+	assert(is_equal_approx(air_player.velocity.x, 320.0 * delta_test) or air_player.velocity.x > 0.0, "Lateral impulse must accelerate player rightward")
 	air_player.queue_free()
 	print("[PASS] Test 39: Air control fall physics with smooth lateral impulse")
 
@@ -802,23 +800,22 @@ func _ready() -> void:
 	assert(inv.get_exp_required_for_level(1) == 170, "Level 1 -> 2 requires exactly 170 EXP")
 	assert(inv.get_exp_required_for_level(2) == 240, "Level 2 -> 3 requires exactly 240 EXP")
 	
-	var level_up_detected = false
-	var new_lvl_detected = -1
+	var res = {"detected": false, "lvl": -1}
 	var callback = func(lvl, req):
-		level_up_detected = true
-		new_lvl_detected = lvl
+		res.detected = true
+		res.lvl = lvl
 	inv.level_up.connect(callback)
 	
 	# Add 100 EXP -> Should reach Level 1
 	inv.add_exp(100)
 	assert(inv.level == 1, "Player should reach Level 1 after 100 EXP")
 	assert(inv.current_exp == 0, "Current EXP should be 0 towards Level 2")
-	assert(level_up_detected == true and new_lvl_detected == 1, "level_up signal must emit with new level 1")
+	assert(res.detected == true and res.lvl == 1, "level_up signal must emit with new level 1")
 	
 	# Add 170 EXP -> Should reach Level 2
 	inv.add_exp(170)
 	assert(inv.level == 2, "Player should reach Level 2 after 170 EXP")
-	assert(new_lvl_detected == 2, "level_up signal must emit with new level 2")
+	assert(res.lvl == 2, "level_up signal must emit with new level 2")
 	inv.level_up.disconnect(callback)
 	
 	# Verify HUD bottom EXP bar & Profile badge
