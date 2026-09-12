@@ -23,6 +23,8 @@ func hit() -> void:
 	if not target_player:
 		queue_free()
 
+var anim_timer: float = 0.0
+
 func _process(delta: float) -> void:
 	if target_player:
 		var sprite = $Sprite2D

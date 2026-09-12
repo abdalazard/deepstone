@@ -16,6 +16,12 @@ var anim_state: String = "idle" # idle, dig, walk
 var is_mining: bool = false
 var mine_timer: float = 0.0
 
+var tex_idle = preload("res://assets/sprites/Idle.png")
+var tex_walk = preload("res://assets/sprites/Walk.png")
+var tex_jump = preload("res://assets/sprites/Jump.png")
+var tex_mine = preload("res://assets/sprites/Minering.png")
+var tex_climb = preload("res://assets/sprites/Rope.png")
+
 func _process(delta: float) -> void:
 	if is_mining:
 		mine_timer -= delta
@@ -29,7 +35,9 @@ func _process(delta: float) -> void:
 			anim_state = "climb_idle"
 	elif is_mining:
 		anim_state = "dig"
-	elif not is_on_floor() or velocity.x != 0:
+	elif not is_on_floor():
+		anim_state = "jump"
+	elif velocity.x != 0:
 		anim_state = "walk"
 	else:
 		anim_state = "idle"
@@ -38,20 +46,30 @@ func _process(delta: float) -> void:
 	if anim_state != "climb_idle":
 		anim_timer += delta
 	
-	var fps = 8.0 if anim_state in ["walk", "dig", "climb"] else 4.0
+	var fps = 8.0 if anim_state in ["walk", "dig", "climb", "jump"] else 4.0
+	
+	var current_tex = tex_idle
+	if anim_state == "walk": current_tex = tex_walk
+	elif anim_state == "jump": current_tex = tex_jump
+	elif anim_state == "dig": current_tex = tex_mine
+	elif anim_state in ["climb", "climb_idle"]: current_tex = tex_climb
+	
+	var sprite = $Sprite2D
+	if sprite.texture != current_tex:
+		sprite.texture = current_tex
+		sprite.vframes = 1
+		sprite.hframes = int(current_tex.get_width() / 32.0)
+		sprite.scale = Vector2(1, 1) # Reset scale since new sprites are 32x32
+		anim_frame = 0 # reset frame on state change
+	
 	if anim_timer > 1.0 / fps:
 		anim_timer = 0.0
-		anim_frame = (anim_frame + 1) % 4
-		
-	var base_frame = 0
-	if anim_state == "dig": base_frame = 4
-	elif anim_state == "walk": base_frame = 8
-	elif anim_state == "climb" or anim_state == "climb_idle": base_frame = 12
+		anim_frame = (anim_frame + 1) % sprite.hframes
 	
-	$Sprite2D.frame = base_frame + anim_frame
+	sprite.frame = anim_frame
 	
 	if anim_state not in ["climb", "climb_idle"] and last_direction.x != 0:
-		$Sprite2D.flip_h = last_direction.x < 0
+		sprite.flip_h = last_direction.x < 0
 
 func _physics_process(delta: float) -> void:
 	if on_ladder:
