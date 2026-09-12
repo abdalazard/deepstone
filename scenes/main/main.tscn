@@ -45,7 +45,7 @@ color = Color(0.05, 0.05, 0.08, 1)
 [node name="Cave" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(496, 96)
+position = Vector2(640, 96)
 
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 

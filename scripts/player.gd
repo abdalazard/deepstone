@@ -5,8 +5,8 @@ extends CharacterBody2D
 @export var sprite_scale: Vector2 = Vector2(3.0, 3.0)
 
 var gravity: float = 980.0
-var last_direction: Vector2 = Vector2.DOWN
-var facing_x: float = 1.0
+var last_direction: Vector2 = Vector2.LEFT
+var facing_x: float = -1.0
 const MINE_DISTANCE: float = 48.0
 var in_ladder_count: int = 0
 var on_ladder: bool:
@@ -31,10 +31,13 @@ var tex_climb = preload("res://assets/sprites/Rope.png")
 func _ready() -> void:
 	if has_node("/root/SaveManager") and SaveManager.has_loaded_save and SaveManager.player_saved_pos != Vector2.ZERO:
 		global_position = SaveManager.player_saved_pos
+	else:
+		global_position = Vector2(640, 96)
 	var sprite = $Sprite2D
 	if sprite:
 		sprite.scale = sprite_scale
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.flip_h = true
 
 func _process(delta: float) -> void:
 	if is_mining:

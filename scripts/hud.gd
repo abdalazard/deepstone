@@ -286,6 +286,10 @@ func _on_save_pressed() -> void:
 func _on_restart_pressed() -> void:
 	if is_inside_tree() and get_tree():
 		get_tree().paused = false
+		if is_instance_valid(pause_panel):
+			pause_panel.visible = false
+		if get_tree().root and get_tree().root.has_node("SaveManager"):
+			get_tree().root.get_node("SaveManager").player_saved_pos = Vector2(640, 96)
 		get_tree().reload_current_scene()
 
 func _on_exit_pressed() -> void:

@@ -84,7 +84,7 @@ func save_game(show_notify: bool = false) -> void:
 	var chest = current.get_node_or_null("Chest") if current else null
 	var inv = _get_inventory()
 	
-	var p_pos = player_saved_pos if player_saved_pos != Vector2.ZERO else Vector2(496, 96)
+	var p_pos = player_saved_pos if player_saved_pos != Vector2.ZERO else Vector2(640, 96)
 	if is_instance_valid(player):
 		p_pos = player.global_position
 		
