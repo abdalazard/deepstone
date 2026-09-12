@@ -38,16 +38,27 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	
-	# Push only resource RigidBodies
-	var push_force = 20.0
-	for i in get_slide_collision_count():
-		var c = get_slide_collision(i)
-		var collider = c.get_collider()
-		if collider is RigidBody2D and collider.has_method("is_resource"):
-			collider.apply_central_impulse(-c.get_normal() * push_force)
+	# Push only resource RigidBodies when holding Drag key
+	var push_force = 40.0
+	if Input.is_action_pressed("action_drag"):
+		for i in get_slide_collision_count():
+			var c = get_slide_collision(i)
+			var collider = c.get_collider()
+			if collider is RigidBody2D and collider.has_method("is_resource"):
+				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
-	if Input.is_action_just_pressed("ui_accept"):
+	if Input.is_action_just_pressed("action_mine"):
 		try_mine()
+		
+	if Input.is_action_just_pressed("action_collect"):
+		try_collect()
+
+func try_collect() -> void:
+	if has_node("PickupArea"):
+		for body in $PickupArea.get_overlapping_bodies():
+			if body.has_method("is_resource"):
+				Inventory.add_resource(body.type, 1)
+				body.queue_free()
 
 func try_mine() -> void:
 	var space_state = get_world_2d().direct_space_state
