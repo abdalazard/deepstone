@@ -29,7 +29,7 @@ color = Color(0.05, 0.05, 0.08, 1)
 [node name="Cave" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(240, 80)
+position = Vector2(248, 80)
 
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 
@@ -42,6 +42,6 @@ position = Vector2(488, 500)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="Chest" parent="." instance=ExtResource("7_chest")]
-position = Vector2(240, 112)
+position = Vector2(248, 112)
 
 [node name="StartScreen" parent="." instance=ExtResource("6_start")]
