@@ -10,23 +10,13 @@ func _ready() -> void:
 	else:
 		sprite.frame = 26 # Row 5 Col 3 (copper ingot)
 		
-	$PickupArea.body_entered.connect(_on_body_entered)
-	
 	# Pop out effect
 	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
 	
 	scale = Vector2.ZERO
 	var tween = create_tween()
 	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.3).set_trans(Tween.TRANS_BOUNCE)
-	
-	var timer = Timer.new()
-	timer.wait_time = 15.0
-	timer.one_shot = true
-	timer.timeout.connect(queue_free)
-	add_child(timer)
-	timer.start()
 
-func _on_body_entered(body: Node2D) -> void:
-	if body.name == "Player":
-		Inventory.add_resource(type, 1)
-		queue_free()
+# Identifier function for the elevator to recognize this object
+func is_resource() -> bool:
+	return true

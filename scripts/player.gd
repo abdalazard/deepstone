@@ -38,6 +38,14 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	
+	# Push RigidBodies
+	var push_force = 20.0
+	for i in get_slide_collision_count():
+		var c = get_slide_collision(i)
+		var collider = c.get_collider()
+		if collider is RigidBody2D:
+			collider.apply_central_impulse(-c.get_normal() * push_force)
+	
 	if Input.is_action_just_pressed("ui_accept"):
 		try_mine()
 
