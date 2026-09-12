@@ -23,6 +23,7 @@ func _safe_grab_focus(ctrl: Control) -> void:
 # Equipment Menu nodes
 @onready var equipment_panel = find_child("EquipmentPanel", true, false)
 @onready var equip_close_btn = find_child("EquipCloseButton", true, false)
+var equip_swap_slot: String = "" # Current slot being replaced
 
 # Shop Menu nodes
 @onready var shop_panel = find_child("ShopPanel", true, false)
@@ -72,6 +73,10 @@ var stone_tex = preload("res://assets/sprites/stone_drop.png")
 var dirt_tex = preload("res://assets/sprites/dirt_drop.png")
 var brick_tex = preload("res://assets/sprites/brick_platform.png")
 var broken_pickaxe_tex = preload("res://assets/sprites/broken_pickaxe.png")
+var helmet_tex = preload("res://assets/sprites/equip_helmet.png")
+var armor_tex = preload("res://assets/sprites/equip_armor.png")
+var boots_tex = preload("res://assets/sprites/equip_boots.png")
+var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 
 # Coins HUD
 @onready var coins_badge_container = find_child("CoinsBadgeContainer", true, false)
@@ -97,6 +102,11 @@ var broken_pickaxe_tex = preload("res://assets/sprites/broken_pickaxe.png")
 @onready var craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
 @onready var craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 var current_forge_node: Node = null
+var forge_tab_upgrade: bool = false
+var forge_tab_create_btn: Button = null
+var forge_tab_upgrade_btn: Button = null
+var forge_create_view: VBoxContainer = null
+var forge_upgrade_view: VBoxContainer = null
 
 # Pause Menu Reset
 @onready var reset_mine_btn = find_child("ResetMineBtn", true, false)
@@ -123,11 +133,11 @@ var chest_items_def = [
 	},
 	{
 		"key": "lamp",
-		"name": "Poste de Luz",
-		"desc": "Lampião portátil que ilumina a caverna e faz os minérios brilharem no escuro. Custa 3 Carvões + 2 Ferros.",
+		"name": "Poste de Luz Portátil",
+		"desc": "Ilumina cavernas profundas. Posicionável no solo rochoso e sobre tábuas de madeira.",
 		"icon_type": "atlas",
-		"atlas": "lamp",
-		"region": Rect2(0, 0, 16, 16),
+		"atlas": "extras",
+		"region": Rect2(16, 0, 16, 16),
 		"shortcut": "2",
 		"is_tool": true,
 		"tool_slot": 1
@@ -135,7 +145,7 @@ var chest_items_def = [
 	{
 		"key": "ladder",
 		"name": "Escada de Madeira",
-		"desc": "Escada portátil com degraus para descer e subir poços profundos.",
+		"desc": "Construção de madeira para escalar poços verticais. Forjada na Forja com troncos de árvores.",
 		"icon_type": "direct",
 		"tex": "rope",
 		"shortcut": "3",
@@ -145,7 +155,7 @@ var chest_items_def = [
 	{
 		"key": "plank",
 		"name": "Tábua de Madeira",
-		"desc": "Ponte horizontal sólida para cruzar fendas e abismos. Pressione [Z] para construir.",
+		"desc": "Plataforma horizontal resistente para pontes subterrâneas. Permite transpor abismos e sustenta postes de luz.",
 		"icon_type": "direct",
 		"tex": "plank",
 		"shortcut": "4",
@@ -155,7 +165,7 @@ var chest_items_def = [
 	{
 		"key": "brick",
 		"name": "Piso de Tijolo",
-		"desc": "Plataforma reforçada de tijolo forjada com 1 terra e 1 pedra. Suporta postes de luz.",
+		"desc": "Plataforma sólida forjada com terra e pedra. Cria passarelas firmes na mina.",
 		"icon_type": "direct",
 		"tex": "brick",
 		"shortcut": "5",
@@ -165,7 +175,7 @@ var chest_items_def = [
 	{
 		"key": "forge",
 		"name": "Forja Portátil",
-		"desc": "Forja portátil para implantar na mina e forjar itens longe da superfície. Custa 5 pedras + 3 ferros.",
+		"desc": "Forja compacta forjada na superfície. Implante em qualquer lugar do subsolo para forjar sem voltar à superfície!",
 		"icon_type": "direct",
 		"tex": "stone",
 		"shortcut": "6",
@@ -174,8 +184,8 @@ var chest_items_def = [
 	},
 	{
 		"key": "wood",
-		"name": "Tronco de Madeira",
-		"desc": "Madeira obtida de árvores da superfície ou raízes subterrâneas. Usada para criar escadas, tábuas e picaretas.",
+		"name": "Madeira (Troncos)",
+		"desc": "Troncos nobres obtidos ao podar árvores da superfície ou raízes subterrâneas. Matéria-prima essencial na Forja.",
 		"icon_type": "direct",
 		"tex": "wood",
 		"shortcut": "",
@@ -184,7 +194,7 @@ var chest_items_def = [
 	{
 		"key": "iron",
 		"name": "Minério de Ferro",
-		"desc": "Metal versátil e resistente obtido nas profundezas. Usado na forja de ferramentas e postes.",
+		"desc": "Minério bruto resistente e condutor. Usado para criar ferramentas, postes e aprimorar equipamentos.",
 		"icon_type": "atlas",
 		"atlas": "ores",
 		"region": Rect2(32, 128, 16, 16),
@@ -249,9 +259,9 @@ func _process(delta: float) -> void:
 		idle_anim_timer = 0.0
 		idle_anim_frame = (idle_anim_frame + 1) % 16
 		
-		# Animate HUD Top-Left Avatar
+		# Animate HUD Top-Left Avatar (Focused tightly on character face/head)
 		if is_instance_valid(avatar_rect) and avatar_rect.texture is AtlasTexture:
-			avatar_rect.texture.region = Rect2(idle_anim_frame * 32.0, 0, 32.0, 30.0)
+			avatar_rect.texture.region = Rect2(idle_anim_frame * 32.0 + 9.0, 11.0, 14.0, 10.0)
 			
 		# Animate Equipment Menu Character Preview
 		if is_instance_valid(equipment_panel) and equipment_panel.visible:
@@ -326,14 +336,16 @@ func _ready() -> void:
 		craft_ladder_btn.pressed.connect(_on_craft_ladder)
 	if craft_plank_btn and not craft_plank_btn.pressed.is_connected(_on_craft_plank):
 		craft_plank_btn.pressed.connect(_on_craft_plank)
-	if craft_brick_floor_btn and not craft_brick_floor_btn.pressed.is_connected(_on_craft_brick_floor):
-		craft_brick_floor_btn.pressed.connect(_on_craft_brick_floor)
 	if craft_pickaxe_btn and not craft_pickaxe_btn.pressed.is_connected(_on_craft_pickaxe):
 		craft_pickaxe_btn.pressed.connect(_on_craft_pickaxe)
+	if craft_brick_floor_btn and not craft_brick_floor_btn.pressed.is_connected(_on_craft_brick_floor):
+		craft_brick_floor_btn.pressed.connect(_on_craft_brick_floor)
 	if craft_portable_forge_btn and not craft_portable_forge_btn.pressed.is_connected(_on_craft_portable_forge):
 		craft_portable_forge_btn.pressed.connect(_on_craft_portable_forge)
 		
-	select_slot(0)
+	_setup_forge_tabs()
+	_setup_equipment_slot_interactions()
+	
 	update_ui()
 
 func _consume_input() -> void:
@@ -345,6 +357,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Shift + A: Open Hotbar Shortcut Config
 		if event.physical_keycode == KEY_A and (event.shift_pressed or Input.is_key_pressed(KEY_SHIFT)):
 			toggle_hotbar_config()
+			_consume_input()
+			return
+
+		# Toggle Shop Menu with [L]
+		if event.physical_keycode == KEY_L:
+			toggle_shop()
 			_consume_input()
 			return
 
@@ -449,51 +467,58 @@ func toggle_hotbar_config() -> void:
 
 func _build_hotbar_config_panel() -> void:
 	hotbar_config_panel = PanelContainer.new()
-	hotbar_config_panel.name = "HotbarConfigPanel"
-	hotbar_config_panel.custom_minimum_size = Vector2(400, 260)
+	hotbar_config_panel.custom_minimum_size = Vector2(420, 260)
 	hotbar_config_panel.anchors_preset = Control.PRESET_CENTER
+	hotbar_config_panel.anchor_left = 0.5
+	hotbar_config_panel.anchor_top = 0.5
+	hotbar_config_panel.anchor_right = 0.5
+	hotbar_config_panel.anchor_bottom = 0.5
+	hotbar_config_panel.offset_left = -210
+	hotbar_config_panel.offset_top = -130
+	hotbar_config_panel.offset_right = 210
+	hotbar_config_panel.offset_bottom = 130
 	
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.16, 0.1, 0.05, 0.98)
+	style.bg_color = Color(0.18, 0.12, 0.06, 0.98)
 	style.border_width_left = 4
 	style.border_width_top = 4
 	style.border_width_right = 4
 	style.border_width_bottom = 4
-	style.border_color = Color(0.9, 0.75, 0.25, 1)
+	style.border_color = Color(0.8, 0.6, 0.2, 1)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_right = 8
 	style.corner_radius_bottom_left = 8
-	style.shadow_size = 10
 	hotbar_config_panel.add_theme_stylebox_override("panel", style)
 	
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_right", 14)
 	margin.add_theme_constant_override("margin_bottom", 12)
 	hotbar_config_panel.add_child(margin)
 	
 	var vbox = VBoxContainer.new()
-	vbox.name = "ConfigVBox"
 	vbox.add_theme_constant_override("separation", 10)
 	margin.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = "⚙ CONFIGURAR ATALHOS DA HOTBAR [Shift + A]"
-	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
+	title.text = "⚙ CONFIGURAR ATALHOS DA HOTBAR (1-6)"
 	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 	
 	var desc = Label.new()
-	desc.text = "Selecione o slot e clique no item para reatribuir:"
+	desc.text = "Clique em um slot (1-6) e depois selecione o item desejado:"
 	desc.add_theme_font_size_override("font_size", 11)
-	desc.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(desc)
 	
 	var slots_hbox = HBoxContainer.new()
 	slots_hbox.name = "SlotsHBox"
-	slots_hbox.add_theme_constant_override("separation", 8)
+	slots_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	slots_hbox.add_theme_constant_override("separation", 6)
 	vbox.add_child(slots_hbox)
 	
 	var items_grid = GridContainer.new()
@@ -587,6 +612,245 @@ func show_level_up_vfx(new_lvl: int, exp_req: int) -> void:
 					)
 			)
 
+# Setup Forge Tabs and Views
+func _setup_forge_tabs() -> void:
+	if not is_instance_valid(forge_panel): return
+	var content_margin = forge_panel.find_child("ContentMargin", true, false)
+	if not content_margin: return
+	var inner_vbox = content_margin.get_node_or_null("InnerVBox")
+	if not inner_vbox: return
+	
+	# Check if Tab bar already exists
+	var tab_bar = inner_vbox.get_node_or_null("ForgeTabBar")
+	if not tab_bar:
+		tab_bar = HBoxContainer.new()
+		tab_bar.name = "ForgeTabBar"
+		tab_bar.add_theme_constant_override("separation", 10)
+		inner_vbox.add_child(tab_bar)
+		inner_vbox.move_child(tab_bar, 0)
+		
+		forge_tab_create_btn = Button.new()
+		forge_tab_create_btn.text = "⚒ CRIAR ITENS"
+		forge_tab_create_btn.custom_minimum_size = Vector2(130, 32)
+		forge_tab_create_btn.pressed.connect(func():
+			forge_tab_upgrade = false
+			_update_forge_tab_visibility()
+		)
+		tab_bar.add_child(forge_tab_create_btn)
+		
+		forge_tab_upgrade_btn = Button.new()
+		forge_tab_upgrade_btn.text = "⭐ APRIMORAR EQUIPES"
+		forge_tab_upgrade_btn.custom_minimum_size = Vector2(170, 32)
+		forge_tab_upgrade_btn.pressed.connect(func():
+			forge_tab_upgrade = true
+			_update_forge_tab_visibility()
+		)
+		tab_bar.add_child(forge_tab_upgrade_btn)
+		
+		# Upgrade View container
+		forge_upgrade_view = VBoxContainer.new()
+		forge_upgrade_view.name = "ForgeUpgradeView"
+		forge_upgrade_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		forge_upgrade_view.add_theme_constant_override("separation", 8)
+		forge_upgrade_view.visible = false
+		
+		var scroll = ScrollContainer.new()
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		forge_upgrade_view.add_child(scroll)
+		
+		var up_rows = VBoxContainer.new()
+		up_rows.name = "UpgradeRowsContainer"
+		up_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		up_rows.add_theme_constant_override("separation", 8)
+		scroll.add_child(up_rows)
+		
+		inner_vbox.add_child(forge_upgrade_view)
+
+func _update_forge_tab_visibility() -> void:
+	if not is_instance_valid(forge_panel): return
+	var content_margin = forge_panel.find_child("ContentMargin", true, false)
+	if not content_margin: return
+	var inner_vbox = content_margin.get_node_or_null("InnerVBox")
+	if not inner_vbox: return
+	
+	var grid = inner_vbox.find_child("GridContainer", true, false)
+	var up_view = inner_vbox.find_child("ForgeUpgradeView", true, false)
+	
+	if forge_tab_upgrade:
+		if grid: grid.visible = false
+		if up_view: up_view.visible = true
+		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
+	else:
+		if grid: grid.visible = true
+		if up_view: up_view.visible = false
+		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
+		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+		
+	update_forge_ui()
+
+# Setup Equipment Slot Interactions (Replacing/Equipping Gear)
+func _setup_equipment_slot_interactions() -> void:
+	if not is_instance_valid(equipment_panel): return
+	var slots_vbox = equipment_panel.find_child("SlotsVBox", true, false)
+	if not slots_vbox: return
+	
+	var slot_nodes = [
+		{"node": slots_vbox.get_node_or_null("SlotHelmet"), "slot": "helmet"},
+		{"node": slots_vbox.get_node_or_null("SlotPickaxe"), "slot": "pickaxe"},
+		{"node": slots_vbox.get_node_or_null("SlotArmor"), "slot": "armor"},
+		{"node": slots_vbox.get_node_or_null("SlotBoots"), "slot": "boots"}
+	]
+	
+	for sn in slot_nodes:
+		if is_instance_valid(sn.node):
+			var slot_type = sn.slot
+			var hbox = sn.node.find_child("HBox", true, false)
+			if hbox and not hbox.has_node("SwapBtn"):
+				var swap_btn = Button.new()
+				swap_btn.name = "SwapBtn"
+				swap_btn.text = "Substituir [Z]"
+				swap_btn.custom_minimum_size = Vector2(100, 28)
+				swap_btn.pressed.connect(func(): _open_equipment_swap(slot_type))
+				hbox.add_child(swap_btn)
+
+func _open_equipment_swap(slot_type: String) -> void:
+	equip_swap_slot = slot_type
+	var inv = _get_inv()
+	if not inv: return
+	
+	# Create or show replacement selection modal
+	var modal = find_child("EquipSwapModal", true, false)
+	if is_instance_valid(modal):
+		modal.queue_free()
+		
+	modal = PanelContainer.new()
+	modal.name = "EquipSwapModal"
+	modal.custom_minimum_size = Vector2(360, 240)
+	modal.anchors_preset = Control.PRESET_CENTER
+	modal.anchor_left = 0.5
+	modal.anchor_top = 0.5
+	modal.anchor_right = 0.5
+	modal.anchor_bottom = 0.5
+	modal.offset_left = -180
+	modal.offset_top = -120
+	modal.offset_right = 180
+	modal.offset_bottom = 120
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.18, 0.12, 0.06, 0.98)
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = Color(0.85, 0.7, 0.25, 1)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_right = 8
+	style.corner_radius_bottom_left = 8
+	modal.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	modal.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+	
+	var slot_title = "CAPACETE"
+	var owned_list = inv.owned_helmets
+	var cur_equipped = inv.equipped_helmet
+	if slot_type == "pickaxe":
+		slot_title = "PICARETA"
+		owned_list = inv.owned_pickaxes
+		cur_equipped = inv.equipped_pickaxe
+	elif slot_type == "armor":
+		slot_title = "TRAJE"
+		owned_list = inv.owned_armors
+		cur_equipped = inv.equipped_armor
+	elif slot_type == "boots":
+		slot_title = "BOTAS"
+		owned_list = inv.owned_boots
+		cur_equipped = inv.equipped_boots
+		
+	var tlabel = Label.new()
+	tlabel.text = "SUBSTITUIR %s:" % slot_title
+	tlabel.add_theme_font_size_override("font_size", 13)
+	tlabel.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
+	vbox.add_child(tlabel)
+	
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+	
+	var list_vbox = VBoxContainer.new()
+	list_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list_vbox.add_theme_constant_override("separation", 6)
+	scroll.add_child(list_vbox)
+	
+	for item_id in owned_list:
+		var def = inv.EQUIPMENT_DEFS.get(item_id, {})
+		var row = PanelContainer.new()
+		var r_style = StyleBoxFlat.new()
+		r_style.bg_color = Color(0.12, 0.08, 0.04, 0.9)
+		r_style.border_width_left = 1
+		r_style.border_width_top = 1
+		r_style.border_width_right = 1
+		r_style.border_width_bottom = 1
+		r_style.border_color = Color(0.4, 0.3, 0.15, 1)
+		r_style.corner_radius_top_left = 4
+		r_style.corner_radius_top_right = 4
+		r_style.corner_radius_bottom_right = 4
+		r_style.corner_radius_bottom_left = 4
+		row.add_theme_stylebox_override("panel", r_style)
+		
+		var rm = MarginContainer.new()
+		rm.add_theme_constant_override("margin_left", 6)
+		rm.add_theme_constant_override("margin_top", 4)
+		rm.add_theme_constant_override("margin_right", 6)
+		rm.add_theme_constant_override("margin_bottom", 4)
+		row.add_child(rm)
+		
+		var rhbox = HBoxContainer.new()
+		rhbox.add_theme_constant_override("separation", 8)
+		rm.add_child(rhbox)
+		
+		var ilbl = Label.new()
+		ilbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ilbl.text = "%s
+%s" % [def.get("name", item_id), def.get("desc", "")]
+		ilbl.add_theme_font_size_override("font_size", 11)
+		rhbox.add_child(ilbl)
+		
+		var ebtn = Button.new()
+		if item_id == cur_equipped:
+			ebtn.text = "✓ Em Uso"
+			ebtn.disabled = true
+		else:
+			ebtn.text = "Equipar"
+			var i_key = item_id
+			ebtn.pressed.connect(func():
+				inv.equip_gear(i_key)
+				modal.queue_free()
+				update_equipment_ui()
+				update_ui()
+			)
+		rhbox.add_child(ebtn)
+		list_vbox.add_child(row)
+		
+	var close_b = Button.new()
+	close_b.text = "Fechar [X]"
+	close_b.pressed.connect(func(): modal.queue_free())
+	vbox.add_child(close_b)
+	
+	add_child(modal)
+
 # Forge Crafting Handlers
 func _on_craft_pickaxe() -> void:
 	var inv = _get_inv()
@@ -653,6 +917,7 @@ func open_forge(forge_node: Node = null) -> void:
 	current_forge_node = forge_node
 	if forge_panel:
 		forge_panel.visible = true
+		_update_forge_tab_visibility()
 		update_forge_ui()
 		if craft_lamp_btn:
 			_safe_grab_focus(craft_lamp_btn)
@@ -694,6 +959,104 @@ func update_forge_ui() -> void:
 	if not craft_portable_forge_btn: craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 	if craft_portable_forge_btn:
 		craft_portable_forge_btn.disabled = not inv.can_craft_portable_forge()
+		
+	# Update Forge Upgrade View rows
+	var up_rows = find_child("UpgradeRowsContainer", true, false)
+	if up_rows:
+		for c in up_rows.get_children(): c.queue_free()
+		for up in inv.FORGE_UPGRADES:
+			var row = _create_forge_upgrade_row(up)
+			up_rows.add_child(row)
+
+func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
+	var inv = _get_inv()
+	var row = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.10, 0.05, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.5, 0.35, 0.18, 1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	row.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	row.add_child(margin)
+	
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	margin.add_child(hbox)
+	
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(vbox)
+	
+	var title_lbl = Label.new()
+	title_lbl.text = up.get("name", "")
+	title_lbl.add_theme_font_size_override("font_size", 12)
+	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.4, 1.0))
+	vbox.add_child(title_lbl)
+	
+	var desc_lbl = Label.new()
+	desc_lbl.text = "%s
+Custo: %s" % [up.get("desc", ""), _format_upgrade_cost(up.get("cost", {}))]
+	desc_lbl.add_theme_font_size_override("font_size", 10)
+	desc_lbl.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
+	vbox.add_child(desc_lbl)
+	
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(120, 32)
+	var target = up.get("target_item", "")
+	var req_lvl = up.get("level_req", 0)
+	
+	var already_max = false
+	if inv:
+		if target in inv.owned_helmets and inv.equipped_helmet == target: already_max = true
+		elif target in inv.owned_pickaxes and inv.equipped_pickaxe == target: already_max = true
+		elif target in inv.owned_armors and inv.equipped_armor == target: already_max = true
+		elif target in inv.owned_boots and inv.equipped_boots == target: already_max = true
+		
+	if already_max:
+		btn.text = "✓ Equipado"
+		btn.disabled = true
+	elif inv and inv.level < req_lvl:
+		btn.text = "🔒 Nível %d" % req_lvl
+		btn.disabled = true
+	else:
+		var can_up = inv.can_forge_upgrade(up) if inv else false
+		btn.text = "Aprimorar [Z]"
+		btn.disabled = not can_up
+		var up_k = up.get("key", "")
+		btn.pressed.connect(func():
+			if inv and inv.execute_forge_upgrade(up_k):
+				update_forge_ui()
+				update_ui()
+		)
+	hbox.add_child(btn)
+	
+	return row
+
+func _format_upgrade_cost(cost: Dictionary) -> String:
+	var parts = []
+	for k in cost:
+		var name_str = k.capitalize()
+		if k == "iron": name_str = "Ferro"
+		elif k == "gold": name_str = "Ouro"
+		elif k == "coal": name_str = "Carvão"
+		elif k == "wood": name_str = "Madeira"
+		elif k == "stone": name_str = "Pedra"
+		elif k == "plank": name_str = "Tábua"
+		elif k == "dirt": name_str = "Terra"
+		parts.append("%d %s" % [cost[k], name_str])
+	return ", ".join(parts)
 
 func toggle_equipment() -> void:
 	if not equipment_panel: return
@@ -707,12 +1070,40 @@ func open_equipment() -> void:
 		equipment_panel.visible = true
 		idle_anim_timer = 0.0
 		idle_anim_frame = 0
+		update_equipment_ui()
 		if equip_close_btn:
 			_safe_grab_focus(equip_close_btn)
 
 func close_equipment() -> void:
 	if equipment_panel:
 		equipment_panel.visible = false
+	var swap_modal = find_child("EquipSwapModal", true, false)
+	if is_instance_valid(swap_modal):
+		swap_modal.queue_free()
+
+func update_equipment_ui() -> void:
+	var inv = _get_inv()
+	if not inv or not is_instance_valid(equipment_panel): return
+	
+	var slots_vbox = equipment_panel.find_child("SlotsVBox", true, false)
+	if not slots_vbox: return
+	
+	var h_def = inv.get_equipped_def("helmet")
+	var p_def = inv.get_equipped_def("pickaxe")
+	var a_def = inv.get_equipped_def("armor")
+	var b_def = inv.get_equipped_def("boots")
+	
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotHelmet"), h_def)
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotPickaxe"), p_def)
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotArmor"), a_def)
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotBoots"), b_def)
+
+func _update_single_slot_ui(slot_node: Node, def: Dictionary) -> void:
+	if not is_instance_valid(slot_node) or def.is_empty(): return
+	var name_lbl = slot_node.find_child("ItemName", true, false)
+	var desc_lbl = slot_node.find_child("ItemDesc", true, false)
+	if name_lbl: name_lbl.text = def.get("name", "")
+	if desc_lbl: desc_lbl.text = def.get("desc", "")
 
 func toggle() -> void:
 	if not inventory_panel: return
@@ -779,10 +1170,10 @@ func toggle_shop() -> void:
 func open_shop() -> void:
 	if shop_panel:
 		shop_panel.visible = true
-		_on_shop_tab_sell()
+		_on_shop_tab_buy()
 		update_shop_ui()
-		if shop_tab_sell_btn:
-			_safe_grab_focus(shop_tab_sell_btn)
+		if shop_tab_buy_btn:
+			_safe_grab_focus(shop_tab_buy_btn)
 
 func close_shop() -> void:
 	if shop_panel:
@@ -796,6 +1187,7 @@ func _on_shop_tab_buy() -> void:
 	if shop_sell_view: shop_sell_view.visible = false
 	if shop_tab_buy_btn: shop_tab_buy_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
 	if shop_tab_sell_btn: shop_tab_sell_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+	update_shop_ui()
 
 func _on_shop_tab_sell() -> void:
 	if shop_buy_view: shop_buy_view.visible = false
@@ -809,24 +1201,42 @@ func update_shop_ui() -> void:
 	if not inv: return
 	
 	if shop_coins_label:
-		shop_coins_label.text = "Suas Moedas de Ouro: %d" % inv.coins
+		shop_coins_label.text = "🪙 Suas Moedas de Ouro: %d" % inv.coins
 		
-	# Update dynamically sellable items list in Shop
+	# 1. Update BUY tab with purchasable equipment
+	var buy_container = find_child("BuyRowsContainer", true, false)
+	if buy_container:
+		for child in buy_container.get_children(): child.queue_free()
+		var buyable_keys = [
+			"helmet_lamp",
+			"boots_leather",
+			"armor_reinforced",
+			"helmet_iron_lamp",
+			"boots_steel",
+			"armor_explorer"
+		]
+		for key in buyable_keys:
+			var def = inv.EQUIPMENT_DEFS.get(key, {})
+			if not def.is_empty():
+				var row = _create_shop_buy_row(def)
+				buy_container.add_child(row)
+		
+	# 2. Update SELL tab (STRICTLY only items with count > 0)
 	var sell_container = find_child("SellRowsContainer", true, false)
 	if sell_container:
 		for child in sell_container.get_children():
 			child.queue_free()
 			
 		var sellable = [
-			{"key": "coal", "name": "Carvão Mineral", "price": inv.COAL_PRICE, "count": inv.coal, "tex": "ores_coal"},
-			{"key": "iron", "name": "Minério de Ferro", "price": inv.IRON_PRICE, "count": inv.iron, "tex": "ores_iron"},
-			{"key": "gold", "name": "Minério de Ouro", "price": inv.GOLD_PRICE, "count": inv.gold, "tex": "ores_gold"},
-			{"key": "wood", "name": "Madeira (Troncos)", "price": inv.WOOD_PRICE, "count": inv.wood_logs, "tex": "wood"},
-			{"key": "stone", "name": "Pedra", "price": inv.STONE_PRICE, "count": inv.stone, "tex": "stone"},
-			{"key": "dirt", "name": "Lama / Terra", "price": inv.DIRT_PRICE, "count": inv.dirt, "tex": "dirt"},
-			{"key": "plank", "name": "Tábua de Madeira", "price": inv.PLANK_PRICE, "count": inv.planks, "tex": "plank"},
-			{"key": "brick", "name": "Piso de Tijolo", "price": inv.BRICK_PRICE, "count": inv.brick_floors, "tex": "brick"},
-			{"key": "ladder", "name": "Escada", "price": inv.LADDER_PRICE, "count": inv.ladders, "tex": "rope"}
+			{"key": "coal", "name": "Carvão Mineral", "price": inv.COAL_PRICE, "count": inv.coal},
+			{"key": "iron", "name": "Minério de Ferro", "price": inv.IRON_PRICE, "count": inv.iron},
+			{"key": "gold", "name": "Minério de Ouro", "price": inv.GOLD_PRICE, "count": inv.gold},
+			{"key": "wood", "name": "Madeira (Troncos)", "price": inv.WOOD_PRICE, "count": inv.wood_logs},
+			{"key": "stone", "name": "Pedra", "price": inv.STONE_PRICE, "count": inv.stone},
+			{"key": "dirt", "name": "Lama / Terra", "price": inv.DIRT_PRICE, "count": inv.dirt},
+			{"key": "plank", "name": "Tábua de Madeira", "price": inv.PLANK_PRICE, "count": inv.planks},
+			{"key": "brick", "name": "Piso de Tijolo", "price": inv.BRICK_PRICE, "count": inv.brick_floors},
+			{"key": "ladder", "name": "Escada", "price": inv.LADDER_PRICE, "count": inv.ladders}
 		]
 		
 		var has_any = false
@@ -839,6 +1249,79 @@ func update_shop_ui() -> void:
 		var empty_lbl = find_child("SellEmptyLabel", true, false)
 		if empty_lbl:
 			empty_lbl.visible = not has_any
+
+func _create_shop_buy_row(def: Dictionary) -> PanelContainer:
+	var inv = _get_inv()
+	var row = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.18, 0.11, 0.06, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.45, 0.3, 0.16, 1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	row.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	row.add_child(margin)
+	
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	margin.add_child(hbox)
+	
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(vbox)
+	
+	var title_lbl = Label.new()
+	title_lbl.text = "%s — Custo: %d Moedas" % [def.get("name", ""), def.get("cost_coins", 0)]
+	title_lbl.add_theme_font_size_override("font_size", 12)
+	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.9, 0.45, 1.0))
+	vbox.add_child(title_lbl)
+	
+	var desc_lbl = Label.new()
+	desc_lbl.text = def.get("desc", "")
+	desc_lbl.add_theme_font_size_override("font_size", 10)
+	desc_lbl.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
+	vbox.add_child(desc_lbl)
+	
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(110, 30)
+	
+	var item_id = def.get("id", "")
+	var req_lvl = def.get("level_req", 0)
+	var cost = def.get("cost_coins", 0)
+	
+	var already_owned = false
+	if inv:
+		if item_id in inv.owned_helmets or item_id in inv.owned_pickaxes or item_id in inv.owned_armors or item_id in inv.owned_boots:
+			already_owned = true
+			
+	if already_owned:
+		btn.text = "✓ Possui"
+		btn.disabled = true
+	elif inv and inv.level < req_lvl:
+		btn.text = "🔒 Nível %d" % req_lvl
+		btn.disabled = true
+	else:
+		btn.text = "Comprar [Z]"
+		btn.disabled = (inv == null or inv.coins < cost)
+		btn.pressed.connect(func():
+			if inv and inv.buy_shop_item(item_id):
+				update_shop_ui()
+				update_ui()
+		)
+	hbox.add_child(btn)
+	
+	return row
 
 func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 	var row = PanelContainer.new()
@@ -1105,7 +1588,9 @@ func select_slot(idx: int) -> void:
 		if item_title: item_title.text = def.name
 		if item_desc:
 			if def.key == "pickaxe" and inv:
-				item_desc.text = "%s\n\nDurabilidade: %d%% (%d/100)" % [def.desc, inv.pickaxe_durability, inv.pickaxe_durability]
+				item_desc.text = "%s
+
+Durabilidade: %d%% (%d/%d)" % [def.desc, inv.pickaxe_durability, inv.pickaxe_durability, inv.max_pickaxe_durability]
 			else:
 				item_desc.text = def.desc
 		if equip_button:
@@ -1211,7 +1696,7 @@ func update_ui() -> void:
 			
 		if key == "pickaxe":
 			if inv.has_pickaxe:
-				count_lbl.text = "%d%%" % inv.pickaxe_durability
+				count_lbl.text = "%d%%" % int((float(inv.pickaxe_durability) / float(inv.max_pickaxe_durability)) * 100.0)
 				slot.modulate = Color.WHITE
 			else:
 				count_lbl.text = "QUEBR."
@@ -1241,7 +1726,7 @@ func update_ui() -> void:
 			if count_label:
 				var c = _get_item_count(def.key)
 				if def.key == "pickaxe":
-					count_label.text = "%d%%" % inv.pickaxe_durability if inv.has_pickaxe else "QUEBRADA"
+					count_label.text = "%d%%" % int((float(inv.pickaxe_durability) / float(inv.max_pickaxe_durability)) * 100.0) if inv.has_pickaxe else "QUEBRADA"
 				else:
 					count_label.text = "%d" % c
 				
@@ -1251,14 +1736,100 @@ func update_ui() -> void:
 					card.modulate = Color(1, 1, 1, 1.0)
 					
 	_update_capacity_badge()
+	update_equipment_ui()
 
 func _update_capacity_badge() -> void:
 	var inv = _get_inv()
 	if not inv: return
+	var max_cap = inv.get_max_capacity() if inv.has_method("get_max_capacity") else 60
+	var cur_load = inv.get_current_load() if inv.has_method("get_current_load") else (inv.iron + inv.gold + inv.coal)
+	var available = max(0, max_cap - cur_load)
+	
 	if capacity_badge_label:
-		var used = inv.get_total_used()
-		capacity_badge_label.text = "Minérios: %d / %d" % [used, inv.MAX_CAPACITY]
+		capacity_badge_label.text = "🎒 Carga: %d / %d  |  Disponível: %d" % [cur_load, max_cap, available]
+		if cur_load >= max_cap:
+			capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4, 1.0))
+		else:
+			capacity_badge_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.85, 1.0))
 
+func show_toast(text: String, icon_type: String = "") -> void:
+	if not toast_list: return
+	
+	var toast = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.08, 0.04, 0.92)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.85, 0.65, 0.2, 1.0)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	toast.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	toast.add_child(margin)
+	
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+	margin.add_child(hbox)
+	
+	if icon_type != "":
+		var icon = TextureRect.new()
+		icon.custom_minimum_size = Vector2(20, 20)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		
+		if icon_type == "coin_gold": icon.texture = coin_gold_tex
+		elif icon_type == "coin_silver": icon.texture = coin_silver_tex
+		elif icon_type == "coin_copper": icon.texture = coin_copper_tex
+		elif icon_type == "wood": icon.texture = wood_tex
+		elif icon_type == "stone": icon.texture = stone_tex
+		elif icon_type == "dirt": icon.texture = dirt_tex
+		elif icon_type == "brick": icon.texture = brick_tex
+		elif icon_type == "lamp": icon.texture = lamp_tex
+		elif icon_type == "ladder": icon.texture = rope_tex
+		elif icon_type == "plank": icon.texture = plank_tex
+		elif icon_type == "helmet": icon.texture = helmet_tex
+		elif icon_type == "armor": icon.texture = armor_tex
+		elif icon_type == "boots": icon.texture = boots_tex
+		elif icon_type == "pickaxe": icon.texture = pickaxe_tex
+		else:
+			var atlas = AtlasTexture.new()
+			atlas.atlas = ores_tex
+			if icon_type == "coal": atlas.region = Rect2(0, 128, 16, 16)
+			elif icon_type == "iron": atlas.region = Rect2(32, 128, 16, 16)
+			elif icon_type == "gold": atlas.region = Rect2(128, 128, 16, 16)
+			else:
+				atlas.atlas = extras_tex
+				atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		hbox.add_child(icon)
+		
+	var label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85, 1.0))
+	hbox.add_child(label)
+	
+	toast_list.add_child(toast)
+	
+	var tween = create_tween()
+	tween.tween_interval(2.5)
+	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(func():
+		if is_instance_valid(toast):
+			toast.queue_free()
+	)
+
+# Chest Menu Handlers
 func toggle_chest(chest_node: Node = null) -> void:
 	if not chest_panel: return
 	if chest_panel.visible:
@@ -1281,14 +1852,12 @@ func close_chest() -> void:
 
 func update_chest_ui() -> void:
 	var inv = _get_inv()
-	var c_coal = 0
-	var c_iron = 0
-	var c_gold = 0
-	if is_instance_valid(current_chest_node):
-		c_coal = current_chest_node.stored_coal
-		c_iron = current_chest_node.stored_iron
-		c_gold = current_chest_node.stored_gold
-		
+	if not inv: return
+	
+	var c_coal = current_chest_node.stored_coal if current_chest_node else 0
+	var c_iron = current_chest_node.stored_iron if current_chest_node else 0
+	var c_gold = current_chest_node.stored_gold if current_chest_node else 0
+	
 	if chest_coal_lbl:
 		chest_coal_lbl.visible = (c_coal > 0)
 		chest_coal_lbl.text = "• Carvão: %d" % c_coal
@@ -1299,149 +1868,61 @@ func update_chest_ui() -> void:
 		chest_gold_lbl.visible = (c_gold > 0)
 		chest_gold_lbl.text = "• Minério de Ouro: %d" % c_gold
 		
-	var b_coal = inv.coal if inv else 0
-	var b_iron = inv.iron if inv else 0
-	var b_gold = inv.gold if inv else 0
-	
 	if backpack_coal_lbl:
-		backpack_coal_lbl.visible = (b_coal > 0)
-		backpack_coal_lbl.text = "• Carvão: %d" % b_coal
+		backpack_coal_lbl.visible = (inv.coal > 0)
+		backpack_coal_lbl.text = "• Carvão: %d" % inv.coal
 	if backpack_iron_lbl:
-		backpack_iron_lbl.visible = (b_iron > 0)
-		backpack_iron_lbl.text = "• Minério de Ferro: %d" % b_iron
+		backpack_iron_lbl.visible = (inv.iron > 0)
+		backpack_iron_lbl.text = "• Minério de Ferro: %d" % inv.iron
 	if backpack_gold_lbl:
-		backpack_gold_lbl.visible = (b_gold > 0)
-		backpack_gold_lbl.text = "• Minério de Ouro: %d" % b_gold
-	
-	if chest_deposit_btn:
-		chest_deposit_btn.disabled = (b_coal <= 0 and b_iron <= 0 and b_gold <= 0)
-	if chest_retrieve_btn:
-		chest_retrieve_btn.disabled = (c_coal <= 0 and c_iron <= 0 and c_gold <= 0)
+		backpack_gold_lbl.visible = (inv.gold > 0)
+		backpack_gold_lbl.text = "• Minério de Ouro: %d" % inv.gold
 
 func _on_chest_deposit() -> void:
-	if is_instance_valid(current_chest_node) and current_chest_node.has_method("deposit_resources"):
-		current_chest_node.deposit_resources()
+	var inv = _get_inv()
+	if current_chest_node and inv:
+		current_chest_node.stored_coal += inv.coal
+		current_chest_node.stored_iron += inv.iron
+		current_chest_node.stored_gold += inv.gold
+		current_chest_node.stored_load += (inv.coal + inv.iron + inv.gold)
+		
+		inv.coal = 0
+		inv.iron = 0
+		inv.gold = 0
+		
+		inv.inventory_changed.emit()
 		update_chest_ui()
-		update_ui()
+		show_toast("Recursos guardados no Baú!", "chest")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
 
 func _on_chest_retrieve() -> void:
-	if is_instance_valid(current_chest_node) and current_chest_node.has_method("retrieve_resources"):
-		current_chest_node.retrieve_resources()
+	var inv = _get_inv()
+	if current_chest_node and inv:
+		var max_cap = inv.get_max_capacity() if inv.has_method("get_max_capacity") else 60
+		var cur_load = inv.get_current_load() if inv.has_method("get_current_load") else (inv.iron + inv.gold + inv.coal)
+		var free_space = max(0, max_cap - cur_load)
+		if free_space <= 0:
+			show_toast("Sua mochila já está cheia!", "chest")
+			return
+			
+		var take_coal = min(current_chest_node.stored_coal, free_space)
+		inv.coal += take_coal
+		current_chest_node.stored_coal -= take_coal
+		free_space -= take_coal
+		
+		var take_iron = min(current_chest_node.stored_iron, free_space)
+		inv.iron += take_iron
+		current_chest_node.stored_iron -= take_iron
+		free_space -= take_iron
+		
+		var take_gold = min(current_chest_node.stored_gold, free_space)
+		inv.gold += take_gold
+		current_chest_node.stored_gold -= take_gold
+		
+		current_chest_node.stored_load = current_chest_node.stored_coal + current_chest_node.stored_iron + current_chest_node.stored_gold
+		inv.inventory_changed.emit()
 		update_chest_ui()
-		update_ui()
-
-func show_toast(text: String, icon_type: String = "") -> void:
-	if not toast_list: return
-	
-	var toast = PanelContainer.new()
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.08, 0.04, 0.95)
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
-	style.border_color = Color(0.8, 0.65, 0.25, 1)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_right = 6
-	style.corner_radius_bottom_left = 6
-	style.shadow_color = Color(0, 0, 0, 0.6)
-	style.shadow_size = 6
-	toast.add_theme_stylebox_override("panel", style)
-	
-	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 6)
-	
-	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 8)
-	
-	if icon_type != "":
-		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(20, 20)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		
-		if icon_type in ["coin", "coin_gold"]:
-			icon.texture = coin_gold_tex
-		elif icon_type == "coin_silver":
-			icon.texture = coin_silver_tex
-		elif icon_type == "coin_copper":
-			icon.texture = coin_copper_tex
-		elif icon_type in ["wood", "wood_log"]:
-			icon.texture = wood_tex
-		elif icon_type == "iron":
-			var atlas = AtlasTexture.new()
-			atlas.atlas = ores_tex
-			atlas.region = Rect2(32, 128, 16, 16)
-			icon.texture = atlas
-		elif icon_type == "gold":
-			var atlas = AtlasTexture.new()
-			atlas.atlas = ores_tex
-			atlas.region = Rect2(128, 128, 16, 16)
-			icon.texture = atlas
-		elif icon_type == "coal":
-			var atlas = AtlasTexture.new()
-			atlas.atlas = ores_tex
-			atlas.region = Rect2(0, 128, 16, 16)
-			icon.texture = atlas
-		elif icon_type == "plank":
-			icon.texture = plank_tex
-		elif icon_type == "stone" or icon_type == "forge":
-			icon.texture = stone_tex
-		elif icon_type == "dirt":
-			icon.texture = dirt_tex
-		elif icon_type == "lamp":
-			var atlas = AtlasTexture.new()
-			atlas.atlas = lamp_tex
-			atlas.region = Rect2(0, 0, 16, 16)
-			icon.texture = atlas
-		elif icon_type in ["save", "chest"]:
-			var atlas = AtlasTexture.new()
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(160, 32, 16, 16)
-			icon.texture = atlas
-		elif icon_type == "ladder":
-			icon.texture = rope_tex
-		elif icon_type in ["dash", "pickaxe"]:
-			var atlas = AtlasTexture.new()
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(0, 0, 16, 16)
-			icon.texture = atlas
-		hbox.add_child(icon)
-		
-	var label = Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", 13)
-	label.add_theme_color_override("font_color", Color(1.0, 0.94, 0.82, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
-	label.add_theme_constant_override("outline_size", 4)
-	hbox.add_child(label)
-	
-	margin.add_child(hbox)
-	toast.add_child(margin)
-	toast_list.add_child(toast)
-	
-	toast.modulate.a = 0.0
-	toast.scale = Vector2(0.85, 0.85)
-	var tween = toast.create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(toast, "modulate:a", 1.0, 0.15)
-	tween.tween_property(toast, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	
-	var timer = toast.get_tree().create_timer(2.2) if (toast.is_inside_tree() and toast.get_tree()) else null
-	if timer:
-		timer.timeout.connect(func():
-			if is_instance_valid(toast):
-				var out_tween = toast.create_tween()
-				out_tween.set_parallel(true)
-				out_tween.tween_property(toast, "modulate:a", 0.0, 0.25)
-				out_tween.tween_property(toast, "position:x", toast.position.x - 25.0, 0.25)
-				out_tween.finished.connect(func():
-					if is_instance_valid(toast):
-						toast.queue_free()
-				)
-		)
+		show_toast("Recursos retirados do Baú!", "chest")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()

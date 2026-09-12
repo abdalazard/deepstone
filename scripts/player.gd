@@ -101,6 +101,13 @@ func _spawn_level_up_aura(lvl: int) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		# Toggle Shop with [L]
+		if event.physical_keycode == KEY_L:
+			var hud = get_tree().current_scene.get_node_or_null("HUD") if get_tree() and get_tree().current_scene else null
+			if hud and hud.has_method("toggle_shop"):
+				hud.toggle_shop()
+				if get_viewport(): get_viewport().set_input_as_handled()
+				return
 		# Shift + A: Open Hotbar Shortcuts Config
 		if event.physical_keycode == KEY_A and (event.shift_pressed or Input.is_key_pressed(KEY_SHIFT)):
 			var hud = get_tree().current_scene.get_node_or_null("HUD") if get_tree() and get_tree().current_scene else null
@@ -170,6 +177,11 @@ func _process(delta: float) -> void:
 		sprite.flip_h = (facing_x < 0)
 
 func _physics_process(delta: float) -> void:
+	var inv_stats = _get_inv()
+	var boots_speed_mult = inv_stats.get_boots_speed_multiplier() if (inv_stats and inv_stats.has_method("get_boots_speed_multiplier")) else 1.0
+	var boots_jump_mult = inv_stats.get_boots_jump_multiplier() if (inv_stats and inv_stats.has_method("get_boots_jump_multiplier")) else 1.0
+	var effective_speed = speed * boots_speed_mult
+	var effective_jump = jump_velocity * boots_jump_mult
 	# Pass through planks (layer 6) freely when climbing on ladder or pressing down
 	if Input.is_action_pressed("ui_down"):
 		plank_drop_timer = 0.25
@@ -219,7 +231,7 @@ func _physics_process(delta: float) -> void:
 	
 		# Handle Jump.
 		if Input.is_action_just_pressed("ui_up") and is_on_floor():
-			velocity.y = jump_velocity
+			velocity.y = effective_jump
 
 	# Aiming logic (for mining)
 	var aim_dir = Vector2.ZERO
@@ -237,7 +249,7 @@ func _physics_process(delta: float) -> void:
 	var direction := Input.get_axis("ui_left", "ui_right")
 	var is_dragging = Input.is_action_pressed("action_drag")
 	var is_kick = Input.is_action_just_pressed("action_drag")
-	var current_speed = speed
+	var current_speed = effective_speed
 
 	if is_on_floor() or on_ladder:
 		if direction != 0:
@@ -252,12 +264,12 @@ func _physics_process(delta: float) -> void:
 		# Air control: lateral impulse control via left/right arrows without instant ground friction
 		if direction != 0:
 			facing_x = sign(direction)
-			velocity.x = move_toward(velocity.x, direction * speed, 320.0 * delta)
+			velocity.x = move_toward(velocity.x, direction * effective_speed, 320.0 * delta)
 		else:
 			velocity.x = move_toward(velocity.x, 0, 140.0 * delta)
 
 	# Clamp velocity so external impulses never catapult or bury the character
-	velocity.x = clamp(velocity.x, -speed, speed)
+	velocity.x = clamp(velocity.x, -effective_speed, effective_speed)
 	velocity.y = clamp(velocity.y, -380.0, 340.0)
 
 	move_and_slide()
