@@ -27,6 +27,7 @@ func _ready() -> void:
 	var sprite = $Sprite2D
 	if sprite:
 		sprite.scale = sprite_scale
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 func _process(delta: float) -> void:
 	if is_mining:

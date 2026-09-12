@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://b8mainuidxxxx"]
+[gd_scene load_steps=6 format=3 uid="uid://b8mainuidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://b8playeruidxxx" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/environment/sky.tscn" id="3_sky"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/start_screen.tscn" id="6_start"]
 [ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="7_chest"]
@@ -11,6 +12,8 @@ size = Vector2(16, 2000)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
+
+[node name="Sky" parent="." instance=ExtResource("3_sky")]
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
 rotation = 1.5708
