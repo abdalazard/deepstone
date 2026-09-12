@@ -634,6 +634,11 @@ func set_hotbar_slot(slot_idx: int, item_key: String) -> void:
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 
+func get_active_item_key() -> String:
+	if active_slot >= 0 and active_slot < hotbar_slots.size():
+		return hotbar_slots[active_slot]
+	return "pickaxe"
+
 func get_current_load() -> int:
 	return iron + gold + coal
 
