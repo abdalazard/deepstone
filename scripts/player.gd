@@ -89,7 +89,7 @@ func place_torch() -> void:
 	var torch_scene = load("res://scenes/environment/torch.tscn")
 	var torch = torch_scene.instantiate()
 	var snapped_x = floor(global_position.x / 16.0) * 16.0 + 8.0
-	var snapped_y = floor(global_position.y / 16.0) * 16.0 + 8.0
+	var snapped_y = round(global_position.y / 16.0) * 16.0
 	torch.position = Vector2(snapped_x, snapped_y)
 	get_tree().current_scene.add_child(torch)
 
@@ -101,7 +101,7 @@ func place_ladder() -> void:
 	if not ladder_scene: return
 	var ladder = ladder_scene.instantiate()
 	var snapped_x = floor(global_position.x / 16.0) * 16.0 + 8.0
-	var snapped_y = floor(global_position.y / 16.0) * 16.0 + 8.0
+	var snapped_y = round(global_position.y / 16.0) * 16.0
 	ladder.position = Vector2(snapped_x, snapped_y)
 	get_tree().current_scene.add_child(ladder)
 
