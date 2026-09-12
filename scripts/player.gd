@@ -10,6 +10,41 @@ var in_ladder_count: int = 0
 var on_ladder: bool:
 	get: return in_ladder_count > 0
 
+var anim_timer: float = 0.0
+var anim_frame: int = 0
+var anim_state: String = "idle" # idle, dig, walk
+var is_mining: bool = false
+var mine_timer: float = 0.0
+
+func _process(delta: float) -> void:
+	if is_mining:
+		mine_timer -= delta
+		if mine_timer <= 0:
+			is_mining = false
+	
+	if is_mining:
+		anim_state = "dig"
+	elif not is_on_floor() or velocity.x != 0:
+		anim_state = "walk"
+	else:
+		anim_state = "idle"
+		
+	# Update frames
+	anim_timer += delta
+	var fps = 8.0 if anim_state == "walk" or anim_state == "dig" else 4.0
+	if anim_timer > 1.0 / fps:
+		anim_timer = 0.0
+		anim_frame = (anim_frame + 1) % 4
+		
+	var base_frame = 0
+	if anim_state == "dig": base_frame = 4
+	elif anim_state == "walk": base_frame = 8
+	
+	$Sprite2D.frame = base_frame + anim_frame
+	
+	if last_direction.x != 0:
+		$Sprite2D.flip_h = last_direction.x < 0
+
 func _physics_process(delta: float) -> void:
 	if on_ladder:
 		if Input.is_action_pressed("ui_up"):
@@ -139,8 +174,10 @@ func try_mine() -> void:
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true
 	query.collide_with_areas = true
-	query.hit_from_inside = true
-	query.exclude = [get_rid()]
+	query.collision_mask = 5 # Block and Placed items
+	
+	is_mining = true
+	mine_timer = 0.5
 	
 	var result = space_state.intersect_ray(query)
 	if result and result.has("collider"):
