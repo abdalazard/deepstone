@@ -633,7 +633,7 @@ func show_toast(text: String, icon_type: String = "") -> void:
 	margin.add_theme_constant_override("margin_bottom", 6)
 	
 	var hbox = HBoxContainer.new()
-	hbox.theme_override_constants.separation = 8
+	hbox.add_theme_constant_override("separation", 8)
 	
 	if icon_type != "":
 		var icon = TextureRect.new()
