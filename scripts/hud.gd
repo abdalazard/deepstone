@@ -5,7 +5,7 @@ extends CanvasLayer
 @onready var container = $MarginContainer/VBoxContainer
 
 func _ready() -> void:
-	Inventory.resources_changed.connect(_on_resources_changed)
+	Inventory.inventory_changed.connect(_on_resources_changed)
 	_on_resources_changed()
 	container.hide() # Inventory starts closed!
 
