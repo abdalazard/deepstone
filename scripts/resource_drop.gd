@@ -17,7 +17,16 @@ func _ready() -> void:
 	var tween = create_tween()
 	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.3).set_trans(Tween.TRANS_BOUNCE)
 	
-	# Add area for auto-pickup
+	# Auto collect for basic ores (Stone, Copper)
+	# Future ores like Gold will skip this to force manual hauling
+	var timer = Timer.new()
+	timer.wait_time = 1.0
+	timer.one_shot = true
+	timer.timeout.connect(_auto_fly_to_player)
+	add_child(timer)
+	timer.start()
+	
+	# Add area for auto-pickup (when player presses C)
 	var pickup_area = Area2D.new()
 	pickup_area.collision_layer = 0
 	pickup_area.collision_mask = 2 # Player layer
@@ -29,6 +38,18 @@ func _ready() -> void:
 	pickup_area.add_child(collision)
 	
 	add_child(pickup_area)
+
+func _auto_fly_to_player() -> void:
+	var player = get_tree().current_scene.get_node_or_null("Player")
+	if not player: return
+	
+	set_deferred("freeze", true)
+	if has_node("CollisionShape2D"):
+		get_node("CollisionShape2D").set_deferred("disabled", true)
+		
+	var tween = create_tween()
+	tween.tween_property(self, "global_position", player.global_position, 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
+	tween.finished.connect(collect)
 
 func collect() -> void:
 	Inventory.add_resource(type, 1)
