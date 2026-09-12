@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dirt"]
 size = Vector2(16, 16)
 
-[node name="Dirt" type="CharacterBody2D"]
+[node name="Dirt" type="RigidBody2D"]
 script = ExtResource("1_rock")
 is_dirt = true
 

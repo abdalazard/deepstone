@@ -1,5 +1,5 @@
 class_name Rock
-extends CharacterBody2D
+extends RigidBody2D
 
 @export var is_copper: bool = false
 @export var is_dirt: bool = false
@@ -36,16 +36,12 @@ func _ready() -> void:
 	add_child(cracks)
 	cracks.draw.connect(_on_cracks_draw)
 	
+	lock_rotation = true
+	mass = 100.0 # Heavy so player doesn't push it easily
+	
 	if is_dirt:
-		set_physics_process(false) # Terra não cai
-
-func _physics_process(delta: float) -> void:
-	if not is_on_floor():
-		velocity.y += 980.0 * delta
-	else:
-		velocity.y = 0
-		
-	move_and_slide()
+		freeze = true
+		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 
 func hit() -> void:
 	if hp <= 0: return
