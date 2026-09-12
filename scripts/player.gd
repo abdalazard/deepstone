@@ -69,7 +69,9 @@ func _physics_process(delta: float) -> void:
 		set_slot((Inventory.active_slot + 1) % 3)
 	
 	if Input.is_action_just_pressed("action_mine"):
-		if Inventory.active_slot == 0:
+		if _try_chest_interaction():
+			pass # Interaction succeeded
+		elif Inventory.active_slot == 0:
 			try_mine()
 		elif Inventory.active_slot == 1 and Inventory.signs > 0:
 			place_torch()
@@ -120,16 +122,19 @@ func toggle_inventory() -> void:
 	if hud:
 		hud.toggle()
 
-func try_mine() -> void:
-	# First check if we can interact with a chest
+func _try_chest_interaction() -> bool:
 	if has_node("PickupArea"):
 		for body in $PickupArea.get_overlapping_bodies():
-			if body.has_method("is_chest") and not body.is_closed:
-				if Inventory.current_load > 0:
+			if body.has_method("is_chest"):
+				if not body.is_closed and Inventory.current_load > 0:
 					var dropped = Inventory.remove_all()
 					body.deposit(dropped)
-					return # Stop here, we just deposited
+				elif body.is_closed:
+					body.extract()
+				return true
+	return false
 
+func try_mine() -> void:
 	var space_state = get_world_2d().direct_space_state
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true

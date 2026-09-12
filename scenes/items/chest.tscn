@@ -24,6 +24,25 @@ hframes = 11
 vframes = 11
 frame = 32
 
+[node name="PromptLabel" type="Label" parent="."]
+visible = false
+offset_left = -45.0
+offset_top = -30.0
+offset_right = 45.0
+offset_bottom = -10.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "[Z] Armazenar"
+horizontal_alignment = 1
+
+[node name="PlayerDetect" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerDetect"]
+shape = SubResource("RectangleShape2D_box")
+
 [node name="InteractArea" type="Area2D" parent="."]
 collision_layer = 0
 collision_mask = 2

@@ -5,11 +5,37 @@ var stored_load: int = 0
 var is_closed: bool = false
 
 @onready var sprite = $Sprite2D
-@onready var interact_area = $InteractArea
+@onready var prompt_label = $PromptLabel
+@onready var player_detect = $PlayerDetect
 
 func _ready() -> void:
+	player_detect.body_entered.connect(_on_player_entered)
+	player_detect.body_exited.connect(_on_player_exited)
+	update_visuals()
+
+func update_visuals() -> void:
 	# 32 = Open, 30 = Closed in extras.png (assuming 11x11 grid)
-	sprite.frame = 32
+	if is_closed:
+		sprite.frame = 30
+	else:
+		sprite.frame = 32
+	if prompt_label.visible:
+		_update_prompt_text()
+
+func _on_player_entered(body: Node2D) -> void:
+	if body.name == "Player":
+		prompt_label.visible = true
+		_update_prompt_text()
+
+func _on_player_exited(body: Node2D) -> void:
+	if body.name == "Player":
+		prompt_label.visible = false
+
+func _update_prompt_text() -> void:
+	if is_closed:
+		prompt_label.text = "[Z] Extrair Baú"
+	else:
+		prompt_label.text = "[Z] Armazenar (" + str(stored_load) + "/" + str(MAX_CAPACITY) + ")"
 
 var in_ladder: bool = false
 var gravity_scale_default: float = 1.0
@@ -24,10 +50,11 @@ func deposit(items: Dictionary) -> void:
 	
 	if stored_load >= MAX_CAPACITY:
 		close_chest()
+	update_visuals()
 
 func close_chest() -> void:
 	is_closed = true
-	sprite.frame = 30 # Closed chest
+	update_visuals()
 	
 	# Light effect when closed
 	var flash = PointLight2D.new()
@@ -57,7 +84,7 @@ func extract() -> void:
 		# Reset Chest
 		stored_load = 0
 		is_closed = false
-		sprite.frame = 32
+		update_visuals()
 
 func is_chest() -> bool:
 	return true
