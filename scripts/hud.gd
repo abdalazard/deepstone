@@ -332,7 +332,7 @@ func _on_restart_pressed() -> void:
 		if is_instance_valid(inventory_panel):
 			inventory_panel.visible = false
 		if get_tree().root and get_tree().root.has_node("SaveManager"):
-			get_tree().root.get_node("SaveManager").clear_save()
+			get_tree().root.get_node("SaveManager").restart_run_to_surface()
 		get_tree().reload_current_scene()
 
 func _on_exit_pressed() -> void:

@@ -377,18 +377,22 @@ func _ready() -> void:
 	assert(hud.shop_panel.visible == false, "Shop panel should close")
 	print("[PASS] Test 17: Shop System (Comprar [EM BREVE], Vender Minérios & Coins balance)")
 
-	# Test 18: Full Game Restart (SaveManager.clear_save)
+	# Test 18: In-Game Restart to Surface (keeps items, loot, coins, and excavations)
 	save.mark_block_mined(Vector2i(15, 25))
 	assert(save.is_block_mined(Vector2i(15, 25)) == true, "Block should be marked mined")
+	save.player_saved_pos = Vector2(400, 2000) # Deep in cave
+	inv.coal = 10
+	inv.iron = 5
+	inv.gold = 2
+	inv.coins = 150
 	
-	save.clear_save()
-	assert(save.is_block_mined(Vector2i(15, 25)) == false, "Restart must wipe all mined blocks/excavations")
-	assert(inv.coal == 0 and inv.iron == 0 and inv.gold == 0, "Restart must reset all mined resources to 0")
-	assert(inv.coins == 0, "Restart must reset coins to 0")
-	assert(inv.starter_lamps == 1, "Player must receive 1 free starter lamp on start/restart")
-	assert(save.player_saved_pos == Vector2(640, 96), "Player position must reset to spawn")
-	assert(save.has_save() == false, "Save file must be deleted on restart")
-	print("[PASS] Test 18: Full Game Restart (wipe excavations, resources, coins & grant starter lamp)")
+	save.restart_run_to_surface()
+	assert(save.player_saved_pos == Vector2(640, 96), "Player position must be returned to surface spawn (Vector2(640, 96))")
+	assert(save.is_block_mined(Vector2i(15, 25)) == true, "Restart must maintain all excavations/mined blocks!")
+	assert(inv.coal == 10 and inv.iron == 5 and inv.gold == 2, "Restart must keep all mined resources and loot!")
+	assert(inv.coins == 150, "Restart must keep all coins!")
+	assert(save.has_save() == true, "Save data must be preserved on restart")
+	print("[PASS] Test 18: In-Game Restart to Surface (keeps items, loot, coins & all excavations)")
 
 	hud.queue_free()
 	print("--- ALL 18 TESTS PASSED SUCCESSFULLY! ---")

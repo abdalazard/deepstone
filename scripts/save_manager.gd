@@ -159,8 +159,19 @@ func save_game(show_notify: bool = false) -> void:
 		file.store_string(JSON.stringify(save_data, "	"))
 		file.flush()
 		file.close()
+		has_loaded_save = true
 		if show_notify and inv:
 			inv.notify("Progresso Salvo!", "save")
+
+func restart_run_to_surface() -> void:
+	player_saved_pos = Vector2(640, 96)
+	var tree = get_tree() if is_inside_tree() else null
+	var current = tree.current_scene if tree else null
+	var player = current.get_node_or_null("Player") if current else null
+	if is_instance_valid(player):
+		player.global_position = player_saved_pos
+		player.velocity = Vector2.ZERO
+	save_game(false)
 
 func load_game() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):
