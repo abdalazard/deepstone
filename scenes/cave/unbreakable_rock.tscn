@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bunbreakablerock"]
+[gd_scene load_steps=5 format=3 uid="uid://nn4b303tk66u"]
 
 [ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/deepslate tiles.png" id="2_deepslate"]
@@ -9,9 +9,7 @@ size = Vector2(32, 32)
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_block"]
 polygon = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
 
-[node name="UnbreakableRock" type="StaticBody2D"]
-collision_layer = 1
-collision_mask = 6
+[node name="UnbreakableRock" type="RigidBody2D"]
 script = ExtResource("1_rock")
 is_unbreakable = true
 

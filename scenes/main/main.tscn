@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="7_chest"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
-size = Vector2(16, 2000)
+size = Vector2(16, 3000)
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
 light_mode = 1
@@ -46,11 +46,11 @@ position = Vector2(496, 96)
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(-16, 400)
+position = Vector2(-8, 1000)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(976, 400)
+position = Vector2(968, 1000)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="Chest" parent="." instance=ExtResource("7_chest")]

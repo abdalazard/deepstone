@@ -6,6 +6,7 @@ extends CharacterBody2D
 
 var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
+var facing_x: float = 1.0
 const MINE_DISTANCE: float = 48.0
 var in_ladder_count: int = 0
 var on_ladder: bool:
@@ -35,13 +36,13 @@ func _process(delta: float) -> void:
 		if mine_timer <= 0:
 			is_mining = false
 	
-	if on_ladder:
+	if is_mining:
+		anim_state = "dig"
+	elif on_ladder:
 		if velocity.y != 0:
 			anim_state = "climb"
 		else:
 			anim_state = "climb_idle"
-	elif is_mining:
-		anim_state = "dig"
 	elif not is_on_floor():
 		anim_state = "jump"
 	elif velocity.x != 0:
@@ -75,12 +76,16 @@ func _process(delta: float) -> void:
 	
 	sprite.frame = anim_frame
 	
-	if anim_state not in ["climb", "climb_idle"] and last_direction.x != 0:
-		sprite.flip_h = last_direction.x < 0
+	if last_direction.x != 0:
+		sprite.flip_h = (last_direction.x < 0)
+	elif facing_x != 0:
+		sprite.flip_h = (facing_x < 0)
 
 func _physics_process(delta: float) -> void:
 	if on_ladder:
-		if Input.is_action_pressed("ui_up"):
+		if is_mining:
+			velocity.y = 0
+		elif Input.is_action_pressed("ui_up"):
 			velocity.y = -100
 		elif Input.is_action_pressed("ui_down"):
 			velocity.y = 100
@@ -100,8 +105,12 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("ui_up"): aim_dir.y = -1
 	elif Input.is_action_pressed("ui_down"): aim_dir.y = 1
 	
-	if Input.is_action_pressed("ui_left"): aim_dir.x = -1
-	elif Input.is_action_pressed("ui_right"): aim_dir.x = 1
+	if Input.is_action_pressed("ui_left"):
+		aim_dir.x = -1
+		facing_x = -1.0
+	elif Input.is_action_pressed("ui_right"):
+		aim_dir.x = 1
+		facing_x = 1.0
 	
 	if aim_dir != Vector2.ZERO:
 		last_direction = aim_dir.normalized()
@@ -110,7 +119,8 @@ func _physics_process(delta: float) -> void:
 
 	# Handle movement
 	var direction := Input.get_axis("ui_left", "ui_right")
-	if direction:
+	if direction != 0:
+		facing_x = sign(direction)
 		velocity.x = direction * speed
 	else:
 		velocity.x = move_toward(velocity.x, 0, speed)

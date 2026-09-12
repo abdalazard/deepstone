@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/rope_tile.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rope"]
-size = Vector2(12, 32)
+size = Vector2(24, 32)
 
 [node name="RopeSegment" type="Area2D"]
 collision_layer = 1

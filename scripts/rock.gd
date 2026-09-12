@@ -3,6 +3,7 @@ extends RigidBody2D
 
 @export var is_copper: bool = false
 @export var is_dirt: bool = false
+@export var is_unbreakable: bool = false
 
 var max_hp: int = 3
 var hp: int = 3
@@ -19,7 +20,13 @@ var sparkle_alpha: float = 0.0
 var sparkle_points: Array[Vector2] = []
 
 func _ready() -> void:
-	if is_dirt:
+	if is_unbreakable:
+		max_hp = 999999
+		hp = 999999
+		if sprite_2d:
+			sprite_2d.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sprite_2d.frame = randi() % 3
+	elif is_dirt:
 		max_hp = 1
 		hp = 1
 		if sprite_2d:
@@ -37,13 +44,14 @@ func _ready() -> void:
 			sprite_2d.frame = 0 # Row 1 Col 2 (Stone/Iron ore)
 			
 	# Setup node to draw cracks over the rock
-	cracks = Node2D.new()
-	cracks.name = "Cracks"
-	cracks.z_index = 1
-	add_child(cracks)
-	cracks.draw.connect(_on_cracks_draw)
+	if not is_unbreakable:
+		cracks = Node2D.new()
+		cracks.name = "Cracks"
+		cracks.z_index = 1
+		add_child(cracks)
+		cracks.draw.connect(_on_cracks_draw)
 	
-	if not is_dirt:
+	if not is_dirt and not is_unbreakable:
 		sparkle_overlay = Node2D.new()
 		sparkle_overlay.name = "Sparkles"
 		sparkle_overlay.z_index = 2
@@ -55,21 +63,32 @@ func _ready() -> void:
 		]
 		shine_timer = randf_range(0.2, 1.2)
 	
-	lock_rotation = true
-	mass = 100.0 # Heavy so player doesn't push it easily
-	
-	if is_dirt:
-		freeze = true
-		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+	if self is RigidBody2D:
+		lock_rotation = true
+		mass = 100.0
+		if is_dirt or is_unbreakable:
+			freeze = true
+			freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 
 func is_ore() -> bool:
-	return !is_dirt
+	return !is_dirt and !is_unbreakable
 
 func hit() -> void:
+	if is_unbreakable:
+		if sprite_2d:
+			sprite_2d.modulate = Color(1.8, 1.8, 2.0, 1.0)
+			var tween = create_tween()
+			tween.tween_property(sprite_2d, "modulate", Color(1, 1, 1, 1), 0.15)
+			var offset = Vector2(randf_range(-2, 2), randf_range(-2, 2))
+			sprite_2d.position = offset
+			tween.parallel().tween_property(sprite_2d, "position", Vector2.ZERO, 0.1)
+		spawn_particles()
+		return
+
 	if hp <= 0: return
 	
 	hp -= 1
-	cracks.queue_redraw()
+	if cracks: cracks.queue_redraw()
 	
 	if sprite_2d:
 		sprite_2d.modulate = sprite_2d.modulate + Color(0.5, 0, 0, 0) # Flash reddish
@@ -122,8 +141,9 @@ func spawn_particles() -> void:
 	particles.scale_amount_max = 4.0
 	
 	var p_color = Color(0.4, 0.4, 0.45, 1)
-	if is_copper: p_color = Color(0.9, 0.8, 0.2, 1) # Gold color
-	if is_dirt: p_color = Color(0.5, 0.35, 0.2, 1)
+	if is_unbreakable: p_color = Color(0.85, 0.9, 1.0, 1) # Bright metallic sparks
+	elif is_copper: p_color = Color(0.9, 0.8, 0.2, 1) # Gold color
+	elif is_dirt: p_color = Color(0.5, 0.35, 0.2, 1)
 	particles.color = p_color
 	
 	particles.global_position = global_position
