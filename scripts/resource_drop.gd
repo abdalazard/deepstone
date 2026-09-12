@@ -25,8 +25,5 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		if type == ResourceType.STONE:
-			print("Collected Stone")
-		else:
-			print("Collected Copper")
+		Inventory.add_resource(type, 1)
 		queue_free()
