@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b8playeruidxxx" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://scenes/environment/elevator.tscn" id="5_elevator"]
+[ext_resource type="PackedScene" path="res://scenes/ui/start_screen.tscn" id="6_start"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
 size = Vector2(16, 2000)
@@ -41,3 +42,5 @@ shape = SubResource("RectangleShape2D_wall_v")
 [node name="RightWall" type="CollisionShape2D" parent="WorldBoundary"]
 position = Vector2(488, 500)
 shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="StartScreen" parent="." instance=ExtResource("6_start")]
