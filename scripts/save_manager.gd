@@ -11,6 +11,9 @@ var placed_planks_data: Array = []
 var player_saved_pos: Vector2 = Vector2.ZERO
 var chest_saved_load: int = 0
 var chest_saved_closed: bool = false
+var chest_saved_coal: int = 0
+var chest_saved_iron: int = 0
+var chest_saved_gold: int = 0
 
 var inventory_override: Node = null
 
@@ -54,6 +57,9 @@ func clear_save() -> void:
 	player_saved_pos = Vector2(640, 96)
 	chest_saved_load = 0
 	chest_saved_closed = false
+	chest_saved_coal = 0
+	chest_saved_iron = 0
+	chest_saved_gold = 0
 	var inv = _get_inventory()
 	if inv:
 		inv.iron = 0
@@ -106,8 +112,11 @@ func save_game(show_notify: bool = false) -> void:
 	}
 	
 	var chest_data = {
-		"stored_load": chest.stored_load if is_instance_valid(chest) else chest_saved_load,
-		"is_closed": chest.is_closed if is_instance_valid(chest) else chest_saved_closed
+		"stored_coal": chest.stored_coal if is_instance_valid(chest) else chest_saved_coal,
+		"stored_iron": chest.stored_iron if is_instance_valid(chest) else chest_saved_iron,
+		"stored_gold": chest.stored_gold if is_instance_valid(chest) else chest_saved_gold,
+		"stored_load": chest.stored_load if is_instance_valid(chest) else (chest_saved_coal + chest_saved_iron + chest_saved_gold),
+		"is_closed": false
 	}
 	
 	var torches_list = []
@@ -220,8 +229,11 @@ func load_game() -> bool:
 		inv.active_slot = p_data.get("active_slot", 0)
 	
 	var c_data = data.get("chest", {})
-	chest_saved_load = c_data.get("stored_load", 0)
-	chest_saved_closed = c_data.get("is_closed", false)
+	chest_saved_coal = c_data.get("stored_coal", 0)
+	chest_saved_iron = c_data.get("stored_iron", 0)
+	chest_saved_gold = c_data.get("stored_gold", 0)
+	chest_saved_load = c_data.get("stored_load", chest_saved_coal + chest_saved_iron + chest_saved_gold)
+	chest_saved_closed = false
 	
 	placed_torches_data = data.get("placed_torches", [])
 	placed_ropes_data = data.get("placed_ropes", [])

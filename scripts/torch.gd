@@ -88,10 +88,18 @@ func _process(delta: float) -> void:
 			if has_node("PointLight2D"):
 				$PointLight2D.energy = 1.8 + randf_range(-0.06, 0.06)
 
+var check_support_timer: float = 0.0
+
 func _physics_process(delta: float) -> void:
 	if target_player:
 		return
 		
+	if not is_falling:
+		check_support_timer -= delta
+		if check_support_timer > 0.0:
+			return
+		check_support_timer = 0.25
+
 	var space_state = get_world_2d().direct_space_state
 	# Cast downward to detect supporting block
 	var from_pos = global_position + Vector2(0, 10)

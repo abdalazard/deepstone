@@ -120,14 +120,27 @@ func _ready() -> void:
 		freeze = true
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 
+	set_process(false)
+	set_physics_process(false)
+
 var is_falling: bool = false
 var fall_timer: float = 0.0
+var drag_timer: float = 0.0
 
 func unfreeze_ore() -> void:
 	if is_ore() and freeze:
 		freeze = false
 		is_falling = true
 		fall_timer = 0.0
+		set_physics_process(true)
+
+func drag_push(dir_x: float, push_speed: float) -> void:
+	if not is_ore():
+		return
+	freeze = false
+	drag_timer = 0.25
+	linear_velocity.x = dir_x * push_speed
+	set_physics_process(true)
 
 func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 	if is_falling:
@@ -135,9 +148,19 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 		if state.linear_velocity.y > 240.0:
 			state.linear_velocity.y = 240.0
 		state.linear_velocity.x = clamp(state.linear_velocity.x, -30.0, 30.0)
+	elif drag_timer > 0.0:
+		state.linear_velocity.x = clamp(state.linear_velocity.x, -60.0, 60.0)
 
 func _physics_process(delta: float) -> void:
-	if is_falling:
+	if drag_timer > 0.0:
+		drag_timer -= delta
+		if drag_timer <= 0.0 and not is_falling:
+			freeze = true
+			freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+			# Snap gently to nearest tile column
+			global_position.x = round((global_position.x - 16.0) / 32.0) * 32.0 + 16.0
+			set_physics_process(false)
+	elif is_falling:
 		fall_timer += delta
 		# After at least 0.2s of falling, if it has settled or stopped:
 		if fall_timer > 0.2 and linear_velocity.length_squared() < 100.0:
@@ -146,6 +169,7 @@ func _physics_process(delta: float) -> void:
 			freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 			# Snap gently to nearest tile column
 			global_position.x = round((global_position.x - 16.0) / 32.0) * 32.0 + 16.0
+			set_physics_process(false)
 			_wake_block_above()
 
 func is_ore() -> bool:
@@ -318,6 +342,7 @@ func set_illuminated(active: bool, source: Node2D) -> void:
 	var should_shine = (!light_sources.is_empty()) and (!is_dirt) and (!is_coal)
 	if should_shine != is_shining:
 		is_shining = should_shine
+		set_process(is_shining)
 		if not is_shining:
 			sparkle_alpha = 0.0
 			if sparkle_overlay: sparkle_overlay.queue_redraw()

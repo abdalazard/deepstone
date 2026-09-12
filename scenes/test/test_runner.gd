@@ -283,7 +283,7 @@ func _ready() -> void:
 	# Verify max fall speed is clamped to 320.0
 	test_player.velocity.y = 999.0
 	test_player._physics_process(0.1)
-	assert(test_player.velocity.y <= 320.0, "Terminal fall velocity must be clamped to 320.0")
+	assert(test_player.velocity.y <= 340.0, "Terminal fall velocity must be clamped to 340.0")
 
 	# Verify depenetration: create a solid ground block beneath player
 	var solid_box = StaticBody2D.new()
@@ -394,6 +394,115 @@ func _ready() -> void:
 	assert(save.has_save() == true, "Save data must be preserved on restart")
 	print("[PASS] Test 18: In-Game Restart to Surface (keeps items, loot, coins & all excavations)")
 
+	# Test 19: Movement gameplay physics & Performance Culling
+	var speed_player = player_scene.instantiate()
+	add_child(speed_player)
+	speed_player._ready()
+	assert(speed_player.speed == 120.0, "Player walk speed must be 120.0")
+	assert(speed_player.jump_velocity == -250.0, "Player jump velocity must be -250.0")
+	speed_player.in_ladder_count = 1
+	Input.action_press("ui_up")
+	speed_player._physics_process(0.016)
+	Input.action_release("ui_up")
+	assert(speed_player.velocity.y == -100.0, "Player upward ladder speed must be -100.0")
+	speed_player.queue_free()
+
+	# Performance culling test on blocks
+	var perf_rock = rock_scene.instantiate()
+	add_child(perf_rock)
+	perf_rock._ready()
+	assert(perf_rock.is_processing() == false, "Idle rocks must have _process disabled to eliminate CPU overhead")
+	assert(perf_rock.is_physics_processing() == false, "Idle rocks must have _physics_process disabled to eliminate CPU overhead")
+	perf_rock.queue_free()
+	print("[PASS] Test 19: Player gameplay speeds (120 px/s, -250 px/s) & Block CPU culling verified")
+
+	# Test 20: Plank pass-through downward on [ui_down]
+	var plank_player = player_scene.instantiate()
+	add_child(plank_player)
+	plank_player._ready()
+	assert(plank_player.get_collision_mask_value(6) == true, "By default, player collides with planks (layer 6)")
+	
+	# When pressing ui_down, mask 6 must turn FALSE to pass through
+	Input.action_press("ui_down")
+	plank_player._physics_process(0.016)
+	Input.action_release("ui_down")
+	assert(plank_player.get_collision_mask_value(6) == false, "Pressing ui_down must disable plank collision mask to drop through")
+	assert(plank_player.plank_drop_timer > 0.0, "Plank drop timer must be active")
+	
+	# After timer expires and not on ladder, mask 6 restores
+	plank_player.plank_drop_timer = 0.0
+	plank_player._physics_process(0.016)
+	assert(plank_player.get_collision_mask_value(6) == true, "After drop timer expires, plank collision must be restored")
+	plank_player.queue_free()
+	print("[PASS] Test 20: Wooden plank drop-through mechanism with [ui_down]")
+
+	# Test 21: Equipment Menu [E] single toggle without double-firing
+	hud.toggle_equipment()
+	assert(hud.equipment_panel.visible == true, "Equipment panel must open on first toggle")
+	hud.toggle_equipment()
+	assert(hud.equipment_panel.visible == false, "Equipment panel must close on second toggle")
+	print("[PASS] Test 21: Equipment Menu [E] clean single toggle")
+
+	# Test 22: Chest persistent storage & retrieval with [X]
+	var chest_scene = load("res://scenes/items/chest.tscn")
+	var test_chest = chest_scene.instantiate()
+	add_child(test_chest)
+	test_chest._ready()
+	assert(test_chest.prompt_label.text == "[X] Abrir Baú", "Chest prompt must indicate [X] Abrir Baú")
+	
+	# Deposit resources
+	inv.coal = 7
+	inv.iron = 4
+	inv.gold = 2
+	test_chest.deposit_resources()
+	assert(test_chest.stored_coal == 7, "Chest must store 7 coal")
+	assert(test_chest.stored_iron == 4, "Chest must store 4 iron")
+	assert(test_chest.stored_gold == 2, "Chest must store 2 gold")
+	assert(test_chest.get_total_stored() == 13, "Total stored in chest must be 13")
+	assert(inv.coal == 0 and inv.iron == 0 and inv.gold == 0, "Inventory must be empty after deposit")
+	
+	# Save & Load to verify persistence
+	save.save_game(false)
+	test_chest.stored_coal = 0
+	test_chest.stored_iron = 0
+	test_chest.stored_gold = 0
+	save.load_game()
+	assert(save.chest_saved_coal == 7 and save.chest_saved_iron == 4 and save.chest_saved_gold == 2, "SaveManager must persist chest resources")
+	
+	# Retrieve resources back to backpack
+	test_chest.stored_coal = 7
+	test_chest.stored_iron = 4
+	test_chest.stored_gold = 2
+	test_chest.retrieve_resources()
+	assert(inv.gold == 2 and inv.iron == 4 and inv.coal == 7, "All resources should be retrieved back to inventory")
+	assert(test_chest.get_total_stored() == 0, "Chest must be empty after retrieval")
+	
+	# Test HUD chest modal
+	hud.open_chest(test_chest)
+	assert(hud.chest_panel.visible == true, "Chest panel must open via HUD")
+	hud.close_chest()
+	assert(hud.chest_panel.visible == false, "Chest panel must close via HUD")
+	test_chest.queue_free()
+	print("[PASS] Test 22: Chest persistent storage, [X] prompt, and retrieval")
+
+	# Test 23: Inventory Grid horizontal scroll disabled & 4 columns
+	var inv_scroll = hud.inventory_panel.find_child("ScrollContainer", true, false)
+	assert(inv_scroll != null, "Inventory ScrollContainer must exist")
+	assert(inv_scroll.horizontal_scroll_mode == 0, "ScrollContainer must have horizontal_scroll_mode disabled (0)")
+	assert(hud.chest_grid.columns == 4, "ChestGrid must have exactly 4 columns")
+	print("[PASS] Test 23: Inventory Grid horizontal scroll disabled & 4 strict columns")
+
+	# Test 24: Dragging loose ore blocks with [X] (reduced player speed & rock velocity)
+	var test_ore = rock_scene.instantiate()
+	add_child(test_ore)
+	test_ore._ready()
+	assert(test_ore.is_ore() == true, "Rock must be identified as ore")
+	test_ore.drag_push(1.0, 45.0)
+	assert(test_ore.freeze == false, "drag_push must unfreeze the ore block")
+	assert(test_ore.linear_velocity.x == 45.0, "drag_push must set horizontal velocity to 45.0")
+	test_ore.queue_free()
+	print("[PASS] Test 24: Loose ore block dragging with [X] (45 px/s impulse and effort)")
+
 	hud.queue_free()
-	print("--- ALL 18 TESTS PASSED SUCCESSFULLY! ---")
+	print("--- ALL 24 TESTS PASSED SUCCESSFULLY! ---")
 	get_tree().quit(0)

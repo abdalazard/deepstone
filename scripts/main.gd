@@ -43,8 +43,13 @@ func _process(delta: float) -> void:
 		else: # Rows 76+: Lava
 			target_color = lava_cave_color
 			
+		var dir_light = get_node_or_null("DirectionalLight2D")
+		if dir_light:
+			dir_light.visible = (py < 350.0)
+
 		var current_color = RenderingServer.get_default_clear_color()
-		RenderingServer.set_default_clear_color(current_color.lerp(target_color, 4.0 * delta))
+		if current_color.distance_to(target_color) > 0.02:
+			RenderingServer.set_default_clear_color(current_color.lerp(target_color, 4.0 * delta))
 
 func restore_placed_items() -> void:
 	if not has_node("/root/SaveManager"): return

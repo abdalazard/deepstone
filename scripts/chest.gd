@@ -1,8 +1,12 @@
 extends StaticBody2D
 
-const MAX_CAPACITY: int = 50
-var stored_load: int = 0
-var is_closed: bool = false
+var stored_coal: int = 0
+var stored_iron: int = 0
+var stored_gold: int = 0
+var player_inside: bool = false
+
+var stored_load: int:
+	get: return get_total_stored()
 
 @onready var sprite = $Sprite2D
 @onready var prompt_label = $PromptLabel
@@ -10,101 +14,128 @@ var is_closed: bool = false
 
 func _ready() -> void:
 	if has_node("/root/SaveManager") and SaveManager.has_loaded_save:
-		stored_load = SaveManager.chest_saved_load
-		is_closed = SaveManager.chest_saved_closed
+		stored_coal = SaveManager.chest_saved_coal
+		stored_iron = SaveManager.chest_saved_iron
+		stored_gold = SaveManager.chest_saved_gold
 	if prompt_label:
+		prompt_label.text = "[X] Abrir Baú"
 		prompt_label.modulate.a = 0.0
 		prompt_label.visible = false
 	if player_detect:
-		player_detect.body_entered.connect(_on_player_entered)
-		player_detect.body_exited.connect(_on_player_exited)
+		if not player_detect.body_entered.is_connected(_on_player_entered):
+			player_detect.body_entered.connect(_on_player_entered)
+		if not player_detect.body_exited.is_connected(_on_player_exited):
+			player_detect.body_exited.connect(_on_player_exited)
 	update_visuals()
 
 func update_visuals() -> void:
-	# 32 = Open, 30 = Closed in extras.png (assuming 11x11 grid)
-	if is_closed:
-		sprite.frame = 30
-	else:
-		sprite.frame = 32
+	if sprite:
+		sprite.frame = 32 # Always open/accessible style
 	if prompt_label and prompt_label.visible:
-		_update_prompt_text()
+		prompt_label.text = "[X] Abrir Baú"
 
 func _on_player_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		_update_prompt_text()
+		player_inside = true
 		if prompt_label:
+			prompt_label.text = "[X] Abrir Baú"
 			prompt_label.visible = true
 			var tween = create_tween()
 			tween.tween_property(prompt_label, "modulate:a", 1.0, 0.2)
 
 func _on_player_exited(body: Node2D) -> void:
 	if body.name == "Player":
+		player_inside = false
 		if prompt_label:
 			var tween = create_tween()
 			tween.tween_property(prompt_label, "modulate:a", 0.0, 0.2)
 			tween.tween_callback(prompt_label.hide)
+		var hud = _get_hud()
+		if hud and hud.has_method("close_chest"):
+			hud.close_chest()
 
-func _update_prompt_text() -> void:
-	if is_closed:
-		prompt_label.text = "[Z] Extrair Baú"
-	else:
-		prompt_label.text = "[Z] Armazenar recursos"
+func _unhandled_input(event: InputEvent) -> void:
+	if player_inside:
+		if event.is_action_pressed("action_drag") or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_X):
+			interact()
+			if is_inside_tree() and get_viewport():
+				get_viewport().set_input_as_handled()
 
-var in_ladder: bool = false
-var gravity_scale_default: float = 1.0
+func interact() -> void:
+	var hud = _get_hud()
+	if hud and hud.has_method("open_chest"):
+		hud.open_chest(self)
 
-func deposit(items: Dictionary) -> void:
-	if is_closed: 
-		extract()
-		return
-	
-	var total_weight = items.get("iron", 0) * 1 + items.get("gold", 0) * 2 + items.get("coal", 0) * 1
-	stored_load += total_weight
-	
-	if stored_load >= MAX_CAPACITY:
-		close_chest()
-	update_visuals()
-	
-	Inventory.notify("Recursos guardados no Baú! (Carga: %d/%d)" % [stored_load, MAX_CAPACITY], "chest")
-	if has_node("/root/SaveManager"):
-		SaveManager.request_save()
+func _get_hud() -> Node:
+	if is_inside_tree() and get_tree() and get_tree().current_scene:
+		return get_tree().current_scene.get_node_or_null("HUD")
+	return null
 
-func close_chest() -> void:
-	is_closed = true
-	update_visuals()
+func deposit_resources() -> int:
+	var inv = get_node_or_null("/root/Inventory")
+	if not inv: return 0
 	
-	# Light effect when closed
-	var flash = PointLight2D.new()
-	flash.color = Color(0.2, 1.0, 0.4, 1.0)
-	flash.energy = 2.0
-	var grad = Gradient.new()
-	grad.colors = PackedColorArray([Color(1,1,1,1), Color(0,0,0,1)])
-	var tex = GradientTexture2D.new()
-	tex.gradient = grad
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.5)
-	tex.fill_to = Vector2(0.8, 0.2)
-	tex.width = 64
-	tex.height = 64
-	flash.texture = tex
-	add_child(flash)
-	
-	var tween = create_tween()
-	tween.tween_property(flash, "scale", Vector2(2.0, 2.0), 0.5)
-	tween.parallel().tween_property(flash, "energy", 0.0, 0.5)
-	tween.finished.connect(flash.queue_free)
-
-func extract() -> void:
-	if is_closed:
-		# Player gains EXP
-		print("Chest extracted! Gained EXP based on load: ", stored_load)
-		Inventory.notify("Carga do Baú extraída com sucesso!", "chest")
-		# Reset Chest
-		stored_load = 0
-		is_closed = false
-		update_visuals()
+	var count = 0
+	if inv.coal > 0:
+		stored_coal += inv.coal
+		count += inv.coal
+		inv.coal = 0
+	if inv.iron > 0:
+		stored_iron += inv.iron
+		count += inv.iron
+		inv.iron = 0
+	if inv.gold > 0:
+		stored_gold += inv.gold
+		count += inv.gold
+		inv.gold = 0
+		
+	if count > 0:
+		inv.inventory_changed.emit()
+		inv.notify("Guardou %d minérios no Baú!" % count, "chest")
 		if has_node("/root/SaveManager"):
 			SaveManager.request_save()
+	else:
+		inv.notify("Nenhum recurso na mochila para guardar.", "chest")
+		
+	update_visuals()
+	return count
+
+func retrieve_resources() -> int:
+	var inv = get_node_or_null("/root/Inventory")
+	if not inv: return 0
+	
+	if get_total_stored() <= 0:
+		inv.notify("O Baú está vazio!", "chest")
+		return 0
+		
+	var retrieved = 0
+	# Prioritize retrieving gold, then iron, then coal as capacity allows
+	while stored_gold > 0 and inv.can_add(1):
+		stored_gold -= 1
+		inv.gold += 1
+		retrieved += 1
+	while stored_iron > 0 and inv.can_add(0):
+		stored_iron -= 1
+		inv.iron += 1
+		retrieved += 1
+	while stored_coal > 0 and inv.can_add(2):
+		stored_coal -= 1
+		inv.coal += 1
+		retrieved += 1
+		
+	if retrieved > 0:
+		inv.inventory_changed.emit()
+		inv.notify("Retirou %d minérios do Baú!" % retrieved, "chest")
+		if has_node("/root/SaveManager"):
+			SaveManager.request_save()
+	else:
+		inv.notify("Mochila cheia! Não há espaço para retirar itens.", "chest")
+		
+	update_visuals()
+	return retrieved
+
+func get_total_stored() -> int:
+	return stored_coal + stored_iron + stored_gold
 
 func is_chest() -> bool:
 	return true

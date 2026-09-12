@@ -21,6 +21,7 @@ var mine_timer: float = 0.0
 var last_down_press_time: float = -1.0
 const DOUBLE_TAP_MAX_DELAY: float = 0.28
 var down_dash_timer: float = 0.0
+var plank_drop_timer: float = 0.0
 
 var tex_idle = preload("res://assets/sprites/Idle.png")
 var tex_walk = preload("res://assets/sprites/Walk.png")
@@ -112,8 +113,14 @@ func _process(delta: float) -> void:
 		sprite.flip_h = (facing_x < 0)
 
 func _physics_process(delta: float) -> void:
-	# Pass through planks (layer 6) freely when climbing on ladder
-	set_collision_mask_value(6, not on_ladder)
+	# Pass through planks (layer 6) freely when climbing on ladder or pressing down
+	if Input.is_action_pressed("ui_down"):
+		plank_drop_timer = 0.25
+	elif plank_drop_timer > 0.0:
+		plank_drop_timer -= delta
+
+	var can_collide_plank = (not on_ladder) and (plank_drop_timer <= 0.0) and (not Input.is_action_pressed("ui_down"))
+	set_collision_mask_value(6, can_collide_plank)
 
 	# Double-tap down dash on ladder
 	if Input.is_action_just_pressed("ui_down") and on_ladder:
@@ -171,30 +178,38 @@ func _physics_process(delta: float) -> void:
 
 	# Movement
 	var direction := Input.get_axis("ui_left", "ui_right")
+	var is_dragging = Input.is_action_pressed("action_drag")
+	var current_speed = speed
+
 	if direction != 0:
 		facing_x = sign(direction)
-		velocity.x = direction * speed
+		if is_dragging:
+			# Pushing effort: slow speed to 40.0
+			current_speed = 40.0
+		velocity.x = direction * current_speed
 	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
+		velocity.x = move_toward(velocity.x, 0, current_speed)
 
 	# Clamp velocity so external impulses never catapult or bury the character
 	velocity.x = clamp(velocity.x, -speed, speed)
-	velocity.y = clamp(velocity.y, -360.0, 320.0)
+	velocity.y = clamp(velocity.y, -380.0, 340.0)
 
 	move_and_slide()
 
 	# Active depenetration: if character overlaps any solid blocks, step upward to top surface
 	_depenetrate_from_blocks()
 
-	# Push fallen ores/debris gently
-	var push_force = 18.0
+	# Push loose ores when holding [X]
 	for i in get_slide_collision_count():
 		if i < get_slide_collision_count():
 			var c = get_slide_collision(i)
 			var collider = c.get_collider()
 			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
-				collider.apply_central_impulse(-c.get_normal() * push_force)
-	
+				if is_dragging and direction != 0:
+					velocity.x = clamp(velocity.x, -40.0, 40.0)
+					if collider.has_method("drag_push"):
+						collider.drag_push(facing_x, 45.0)
+
 	var inv = _get_inv()
 	# Only slots 1, 2, 3, 4 (Pickaxe, Lamp, Escada, Tábua) can be selected for button Z
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
@@ -217,9 +232,7 @@ func _physics_process(delta: float) -> void:
 	
 	if Input.is_action_just_pressed("action_mine"):
 		var cur_slot = inv.active_slot if inv else 0
-		if _try_chest_interaction():
-			pass # Interaction succeeded
-		elif cur_slot == 0:
+		if cur_slot == 0:
 			try_mine()
 		elif cur_slot == 1:
 			if inv and inv.can_place_lamp():
@@ -237,14 +250,6 @@ func _physics_process(delta: float) -> void:
 		
 	if Input.is_action_just_pressed("action_inventory"):
 		toggle_inventory()
-
-	if Input.is_action_just_pressed("action_equip_menu"):
-		toggle_equipment()
-
-func toggle_equipment() -> void:
-	var hud = get_tree().current_scene.get_node_or_null("HUD") if (is_inside_tree() and get_tree() and get_tree().current_scene) else null
-	if hud and hud.has_method("toggle_equipment"):
-		hud.toggle_equipment()
 
 func set_slot(slot: int) -> void:
 	var inv = _get_inv()
@@ -430,6 +435,9 @@ func _is_overlapping_solid(pos: Vector2) -> bool:
 	return hits.size() > 0
 
 func _depenetrate_from_blocks() -> void:
+	# If character is cleanly on floor with no active slide collisions, skip expensive physics query
+	if is_on_floor() and get_slide_collision_count() == 0:
+		return
 	# If character overlaps any solid blocks, step upward to top surface
 	if _is_overlapping_solid(global_position):
 		for step in range(1, 49):

@@ -27,6 +27,20 @@ extends CanvasLayer
 @onready var shop_buy_view = find_child("ShopBuyView", true, false)
 @onready var shop_sell_view = find_child("ShopSellView", true, false)
 
+# Chest Menu nodes
+@onready var chest_panel = find_child("ChestPanel", true, false)
+@onready var chest_close_btn = find_child("ChestCloseBtn", true, false)
+@onready var chest_close_footer_btn = find_child("ChestCloseFooterBtn", true, false)
+@onready var chest_deposit_btn = find_child("ChestDepositBtn", true, false)
+@onready var chest_retrieve_btn = find_child("ChestRetrieveBtn", true, false)
+@onready var chest_coal_lbl = find_child("ChestCoalLabel", true, false)
+@onready var chest_iron_lbl = find_child("ChestIronLabel", true, false)
+@onready var chest_gold_lbl = find_child("ChestGoldLabel", true, false)
+@onready var backpack_coal_lbl = find_child("BackpackCoalLabel", true, false)
+@onready var backpack_iron_lbl = find_child("BackpackIronLabel", true, false)
+@onready var backpack_gold_lbl = find_child("BackpackGoldLabel", true, false)
+var current_chest_node: Node = null
+
 # Pause Menu nodes
 @onready var pause_panel = find_child("PausePanel", true, false)
 @onready var resume_btn = find_child("ResumeBtn", true, false)
@@ -192,6 +206,15 @@ func _ready() -> void:
 	if exit_btn and not exit_btn.pressed.is_connected(_on_exit_pressed):
 		exit_btn.pressed.connect(_on_exit_pressed)
 		
+	if chest_close_btn and not chest_close_btn.pressed.is_connected(close_chest):
+		chest_close_btn.pressed.connect(close_chest)
+	if chest_close_footer_btn and not chest_close_footer_btn.pressed.is_connected(close_chest):
+		chest_close_footer_btn.pressed.connect(close_chest)
+	if chest_deposit_btn and not chest_deposit_btn.pressed.is_connected(_on_chest_deposit):
+		chest_deposit_btn.pressed.connect(_on_chest_deposit)
+	if chest_retrieve_btn and not chest_retrieve_btn.pressed.is_connected(_on_chest_retrieve):
+		chest_retrieve_btn.pressed.connect(_on_chest_retrieve)
+		
 	select_slot(0)
 	update_ui()
 
@@ -202,14 +225,18 @@ func _consume_input() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		# Toggle Equipment Menu with [E]
-		if event.physical_keycode == KEY_E:
+		if event.physical_keycode == KEY_E or event.is_action_pressed("action_equip_menu"):
 			toggle_equipment()
 			_consume_input()
 			return
 
 		# Toggle Pause Menu with [P] or [Esc]
 		if event.physical_keycode == KEY_P or event.physical_keycode == KEY_ESCAPE:
-			if is_instance_valid(equipment_panel) and equipment_panel.visible:
+			if is_instance_valid(chest_panel) and chest_panel.visible:
+				close_chest()
+				_consume_input()
+				return
+			elif is_instance_valid(equipment_panel) and equipment_panel.visible:
 				close_equipment()
 				_consume_input()
 				return
@@ -225,6 +252,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				toggle_pause()
 				_consume_input()
 				return
+				
+		# Close Chest with [X] when chest panel is open
+		if is_instance_valid(chest_panel) and chest_panel.visible and event.physical_keycode == KEY_X:
+			close_chest()
+			_consume_input()
+			return
 				
 		# Hotkeys inside Pause Menu
 		if is_instance_valid(pause_panel) and pause_panel.visible:
@@ -275,6 +308,8 @@ func toggle_equipment() -> void:
 		open_equipment()
 
 func open_equipment() -> void:
+	if is_instance_valid(chest_panel) and chest_panel.visible:
+		close_chest()
 	if is_instance_valid(inventory_panel) and inventory_panel.visible:
 		close_inventory()
 	if is_instance_valid(shop_panel) and shop_panel.visible:
@@ -295,6 +330,8 @@ func toggle_pause() -> void:
 		open_pause()
 
 func open_pause() -> void:
+	if is_instance_valid(chest_panel) and chest_panel.visible:
+		close_chest()
 	if is_instance_valid(inventory_panel) and inventory_panel.visible:
 		close_inventory()
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
@@ -370,6 +407,8 @@ func toggle_shop() -> void:
 		open_shop()
 
 func open_shop() -> void:
+	if is_instance_valid(chest_panel) and chest_panel.visible:
+		close_chest()
 	if is_instance_valid(inventory_panel) and inventory_panel.visible:
 		close_inventory()
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
@@ -582,7 +621,7 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 
 func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(85, 75)
+	card.custom_minimum_size = Vector2(80, 75)
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.14, 0.08, 0.04, 0.95)
@@ -803,6 +842,8 @@ func update_ui() -> void:
 	_update_capacity_badge()
 	if is_instance_valid(shop_panel) and shop_panel.visible:
 		update_shop_ui()
+	if is_instance_valid(chest_panel) and chest_panel.visible:
+		update_chest_ui()
 
 func _update_capacity_badge() -> void:
 	var inv = _get_inv()
@@ -830,6 +871,8 @@ func toggle() -> void:
 		open_inventory()
 
 func open_inventory() -> void:
+	if is_instance_valid(chest_panel) and chest_panel.visible:
+		close_chest()
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
 		close_equipment()
 	if is_instance_valid(shop_panel) and shop_panel.visible:
@@ -844,6 +887,71 @@ func open_inventory() -> void:
 func close_inventory() -> void:
 	if is_instance_valid(inventory_panel):
 		inventory_panel.visible = false
+
+func toggle_chest(chest_node: Node = null) -> void:
+	if is_instance_valid(chest_panel) and chest_panel.visible:
+		close_chest()
+	else:
+		open_chest(chest_node)
+
+func open_chest(chest_node: Node = null) -> void:
+	if chest_node:
+		current_chest_node = chest_node
+	elif not is_instance_valid(current_chest_node):
+		if is_inside_tree() and get_tree() and get_tree().current_scene:
+			current_chest_node = get_tree().current_scene.get_node_or_null("Chest")
+			
+	if is_instance_valid(inventory_panel) and inventory_panel.visible:
+		close_inventory()
+	if is_instance_valid(equipment_panel) and equipment_panel.visible:
+		close_equipment()
+	if is_instance_valid(shop_panel) and shop_panel.visible:
+		close_shop()
+	if is_instance_valid(pause_panel) and pause_panel.visible:
+		close_pause()
+		
+	if is_instance_valid(chest_panel):
+		chest_panel.visible = true
+		update_chest_ui()
+
+func close_chest() -> void:
+	if is_instance_valid(chest_panel):
+		chest_panel.visible = false
+
+func update_chest_ui() -> void:
+	var inv = _get_inv()
+	var c_coal = current_chest_node.stored_coal if is_instance_valid(current_chest_node) else 0
+	var c_iron = current_chest_node.stored_iron if is_instance_valid(current_chest_node) else 0
+	var c_gold = current_chest_node.stored_gold if is_instance_valid(current_chest_node) else 0
+	
+	if chest_coal_lbl: chest_coal_lbl.text = "• Carvão: %d" % c_coal
+	if chest_iron_lbl: chest_iron_lbl.text = "• Minério de Ferro: %d" % c_iron
+	if chest_gold_lbl: chest_gold_lbl.text = "• Minério de Ouro: %d" % c_gold
+	
+	var b_coal = inv.coal if inv else 0
+	var b_iron = inv.iron if inv else 0
+	var b_gold = inv.gold if inv else 0
+	
+	if backpack_coal_lbl: backpack_coal_lbl.text = "• Carvão: %d" % b_coal
+	if backpack_iron_lbl: backpack_iron_lbl.text = "• Minério de Ferro: %d" % b_iron
+	if backpack_gold_lbl: backpack_gold_lbl.text = "• Minério de Ouro: %d" % b_gold
+	
+	if chest_deposit_btn:
+		chest_deposit_btn.disabled = (b_coal <= 0 and b_iron <= 0 and b_gold <= 0)
+	if chest_retrieve_btn:
+		chest_retrieve_btn.disabled = (c_coal <= 0 and c_iron <= 0 and c_gold <= 0)
+
+func _on_chest_deposit() -> void:
+	if is_instance_valid(current_chest_node) and current_chest_node.has_method("deposit_resources"):
+		current_chest_node.deposit_resources()
+		update_chest_ui()
+		update_ui()
+
+func _on_chest_retrieve() -> void:
+	if is_instance_valid(current_chest_node) and current_chest_node.has_method("retrieve_resources"):
+		current_chest_node.retrieve_resources()
+		update_chest_ui()
+		update_ui()
 
 func show_toast(text: String, icon_type: String = "") -> void:
 	if not toast_list: return
