@@ -5,6 +5,7 @@ extends RigidBody2D
 @export var is_coal: bool = false
 @export var is_dirt: bool = false
 @export var is_stone: bool = false
+@export var is_roots: bool = false
 @export var is_unbreakable: bool = false
 @export var biome: int = 0 # 0=Terra (0-35), 1=Gelo (36-75), 2=Lava (76-120)
 
@@ -39,6 +40,7 @@ func apply_biome(b: int) -> void:
 	
 	var base_hp = 3 # Iron default
 	if is_dirt: base_hp = 1
+	elif is_roots: base_hp = 2 # Raízes de árvore
 	elif is_stone: base_hp = 2 # Stone (Pedra)
 	elif is_coal: base_hp = 2 # Coal (easy)
 	elif is_copper: base_hp = 6 # Gold (demora mais tempo)
@@ -47,21 +49,21 @@ func apply_biome(b: int) -> void:
 		max_hp = base_hp + 1
 		hp = max_hp
 		if sprite_2d:
-			if is_dirt: sprite_2d.modulate = Color(0.42, 0.65, 0.88, 1.0)
+			if is_dirt or is_roots: sprite_2d.modulate = Color(0.42, 0.65, 0.88, 1.0)
 			elif is_stone: sprite_2d.modulate = Color(0.65, 0.85, 1.1, 1.0)
 			else: sprite_2d.modulate = Color(0.72, 0.88, 1.1, 1.0)
 	elif biome == 2: # Lava (+2 HP)
 		max_hp = base_hp + 2
 		hp = max_hp
 		if sprite_2d:
-			if is_dirt: sprite_2d.modulate = Color(0.45, 0.22, 0.16, 1.0)
+			if is_dirt or is_roots: sprite_2d.modulate = Color(0.45, 0.22, 0.16, 1.0)
 			elif is_stone: sprite_2d.modulate = Color(1.15, 0.5, 0.35, 1.0)
 			else: sprite_2d.modulate = Color(1.15, 0.55, 0.35, 1.0)
 	else: # Terra
 		max_hp = base_hp
 		hp = max_hp
 		if sprite_2d:
-			if is_dirt: sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0)
+			if is_dirt or is_roots: sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0)
 			elif is_stone: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
 			else: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
 			
@@ -75,6 +77,15 @@ func _ready() -> void:
 		if sprite_2d:
 			sprite_2d.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			sprite_2d.frame = randi() % 3
+	elif is_roots:
+		max_hp = 2
+		hp = 2
+		if sprite_2d:
+			sprite_2d.texture = load("res://assets/sprites/dirt_roots.png")
+			sprite_2d.hframes = 1
+			sprite_2d.vframes = 1
+			sprite_2d.frame = 0
+			sprite_2d.scale = Vector2(1, 1)
 	elif is_dirt:
 		max_hp = 1
 		hp = 1
@@ -207,6 +218,18 @@ func hit() -> void:
 	if hp <= 0: return
 	
 	hp -= 1
+	
+	# Damage pickaxe based on block hardness
+	var inv = null
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		inv = get_tree().root.get_node("Inventory")
+	if inv and inv.has_method("damage_pickaxe"):
+		var wear = 1
+		if is_roots or is_stone: wear = 2
+		elif is_coal or (not is_dirt and not is_copper): wear = 3
+		elif is_copper: wear = 5 # Gold is much harder and wears pickaxe faster
+		inv.damage_pickaxe(wear)
+		
 	if cracks: cracks.queue_redraw()
 	
 	if sprite_2d:
@@ -242,15 +265,24 @@ func destroy() -> void:
 	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
 		inv = get_tree().root.get_node("Inventory")
 	
-	if is_dirt:
+	if is_roots:
+		if inv:
+			inv.add_exp(3)
+		var drop = DROP_SCENE.instantiate()
+		drop.type = 5 # WOOD
+		drop.global_position = global_position
+		get_parent().add_child(drop)
+	elif is_stone:
+		if inv:
+			inv.add_exp(2)
+		var drop = DROP_SCENE.instantiate()
+		drop.type = 7 # STONE
+		drop.global_position = global_position
+		get_parent().add_child(drop)
+	elif is_dirt:
 		if inv:
 			inv.dirt += 1
 			inv.add_exp(1)
-			inv.inventory_changed.emit()
-	elif is_stone:
-		if inv:
-			inv.stone += 1
-			inv.add_exp(2)
 			inv.inventory_changed.emit()
 	elif not is_unbreakable:
 		if inv:

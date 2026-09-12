@@ -55,6 +55,63 @@ func _ready() -> void:
 		sprite.scale = sprite_scale
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		sprite.flip_h = true
+		
+	var inv = _get_inv()
+	if inv and not inv.level_up.is_connected(_on_level_up):
+		inv.level_up.connect(_on_level_up)
+
+func _on_level_up(new_lvl: int, _req_exp: int) -> void:
+	# In-world character Level Up VFX
+	_spawn_level_up_aura(new_lvl)
+
+func _spawn_level_up_aura(lvl: int) -> void:
+	var particles = CPUParticles2D.new()
+	particles.emitting = true
+	particles.one_shot = true
+	particles.explosiveness = 0.8
+	particles.amount = 24
+	particles.lifetime = 1.0
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	particles.emission_sphere_radius = 20.0
+	particles.spread = 180.0
+	particles.gravity = Vector2(0, -60)
+	particles.initial_velocity_min = 20.0
+	particles.initial_velocity_max = 50.0
+	particles.scale_amount_min = 2.5
+	particles.scale_amount_max = 5.0
+	particles.color = Color(1.0, 0.85, 0.25, 1.0) # Golden sparks
+	add_child(particles)
+	
+	# Floating label over player
+	var lbl = Label.new()
+	lbl.text = "★ NÍVEL %d! ★" % lvl
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.modulate = Color(1.0, 0.9, 0.3, 1.0)
+	lbl.position = Vector2(-40, -45)
+	add_child(lbl)
+	
+	var tween = create_tween()
+	tween.tween_property(lbl, "position:y", -70.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(lbl, "modulate:a", 0.0, 1.2).set_delay(0.4)
+	tween.tween_callback(func():
+		lbl.queue_free()
+		particles.queue_free()
+	)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		# Shift + A: Open Hotbar Shortcuts Config
+		if event.physical_keycode == KEY_A and (event.shift_pressed or Input.is_key_pressed(KEY_SHIFT)):
+			var hud = get_tree().current_scene.get_node_or_null("HUD") if get_tree() and get_tree().current_scene else null
+			if hud and hud.has_method("toggle_hotbar_config"):
+				hud.toggle_hotbar_config()
+				if get_viewport(): get_viewport().set_input_as_handled()
+				return
+		# Numeric keys 1 to 6
+		if event.physical_keycode >= KEY_1 and event.physical_keycode <= KEY_6:
+			var slot_idx = event.physical_keycode - KEY_1
+			set_slot(slot_idx)
 
 func _process(delta: float) -> void:
 	if is_mining:
@@ -228,45 +285,19 @@ func _physics_process(delta: float) -> void:
 						collider.drag_push(facing_x, 45.0)
 
 	var inv = _get_inv()
-	# Only slots 1, 2, 3, 4 (Pickaxe, Lamp, Escada, Tábua) can be selected for button Z
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
-	if Input.is_action_just_pressed("slot_2"):
-		if inv and not inv.can_place_lamp():
-			inv.notify("Sem postes disponíveis! Crie na Forja com carvão e ferro.", "lamp")
-			set_slot(2) # Pula para o próximo (Escada)
-		else:
-			set_slot(1)
+	if Input.is_action_just_pressed("slot_2"): set_slot(1)
 	if Input.is_action_just_pressed("slot_3"): set_slot(2)
 	if Input.is_action_just_pressed("slot_4"): set_slot(3)
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
-		# Cycle strictly between tools, skipping lamp if insufficient resources
 		var cur_slot = inv.active_slot if inv else 0
-		var next_slot = (cur_slot + 1) % 4
-		if next_slot == 1 and inv and not inv.can_place_lamp():
-			next_slot = 2
+		var max_s = inv.hotbar_slots.size() if (inv and "hotbar_slots" in inv) else 6
+		var next_slot = (cur_slot + 1) % max_s
 		set_slot(next_slot)
 	
 	if Input.is_action_just_pressed("action_mine"):
-		var cur_slot = inv.active_slot if inv else 0
-		if cur_slot == 0:
-			try_mine()
-		elif cur_slot == 1:
-			if inv and inv.can_place_lamp():
-				place_torch()
-			else:
-				if inv: inv.notify("Sem postes disponíveis! Crie na Forja com carvão e ferro.", "lamp")
-				set_slot(2)
-		elif cur_slot == 2:
-			if inv and inv.ladders > 0:
-				place_rope()
-			else:
-				if inv: inv.notify("Sem escadas! Crie na Forja usando madeira.", "ladder")
-		elif cur_slot == 3:
-			if inv and inv.planks > 0:
-				place_plank()
-			else:
-				if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
+		execute_active_item()
 			
 	if Input.is_action_just_pressed("action_collect"):
 		try_collect()
@@ -274,13 +305,47 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("action_inventory"):
 		toggle_inventory()
 
+func execute_active_item() -> void:
+	var inv = _get_inv()
+	var key = inv.get_active_item_key() if inv else "pickaxe"
+	match key:
+		"pickaxe":
+			try_mine()
+		"lamp":
+			if inv and inv.can_place_lamp():
+				place_torch()
+			else:
+				if inv: inv.notify("Sem postes disponíveis! Crie na Forja com carvão e ferro.", "lamp")
+		"ladder":
+			if inv and inv.ladders > 0:
+				place_rope()
+			else:
+				if inv: inv.notify("Sem escadas! Crie na Forja usando madeira.", "ladder")
+		"plank":
+			if inv and inv.planks > 0:
+				place_plank()
+			else:
+				if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
+		"brick":
+			if inv and inv.brick_floors > 0:
+				place_brick_floor()
+			else:
+				if inv: inv.notify("Sem pisos de tijolo! Crie na Forja usando terra e pedra.", "plank")
+		"forge":
+			if inv and inv.portable_forges > 0:
+				place_portable_forge()
+			else:
+				if inv: inv.notify("Sem forjas portáteis! Crie na Forja usando pedra e ferro.", "forge")
+		_:
+			try_mine()
+
 func set_slot(slot: int) -> void:
 	var inv = _get_inv()
-	if slot == 1 and inv and not inv.can_place_lamp():
-		slot = 2
-	if slot in [0, 1, 2, 3] and inv:
-		inv.active_slot = slot
-		inv.inventory_changed.emit()
+	if inv:
+		var max_s = inv.hotbar_slots.size() if "hotbar_slots" in inv else 6
+		if slot >= 0 and slot < max_s:
+			inv.active_slot = slot
+			inv.inventory_changed.emit()
 
 func place_torch() -> void:
 	var inv = _get_inv()
@@ -322,22 +387,13 @@ func place_rope() -> void:
 
 func place_plank() -> void:
 	var inv = _get_inv()
-	if not inv: return
-	
-	var use_brick = false
-	if inv.planks > 0:
-		inv.planks -= 1
-		inv.inventory_changed.emit()
-	elif "brick_floors" in inv and inv.brick_floors > 0:
-		inv.brick_floors -= 1
-		use_brick = true
-		inv.inventory_changed.emit()
-	else:
-		inv.notify("Sem tábuas ou pisos de tijolo! Crie na Forja.", "plank")
+	if not inv or inv.planks <= 0:
+		if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
 		return
+	inv.planks -= 1
+	inv.inventory_changed.emit()
 	
-	var scene_path = "res://scenes/environment/brick_floor.tscn" if use_brick else "res://scenes/environment/plank.tscn"
-	var platform_scene = load(scene_path)
+	var platform_scene = load("res://scenes/environment/plank.tscn")
 	if not platform_scene: return
 	var platform = platform_scene.instantiate()
 	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
@@ -348,6 +404,50 @@ func place_plank() -> void:
 	platform.position = Vector2(place_x, place_y)
 	platform.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(platform)
+	var sm = _get_save()
+	if sm:
+		sm.request_save()
+
+func place_brick_floor() -> void:
+	var inv = _get_inv()
+	if not inv or inv.brick_floors <= 0:
+		if inv: inv.notify("Sem pisos de tijolo! Crie na Forja com terra e pedra.", "plank")
+		return
+	inv.brick_floors -= 1
+	inv.inventory_changed.emit()
+	
+	var platform_scene = load("res://scenes/environment/brick_floor.tscn")
+	if not platform_scene: return
+	var platform = platform_scene.instantiate()
+	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
+	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
+	if Input.is_action_pressed("ui_down"): grid_y += 1
+	elif Input.is_action_pressed("ui_up"): grid_y -= 1
+	var place_y = grid_y * 32.0 + 117.0
+	platform.position = Vector2(place_x, place_y)
+	platform.add_to_group("placed_planks")
+	get_tree().current_scene.add_child(platform)
+	var sm = _get_save()
+	if sm:
+		sm.request_save()
+
+func place_portable_forge() -> void:
+	var inv = _get_inv()
+	if not inv or inv.portable_forges <= 0:
+		if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 pedras e 3 ferros.", "forge")
+		return
+	inv.portable_forges -= 1
+	inv.inventory_changed.emit()
+	
+	var forge_scene = load("res://scenes/environment/forge.tscn")
+	if not forge_scene: return
+	var forge = forge_scene.instantiate()
+	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
+	var place_y = round(global_position.y / 32.0) * 32.0
+	forge.position = Vector2(place_x, place_y)
+	forge.add_to_group("placed_forges")
+	get_tree().current_scene.add_child(forge)
+	inv.notify("Forja Portátil Instalada!", "forge")
 	var sm = _get_save()
 	if sm:
 		sm.request_save()
@@ -380,7 +480,31 @@ func _is_ladder_segment(col: Node) -> bool:
 	if not is_instance_valid(col): return false
 	return col.is_in_group("placed_ropes") or col.name.begins_with("RopeSegment") or (col is Area2D and col.has_method("hit") and not col.has_method("is_ore") and not col.has_method("fell_tree") and not col.name.begins_with("Torch") and not col.name.begins_with("Plank"))
 
+func _break_block_above() -> void:
+	var world_2d = get_world_2d()
+	if not world_2d and is_inside_tree() and get_viewport():
+		world_2d = get_viewport().find_world_2d()
+	if not world_2d or not world_2d.direct_space_state:
+		return
+	var space_state = world_2d.direct_space_state
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = global_position + Vector2(0, -32)
+	query.collision_mask = 1 # Solid blocks
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
+	var results = space_state.intersect_point(query)
+	for r in results:
+		var col = r.collider
+		if is_instance_valid(col) and col != self:
+			if col.has_method("hit") and not col.get("is_unbreakable"):
+				col.hit()
+
 func try_mine() -> void:
+	var inv = _get_inv()
+	if inv and not inv.has_pickaxe:
+		inv.notify("Sua picareta está quebrada! Forje uma nova na forja.", "pickaxe")
+		return
+
 	# Determine mining aim: if no directional keys held, mine horizontally in current facing direction
 	var has_dir = false
 	var dir = Vector2.ZERO
@@ -412,8 +536,8 @@ func try_mine() -> void:
 	if Input.is_action_pressed("ui_down") and _is_overlapping_solid(global_position):
 		velocity.y = -140.0 # Small jackhammer hop
 		global_position.y -= 4.0 # Gradually pops player upward out of the block
-		var inv_b = _get_inv()
-		if inv_b: inv_b.notify("Britadeira!", "pickaxe")
+		_break_block_above() # Breaks block above to clear overhead space!
+		if inv: inv.notify("Britadeira!", "pickaxe")
 	
 	var world_2d = get_world_2d()
 	if not world_2d and is_inside_tree() and get_viewport():
@@ -448,67 +572,69 @@ func try_mine() -> void:
 			global_position + last_direction * 24.0,
 			global_position + last_direction * 36.0,
 			global_position + Vector2(0, 16.0), # Feet / ground
-			global_position + Vector2(0, 24.0),
-			global_position # Overlapping player body
+			global_position + Vector2(0, -8.0), # Torso/head
+			global_position # Exact center
 		]
 		for pt in check_points:
-			var point_query = PhysicsPointQueryParameters2D.new()
-			point_query.position = pt
-			point_query.collision_mask = 37
-			point_query.collide_with_bodies = true
-			point_query.collide_with_areas = true
-			point_query.exclude = excludes
-			var hits = space_state.intersect_point(point_query, 8)
-			for hit in hits:
-				var c = hit.get("collider")
-				if c and (c.has_method("hit") or c.has_method("collect")):
-					if on_ladder and last_direction.x != 0 and _is_ladder_segment(c):
-						continue # Skip ladder segment
-					target_collider = c
-					break
+			var pt_query = PhysicsPointQueryParameters2D.new()
+			pt_query.position = pt
+			pt_query.collision_mask = 37
+			pt_query.collide_with_bodies = true
+			pt_query.collide_with_areas = true
+			pt_query.exclude = excludes
+			var pt_results = space_state.intersect_point(pt_query)
+			for r in pt_results:
+				var col = r.collider
+				if is_instance_valid(col) and col != self:
+					if on_ladder and last_direction.x != 0 and _is_ladder_segment(col):
+						continue
+					if col.has_method("hit") or col.has_method("collect"):
+						target_collider = col
+						break
 			if target_collider:
 				break
-				
+
 	if target_collider:
-		# Double-check: escada só é destruída com mira vertical estrita ou se o jogador estiver fora dela
-		if _is_ladder_segment(target_collider):
-			var is_strictly_vertical = (last_direction.y != 0 and last_direction.x == 0)
-			if on_ladder and not is_strictly_vertical:
-				return # Ladder is protected!
+		# Check if target is a ladder segment while player is on ladder and aiming sideways
+		if on_ladder and last_direction.x != 0 and _is_ladder_segment(target_collider):
+			return # Shield ladder rung from lateral swings
 		if target_collider.has_method("hit"):
 			target_collider.hit()
 		elif target_collider.has_method("collect"):
 			target_collider.collect()
 
 func _is_overlapping_solid(pos: Vector2) -> bool:
-	if not is_inside_tree() or not get_world_2d():
+	var world_2d = get_world_2d()
+	if not world_2d and is_inside_tree() and get_viewport():
+		world_2d = get_viewport().find_world_2d()
+	if not world_2d or not world_2d.direct_space_state:
 		return false
-	var space = get_world_2d().direct_space_state
-	if not space:
-		return false
-	var shape_node = get_node_or_null("CollisionShape2D")
-	if not shape_node or not shape_node.shape:
-		return false
-	var query = PhysicsShapeQueryParameters2D.new()
-	query.shape = shape_node.shape
-	query.transform = Transform2D(0.0, pos)
-	query.collision_mask = 1 # Solid world blocks (concrete, rocks, bedrock)
+	var space_state = world_2d.direct_space_state
+	
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = pos
+	query.collision_mask = 1 # Solid terrain / bedrock / ores
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
 	query.exclude = [get_rid()]
-	var hits = space.intersect_shape(query, 1)
-	return hits.size() > 0
+	
+	var results = space_state.intersect_point(query)
+	for r in results:
+		var col = r.collider
+		if is_instance_valid(col) and col != self and not col.is_in_group("placed_ropes") and not col.is_in_group("placed_torches") and not col.is_in_group("placed_planks"):
+			return true
+	return false
 
 func _depenetrate_from_blocks() -> void:
-	# If character is cleanly on floor with no active slide collisions, skip expensive physics query
-	if is_on_floor() and get_slide_collision_count() == 0:
-		return
-	# If character overlaps any solid blocks, step upward to top surface
-	if _is_overlapping_solid(global_position):
-		for step in range(1, 49):
-			var dy = float(step)
-			var test_pos = Vector2(global_position.x, global_position.y - dy)
-			if not _is_overlapping_solid(test_pos):
-				global_position.y = test_pos.y
-				velocity.y = 0.0
-				return
+	# Active safety check: if player center or feet are inside solid geometry (layer 1)
+	# Push player upward step-by-step to the free space above
+	var center_overlap = _is_overlapping_solid(global_position)
+	var feet_overlap = _is_overlapping_solid(global_position + Vector2(0, 10.0))
+	
+	if center_overlap or feet_overlap:
+		# Try stepping upward by 4px up to 8 iterations
+		for step in range(8):
+			global_position.y -= 4.0
+			if not _is_overlapping_solid(global_position) and not _is_overlapping_solid(global_position + Vector2(0, 10.0)):
+				velocity.y = min(velocity.y, 0.0)
+				break

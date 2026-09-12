@@ -12,6 +12,7 @@ const UNBREAKABLE_SCENE = preload("res://scenes/cave/unbreakable_rock.tscn")
 const PLANK_SCENE = preload("res://scenes/environment/plank.tscn")
 const STONE_SCENE = preload("res://scenes/cave/stone.tscn")
 const TREE_SCENE = preload("res://scenes/environment/tree.tscn")
+const FORGE_SCENE = preload("res://scenes/environment/forge.tscn")
 
 @onready var player = $Player
 
@@ -73,6 +74,12 @@ func restore_placed_items() -> void:
 		plank.position = Vector2(p.x, p.y)
 		plank.add_to_group("placed_planks")
 		add_child(plank)
+
+	for f in SaveManager.placed_forges_data:
+		var forge = FORGE_SCENE.instantiate()
+		forge.position = Vector2(f.x, f.y)
+		forge.add_to_group("placed_forges")
+		add_child(forge)
 
 func generate_world() -> void:
 	const GRID_W = 30
@@ -230,7 +237,12 @@ func generate_world() -> void:
 					rock.biome = current_biome
 					instance = rock
 				else:
-					if randf() < 0.5:
+					if y >= 1 and y <= 6 and randf() < 0.35:
+						var dirt = DIRT_SCENE.instantiate()
+						dirt.is_roots = true
+						dirt.biome = current_biome
+						instance = dirt
+					elif randf() < 0.5:
 						var dirt = DIRT_SCENE.instantiate()
 						dirt.biome = current_biome
 						instance = dirt

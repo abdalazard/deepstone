@@ -1,6 +1,6 @@
 extends RigidBody2D
 
-enum ResourceType { IRON, GOLD, COAL, PLANK, LAMP, WOOD, LADDER }
+enum ResourceType { IRON, GOLD, COAL, PLANK, LAMP, WOOD, LADDER, STONE, DIRT, BROKEN_PICKAXE, FORGE }
 @export var type: ResourceType = ResourceType.IRON
 var is_player_drop: bool = false
 var pickup_delay: float = 0.0
@@ -63,6 +63,30 @@ func _ready() -> void:
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.0, 1.0)
+		elif type == ResourceType.STONE:
+			sprite.texture = load("res://assets/sprites/stone_drop.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.0, 1.0)
+		elif type == ResourceType.DIRT:
+			sprite.texture = load("res://assets/sprites/dirt_drop.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.0, 1.0)
+		elif type == ResourceType.BROKEN_PICKAXE:
+			sprite.texture = load("res://assets/sprites/broken_pickaxe.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.2, 1.2)
+		elif type == ResourceType.FORGE:
+			sprite.texture = load("res://assets/sprites/stone_block.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(0.8, 0.8)
 		
 	# Pop out effect
 	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
@@ -126,6 +150,14 @@ func _can_be_collected() -> bool:
 		return true
 	elif type == ResourceType.LADDER:
 		return true
+	elif type == ResourceType.STONE:
+		return "stone" in inv and inv.stone < 99
+	elif type == ResourceType.DIRT:
+		return "dirt" in inv and inv.dirt < 99
+	elif type == ResourceType.BROKEN_PICKAXE:
+		return true
+	elif type == ResourceType.FORGE:
+		return true
 	return false
 
 func _auto_fly_to_player() -> void:
@@ -188,6 +220,30 @@ func collect() -> void:
 		if "ladders" in inv:
 			inv.ladders += 1
 			inv.notify("+1 Escada", "ladder")
+			inv.inventory_changed.emit()
+	elif type == ResourceType.STONE:
+		if "stone" in inv:
+			inv.stone += 1
+			inv.notify("+1 Pedra", "stone")
+			inv.inventory_changed.emit()
+	elif type == ResourceType.DIRT:
+		if "dirt" in inv:
+			inv.dirt += 1
+			inv.notify("+1 Terra", "dirt")
+			inv.inventory_changed.emit()
+	elif type == ResourceType.BROKEN_PICKAXE:
+		if "iron" in inv and inv.can_add(0):
+			inv.iron += 1
+		if "wood_logs" in inv:
+			inv.wood_logs += 2
+		if "stone" in inv:
+			inv.stone += 1
+		inv.notify("Materiais da Picareta Recuperados!", "pickaxe")
+		inv.inventory_changed.emit()
+	elif type == ResourceType.FORGE:
+		if "portable_forges" in inv:
+			inv.portable_forges += 1
+			inv.notify("+1 Forja Portátil", "forge")
 			inv.inventory_changed.emit()
 	
 	# Create light flash effect

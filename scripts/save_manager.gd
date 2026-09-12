@@ -8,6 +8,7 @@ var mined_blocks: Dictionary = {}
 var placed_torches_data: Array = []
 var placed_ropes_data: Array = []
 var placed_planks_data: Array = []
+var placed_forges_data: Array = []
 var player_saved_pos: Vector2 = Vector2.ZERO
 var chest_saved_load: int = 0
 var chest_saved_closed: bool = false
@@ -52,6 +53,7 @@ func clear_save() -> void:
 	placed_torches_data.clear()
 	placed_ropes_data.clear()
 	placed_planks_data.clear()
+	placed_forges_data.clear()
 	has_loaded_save = false
 	world_seed = randi()
 	player_saved_pos = Vector2(640, 96)
@@ -62,22 +64,7 @@ func clear_save() -> void:
 	chest_saved_gold = 0
 	var inv = _get_inventory()
 	if inv:
-		inv.iron = 0
-		inv.gold = 0
-		inv.coal = 0
-		if "coins" in inv: inv.coins = 0
-		if "starter_lamps" in inv: inv.starter_lamps = 1
-		inv.signs = 10
-		inv.planks = 0
-		if "wood_logs" in inv: inv.wood_logs = 0
-		if "ladders" in inv: inv.ladders = 0
-		if "dirt" in inv: inv.dirt = 0
-		if "stone" in inv: inv.stone = 0
-		if "brick_floors" in inv: inv.brick_floors = 0
-		if "level" in inv: inv.level = 0
-		if "current_exp" in inv: inv.current_exp = 0
-		inv.active_slot = 0
-		inv.inventory_changed.emit()
+		inv.reset_inventory()
 
 func reset_mine_completely() -> void:
 	clear_save()
@@ -165,6 +152,14 @@ func save_game(show_notify: bool = false) -> void:
 				planks_list.append({"x": p.global_position.x, "y": p.global_position.y})
 	if planks_list.is_empty() and not placed_planks_data.is_empty():
 		planks_list = placed_planks_data
+		
+	var forges_list = []
+	if tree:
+		for f in tree.get_nodes_in_group("placed_forges"):
+			if is_instance_valid(f):
+				forges_list.append({"x": f.global_position.x, "y": f.global_position.y})
+	if forges_list.is_empty() and not placed_forges_data.is_empty():
+		forges_list = placed_forges_data
 	
 	var save_data = {
 		"version": 1,
@@ -184,13 +179,18 @@ func save_game(show_notify: bool = false) -> void:
 			"dirt": inv.dirt if (inv and "dirt" in inv) else 0,
 			"stone": inv.stone if (inv and "stone" in inv) else 0,
 			"brick_floors": inv.brick_floors if (inv and "brick_floors" in inv) else 0,
+			"portable_forges": inv.portable_forges if (inv and "portable_forges" in inv) else 0,
+			"has_pickaxe": inv.has_pickaxe if (inv and "has_pickaxe" in inv) else true,
+			"pickaxe_durability": inv.pickaxe_durability if (inv and "pickaxe_durability" in inv) else 100,
 			"level": inv.level if (inv and "level" in inv) else 0,
-			"current_exp": inv.current_exp if (inv and "current_exp" in inv) else 0
+			"current_exp": inv.current_exp if (inv and "current_exp" in inv) else 0,
+			"hotbar_slots": inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
 		},
 		"chest": chest_data,
 		"placed_torches": torches_list,
 		"placed_ropes": ropes_list,
-		"placed_planks": planks_list
+		"placed_planks": planks_list,
+		"placed_forges": forges_list
 	}
 	
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -261,10 +261,18 @@ func load_game() -> bool:
 			inv.stone = inv_data.get("stone", 0)
 		if "brick_floors" in inv:
 			inv.brick_floors = inv_data.get("brick_floors", 0)
+		if "portable_forges" in inv:
+			inv.portable_forges = inv_data.get("portable_forges", 0)
+		if "has_pickaxe" in inv:
+			inv.has_pickaxe = inv_data.get("has_pickaxe", true)
+		if "pickaxe_durability" in inv:
+			inv.pickaxe_durability = inv_data.get("pickaxe_durability", 100)
 		if "level" in inv:
 			inv.level = inv_data.get("level", 0)
 		if "current_exp" in inv:
 			inv.current_exp = inv_data.get("current_exp", 0)
+		if "hotbar_slots" in inv:
+			inv.hotbar_slots = inv_data.get("hotbar_slots", ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"])
 	
 	var p_data = data.get("player", {})
 	if p_data.has("x") and p_data.has("y"):
@@ -282,8 +290,7 @@ func load_game() -> bool:
 	placed_torches_data = data.get("placed_torches", [])
 	placed_ropes_data = data.get("placed_ropes", [])
 	placed_planks_data = data.get("placed_planks", [])
+	placed_forges_data = data.get("placed_forges", [])
 	
 	has_loaded_save = true
-	if inv:
-		inv.inventory_changed.emit()
 	return true

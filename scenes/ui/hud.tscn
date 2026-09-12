@@ -1821,6 +1821,100 @@ theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
 text = "Forjar 1 Piso"
 
+[node name="PickaxeRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("7_pickaxe")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Nova Picareta"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 1 Ferro + 2 Madeiras + 1 Pedra"
+
+[node name="CraftPickaxeBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+focus_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar Picareta"
+
+[node name="PortableForgeRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("11_lamp_post")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Forja Portátil"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 5 Pedras + 3 Ferros"
+
+[node name="CraftPortableForgeBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+focus_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar Forja"
+
 [node name="FooterHBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
 alignment = 2

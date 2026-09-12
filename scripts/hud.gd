@@ -68,6 +68,10 @@ var coin_gold_tex = preload("res://assets/sprites/coin_gold.png")
 var coin_silver_tex = preload("res://assets/sprites/coin_silver.png")
 var coin_copper_tex = preload("res://assets/sprites/coin_copper.png")
 var wood_tex = preload("res://assets/sprites/wood_log.png")
+var stone_tex = preload("res://assets/sprites/stone_drop.png")
+var dirt_tex = preload("res://assets/sprites/dirt_drop.png")
+var brick_tex = preload("res://assets/sprites/brick_platform.png")
+var broken_pickaxe_tex = preload("res://assets/sprites/broken_pickaxe.png")
 
 # Coins HUD
 @onready var coins_badge_container = find_child("CoinsBadgeContainer", true, false)
@@ -81,15 +85,17 @@ var wood_tex = preload("res://assets/sprites/wood_log.png")
 @onready var level_up_panel = find_child("LevelUpPanel", true, false)
 @onready var level_up_title = find_child("LevelUpTitle", true, false)
 @onready var level_up_subtitle = find_child("LevelUpSubtitle", true, false)
-@onready var craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
 
 # Forge Menu nodes
 @onready var forge_panel = find_child("ForgePanel", true, false)
 @onready var forge_close_btn = find_child("ForgeCloseBtn", true, false)
 @onready var forge_close_footer_btn = find_child("ForgeCloseFooterBtn", true, false)
+@onready var craft_pickaxe_btn = find_child("CraftPickaxeBtn", true, false)
 @onready var craft_lamp_btn = find_child("CraftLampBtn", true, false)
 @onready var craft_ladder_btn = find_child("CraftLadderBtn", true, false)
 @onready var craft_plank_btn = find_child("CraftPlankBtn", true, false)
+@onready var craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
+@onready var craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 var current_forge_node: Node = null
 
 # Pause Menu Reset
@@ -99,11 +105,15 @@ var current_forge_node: Node = null
 var idle_anim_timer: float = 0.0
 var idle_anim_frame: int = 0
 
+# Hotbar Configuration Modal
+var hotbar_config_panel: PanelContainer = null
+var selected_config_slot: int = 0
+
 var chest_items_def = [
 	{
 		"key": "pickaxe",
-		"name": "Picareta de Ferro",
-		"desc": "Ferramenta para escavar terra e rochas. Pressione [1] para equipar (Botão Z para minerar).",
+		"name": "Picareta de Mineração",
+		"desc": "Ferramenta para escavar terra e minérios. Possui durabilidade e desgasta ao bater em minérios pesados.",
 		"icon_type": "atlas",
 		"atlas": "extras",
 		"region": Rect2(0, 0, 16, 16),
@@ -113,8 +123,8 @@ var chest_items_def = [
 	},
 	{
 		"key": "lamp",
-		"name": "Mini Poste de Luz",
-		"desc": "Lampião portátil que ilumina a caverna e faz os minérios brilharem no escuro. Custa 3 Carvões + 2 Ferros. Pressione [2].",
+		"name": "Poste de Luz",
+		"desc": "Lampião portátil que ilumina a caverna e faz os minérios brilharem no escuro. Custa 3 Carvões + 2 Ferros.",
 		"icon_type": "atlas",
 		"atlas": "lamp",
 		"region": Rect2(0, 0, 16, 16),
@@ -125,7 +135,7 @@ var chest_items_def = [
 	{
 		"key": "ladder",
 		"name": "Escada de Madeira",
-		"desc": "Escada portátil com degraus para descer e subir poços profundos. Pressione [3] para equipar.",
+		"desc": "Escada portátil com degraus para descer e subir poços profundos.",
 		"icon_type": "direct",
 		"tex": "rope",
 		"shortcut": "3",
@@ -135,7 +145,7 @@ var chest_items_def = [
 	{
 		"key": "plank",
 		"name": "Tábua de Madeira",
-		"desc": "Ponte horizontal sólida para cruzar fendas e abismos. Pressione [4] para equipar e [Z] para construir.",
+		"desc": "Ponte horizontal sólida para cruzar fendas e abismos. Pressione [Z] para construir.",
 		"icon_type": "direct",
 		"tex": "plank",
 		"shortcut": "4",
@@ -143,9 +153,38 @@ var chest_items_def = [
 		"tool_slot": 3
 	},
 	{
+		"key": "brick",
+		"name": "Piso de Tijolo",
+		"desc": "Plataforma reforçada de tijolo forjada com 1 terra e 1 pedra. Suporta postes de luz.",
+		"icon_type": "direct",
+		"tex": "brick",
+		"shortcut": "5",
+		"is_tool": true,
+		"tool_slot": 4
+	},
+	{
+		"key": "forge",
+		"name": "Forja Portátil",
+		"desc": "Forja portátil para implantar na mina e forjar itens longe da superfície. Custa 5 pedras + 3 ferros.",
+		"icon_type": "direct",
+		"tex": "stone",
+		"shortcut": "6",
+		"is_tool": true,
+		"tool_slot": 5
+	},
+	{
+		"key": "wood",
+		"name": "Tronco de Madeira",
+		"desc": "Madeira obtida de árvores da superfície ou raízes subterrâneas. Usada para criar escadas, tábuas e picaretas.",
+		"icon_type": "direct",
+		"tex": "wood",
+		"shortcut": "",
+		"is_tool": false
+	},
+	{
 		"key": "iron",
 		"name": "Minério de Ferro",
-		"desc": "Metal versátil e resistente obtido nas profundezas. Usado na construção de postes e melhorias futuras.",
+		"desc": "Metal versátil e resistente obtido nas profundezas. Usado na forja de ferramentas e postes.",
 		"icon_type": "atlas",
 		"atlas": "ores",
 		"region": Rect2(32, 128, 16, 16),
@@ -155,7 +194,7 @@ var chest_items_def = [
 	{
 		"key": "gold",
 		"name": "Minério de Ouro",
-		"desc": "Metal nobre e reluzente de alto valor comercial e grande raridade. Guarde seus ouros para comprar itens na Loja.",
+		"desc": "Metal nobre e reluzente de alto valor comercial e grande raridade. Venda na Loja por 50 moedas!",
 		"icon_type": "atlas",
 		"atlas": "ores",
 		"region": Rect2(128, 128, 16, 16),
@@ -165,10 +204,28 @@ var chest_items_def = [
 	{
 		"key": "coal",
 		"name": "Carvão Mineral",
-		"desc": "Combustível fóssil primordial abundante. Usado na forja e consumido na instalação de postes de luz.",
+		"desc": "Combustível fóssil primordial abundante. Usado para iluminação e forjas.",
 		"icon_type": "atlas",
 		"atlas": "ores",
 		"region": Rect2(0, 128, 16, 16),
+		"shortcut": "",
+		"is_tool": false
+	},
+	{
+		"key": "stone",
+		"name": "Pedra Bruta",
+		"desc": "Pedra escavada do subsolo. Usada na construção de pisos de tijolo, forjas portáteis e ferramentas.",
+		"icon_type": "direct",
+		"tex": "stone",
+		"shortcut": "",
+		"is_tool": false
+	},
+	{
+		"key": "dirt",
+		"name": "Lama / Terra",
+		"desc": "Terra coletada das escavações. Usada para moldar e forjar pisos de tijolo.",
+		"icon_type": "direct",
+		"tex": "dirt",
 		"shortcut": "",
 		"is_tool": false
 	}
@@ -185,7 +242,6 @@ func _get_inv() -> Node:
 	if loop and "root" in loop and loop.root and loop.root.has_node("Inventory"):
 		return loop.root.get_node("Inventory")
 	return null
-
 
 func _process(delta: float) -> void:
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
@@ -206,6 +262,8 @@ func _ready() -> void:
 			inv.inventory_changed.connect(update_ui)
 		if not inv.notification_triggered.is_connected(show_toast):
 			inv.notification_triggered.connect(show_toast)
+		if inv.has_signal("level_up") and not inv.level_up.is_connected(_on_level_up):
+			inv.level_up.connect(_on_level_up)
 	
 	setup_hotbar()
 	setup_chest_grid()
@@ -227,27 +285,9 @@ func _ready() -> void:
 	if shop_tab_sell_btn and not shop_tab_sell_btn.pressed.is_connected(_on_shop_tab_sell):
 		shop_tab_sell_btn.pressed.connect(_on_shop_tab_sell)
 
-	var sell_coal_1 = find_child("SellCoalOneBtn", true, false)
-	if sell_coal_1 and not sell_coal_1.pressed.is_connected(_on_sell_coal_one): sell_coal_1.pressed.connect(_on_sell_coal_one)
-	var sell_coal_all = find_child("SellCoalAllBtn", true, false)
-	if sell_coal_all and not sell_coal_all.pressed.is_connected(_on_sell_coal_all): sell_coal_all.pressed.connect(_on_sell_coal_all)
-
-	var sell_iron_1 = find_child("SellIronOneBtn", true, false)
-	if sell_iron_1 and not sell_iron_1.pressed.is_connected(_on_sell_iron_one): sell_iron_1.pressed.connect(_on_sell_iron_one)
-	var sell_iron_all = find_child("SellIronAllBtn", true, false)
-	if sell_iron_all and not sell_iron_all.pressed.is_connected(_on_sell_iron_all): sell_iron_all.pressed.connect(_on_sell_iron_all)
-
-	var sell_gold_1 = find_child("SellGoldOneBtn", true, false)
-	if sell_gold_1 and not sell_gold_1.pressed.is_connected(_on_sell_gold_one): sell_gold_1.pressed.connect(_on_sell_gold_one)
-	var sell_gold_all = find_child("SellGoldAllBtn", true, false)
-	if sell_gold_all and not sell_gold_all.pressed.is_connected(_on_sell_gold_all): sell_gold_all.pressed.connect(_on_sell_gold_all)
-
-	var sell_all_btn = find_child("SellAllMineralsBtn", true, false)
-	if sell_all_btn and not sell_all_btn.pressed.is_connected(_on_sell_all_minerals): sell_all_btn.pressed.connect(_on_sell_all_minerals)
-
+	# Pause Menu buttons
 	if pause_button and not pause_button.pressed.is_connected(toggle_pause):
 		pause_button.pressed.connect(toggle_pause)
-		
 	if resume_btn and not resume_btn.pressed.is_connected(close_pause):
 		resume_btn.pressed.connect(close_pause)
 	if save_btn and not save_btn.pressed.is_connected(_on_save_pressed):
@@ -256,7 +296,10 @@ func _ready() -> void:
 		restart_btn.pressed.connect(_on_restart_pressed)
 	if exit_btn and not exit_btn.pressed.is_connected(_on_exit_pressed):
 		exit_btn.pressed.connect(_on_exit_pressed)
-		
+	if reset_mine_btn and not reset_mine_btn.pressed.is_connected(_on_reset_mine_pressed):
+		reset_mine_btn.pressed.connect(_on_reset_mine_pressed)
+
+	# Chest buttons
 	if chest_close_btn and not chest_close_btn.pressed.is_connected(close_chest):
 		chest_close_btn.pressed.connect(close_chest)
 	if chest_close_footer_btn and not chest_close_footer_btn.pressed.is_connected(close_chest):
@@ -265,9 +308,8 @@ func _ready() -> void:
 		chest_deposit_btn.pressed.connect(_on_chest_deposit)
 	if chest_retrieve_btn and not chest_retrieve_btn.pressed.is_connected(_on_chest_retrieve):
 		chest_retrieve_btn.pressed.connect(_on_chest_retrieve)
-		
-	if reset_mine_btn and not reset_mine_btn.pressed.is_connected(_on_reset_mine_pressed):
-		reset_mine_btn.pressed.connect(_on_reset_mine_pressed)
+
+	# Forge buttons
 	if forge_close_btn and not forge_close_btn.pressed.is_connected(close_forge):
 		forge_close_btn.pressed.connect(close_forge)
 	if forge_close_footer_btn and not forge_close_footer_btn.pressed.is_connected(close_forge):
@@ -278,13 +320,12 @@ func _ready() -> void:
 		craft_ladder_btn.pressed.connect(_on_craft_ladder)
 	if craft_plank_btn and not craft_plank_btn.pressed.is_connected(_on_craft_plank):
 		craft_plank_btn.pressed.connect(_on_craft_plank)
-	if not craft_brick_floor_btn:
-		craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
 	if craft_brick_floor_btn and not craft_brick_floor_btn.pressed.is_connected(_on_craft_brick_floor):
 		craft_brick_floor_btn.pressed.connect(_on_craft_brick_floor)
-	if inv:
-		if inv.has_signal("level_up") and not inv.level_up.is_connected(_on_level_up):
-			inv.level_up.connect(_on_level_up)
+	if craft_pickaxe_btn and not craft_pickaxe_btn.pressed.is_connected(_on_craft_pickaxe):
+		craft_pickaxe_btn.pressed.connect(_on_craft_pickaxe)
+	if craft_portable_forge_btn and not craft_portable_forge_btn.pressed.is_connected(_on_craft_portable_forge):
+		craft_portable_forge_btn.pressed.connect(_on_craft_portable_forge)
 		
 	select_slot(0)
 	update_ui()
@@ -295,6 +336,12 @@ func _consume_input() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		# Shift + A: Open Hotbar Shortcut Config
+		if event.physical_keycode == KEY_A and (event.shift_pressed or Input.is_key_pressed(KEY_SHIFT)):
+			toggle_hotbar_config()
+			_consume_input()
+			return
+
 		# Toggle Equipment Menu with [E]
 		if event.physical_keycode == KEY_E or event.is_action_pressed("action_equip_menu"):
 			toggle_equipment()
@@ -303,7 +350,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		# Toggle Pause Menu with [P] or [Esc]
 		if event.physical_keycode == KEY_P or event.physical_keycode == KEY_ESCAPE:
-			if is_instance_valid(forge_panel) and forge_panel.visible:
+			if is_instance_valid(hotbar_config_panel) and hotbar_config_panel.visible:
+				hotbar_config_panel.visible = false
+				_consume_input()
+				return
+			elif is_instance_valid(forge_panel) and forge_panel.visible:
 				close_forge()
 				_consume_input()
 				return
@@ -330,7 +381,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		# Universal Close on [X] for any open modal
 		if event.physical_keycode == KEY_X:
-			if is_instance_valid(shop_panel) and shop_panel.visible:
+			if is_instance_valid(hotbar_config_panel) and hotbar_config_panel.visible:
+				hotbar_config_panel.visible = false
+				_consume_input()
+				return
+			elif is_instance_valid(shop_panel) and shop_panel.visible:
 				close_shop()
 				_consume_input()
 				return
@@ -351,453 +406,491 @@ func _unhandled_input(event: InputEvent) -> void:
 				_consume_input()
 				return
 
-		# Universal Confirm on [Z] for any open modal with focused button
+		# Universal Confirm on [Z]
 		if event.physical_keycode == KEY_Z:
-			var focus_node = get_viewport().gui_get_focus_owner() if get_viewport() else null
-			if focus_node and (focus_node is BaseButton) and focus_node.is_inside_tree() and focus_node.visible:
-				focus_node.pressed.emit()
-				_consume_input()
-				return
-			elif is_instance_valid(shop_panel) and shop_panel.visible and is_instance_valid(shop_sell_view) and shop_sell_view.visible:
-				_on_sell_all_minerals()
+			if is_instance_valid(forge_panel) and forge_panel.visible:
+				var inv = _get_inv()
+				if inv:
+					if inv.can_craft_pickaxe() and not inv.has_pickaxe:
+						_on_craft_pickaxe()
+					elif inv.can_craft_lamp():
+						_on_craft_lamp()
+					elif inv.can_craft_portable_forge():
+						_on_craft_portable_forge()
+					elif inv.can_craft_brick_floor():
+						_on_craft_brick_floor()
+					elif inv.can_craft_planks():
+						_on_craft_plank()
+					elif inv.can_craft_ladders():
+						_on_craft_ladder()
 				_consume_input()
 				return
 			elif is_instance_valid(chest_panel) and chest_panel.visible:
 				_on_chest_deposit()
 				_consume_input()
 				return
-				
-		# Hotkeys inside Pause Menu
-		if is_instance_valid(pause_panel) and pause_panel.visible:
-			if event.physical_keycode == KEY_S:
+			elif is_instance_valid(inventory_panel) and inventory_panel.visible:
+				_on_equip_pressed()
 				_consume_input()
-				_on_save_pressed()
 				return
-			elif event.physical_keycode == KEY_R:
-				_consume_input()
-				_on_restart_pressed()
-				return
-			elif event.physical_keycode == KEY_Q:
-				_consume_input()
-				_on_exit_pressed()
-				return
+
+func toggle_hotbar_config() -> void:
+	if not is_instance_valid(hotbar_config_panel):
+		_build_hotbar_config_panel()
+	hotbar_config_panel.visible = not hotbar_config_panel.visible
+	if hotbar_config_panel.visible:
+		_update_hotbar_config_ui()
+
+func _build_hotbar_config_panel() -> void:
+	hotbar_config_panel = PanelContainer.new()
+	hotbar_config_panel.name = "HotbarConfigPanel"
+	hotbar_config_panel.custom_minimum_size = Vector2(400, 260)
+	hotbar_config_panel.anchors_preset = Control.PRESET_CENTER
 	
-	# Open Shop with [L]
-	if (not pause_panel or not pause_panel.visible) and (event.is_action_pressed("shop_menu") or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_L)):
-		toggle_shop()
-		_consume_input()
-		return
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.1, 0.05, 0.98)
+	style.border_width_left = 4
+	style.border_width_top = 4
+	style.border_width_right = 4
+	style.border_width_bottom = 4
+	style.border_color = Color(0.9, 0.75, 0.25, 1)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_right = 8
+	style.corner_radius_bottom_left = 8
+	style.shadow_size = 10
+	hotbar_config_panel.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	hotbar_config_panel.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.name = "ConfigVBox"
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "⚙ CONFIGURAR ATALHOS DA HOTBAR [Shift + A]"
+	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
+	title.add_theme_font_size_override("font_size", 14)
+	vbox.add_child(title)
+	
+	var desc = Label.new()
+	desc.text = "Selecione o slot e clique no item para reatribuir:"
+	desc.add_theme_font_size_override("font_size", 11)
+	desc.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
+	vbox.add_child(desc)
+	
+	var slots_hbox = HBoxContainer.new()
+	slots_hbox.name = "SlotsHBox"
+	slots_hbox.add_theme_constant_override("separation", 8)
+	vbox.add_child(slots_hbox)
+	
+	var items_grid = GridContainer.new()
+	items_grid.name = "ItemsGrid"
+	items_grid.columns = 3
+	items_grid.add_theme_constant_override("h_separation", 6)
+	items_grid.add_theme_constant_override("v_separation", 6)
+	vbox.add_child(items_grid)
+	
+	var close_b = Button.new()
+	close_b.text = "Fechar [X]"
+	close_b.pressed.connect(func(): hotbar_config_panel.visible = false)
+	vbox.add_child(close_b)
+	
+	add_child(hotbar_config_panel)
 
-	# Shop Tab Switching with Left/Right Arrows
-	if is_instance_valid(shop_panel) and shop_panel.visible and (not pause_panel or not pause_panel.visible):
-		if event.is_action_pressed("ui_left"):
-			switch_shop_tab("buy")
-			if is_instance_valid(shop_tab_buy_btn): _safe_grab_focus(shop_tab_buy_btn)
-			_consume_input()
-			return
-		elif event.is_action_pressed("ui_right"):
-			switch_shop_tab("sell")
-			if is_instance_valid(shop_tab_sell_btn): _safe_grab_focus(shop_tab_sell_btn)
-			_consume_input()
-			return
+func _update_hotbar_config_ui() -> void:
+	if not is_instance_valid(hotbar_config_panel): return
+	var inv = _get_inv()
+	if not inv: return
+	
+	var slots_hbox = hotbar_config_panel.find_child("SlotsHBox", true, false)
+	if slots_hbox:
+		for c in slots_hbox.get_children(): c.queue_free()
+		for i in range(inv.hotbar_slots.size()):
+			var s_key = inv.hotbar_slots[i]
+			var btn = Button.new()
+			btn.custom_minimum_size = Vector2(50, 32)
+			btn.text = "[%d] %s" % [i + 1, s_key.capitalize()]
+			if i == selected_config_slot:
+				btn.modulate = Color(1.3, 1.3, 0.8, 1.0)
+			var slot_i = i
+			btn.pressed.connect(func():
+				selected_config_slot = slot_i
+				_update_hotbar_config_ui()
+			)
+			slots_hbox.add_child(btn)
+			
+	var items_grid = hotbar_config_panel.find_child("ItemsGrid", true, false)
+	if items_grid:
+		for c in items_grid.get_children(): c.queue_free()
+		var available = [
+			{"key": "pickaxe", "label": "⛏ Picareta"},
+			{"key": "lamp", "label": "🏮 Poste de Luz"},
+			{"key": "ladder", "label": "🪜 Escada"},
+			{"key": "plank", "label": "🪵 Tábua"},
+			{"key": "brick", "label": "🧱 Piso Tijolo"},
+			{"key": "forge", "label": "⚒ Forja Portátil"}
+		]
+		for it in available:
+			var ibtn = Button.new()
+			ibtn.text = it.label
+			var item_k = it.key
+			ibtn.pressed.connect(func():
+				inv.set_hotbar_slot(selected_config_slot, item_k)
+				_update_hotbar_config_ui()
+				update_ui()
+				show_toast("Slot %d atribuído: %s" % [selected_config_slot + 1, it.label], item_k)
+			)
+			items_grid.add_child(ibtn)
 
-	# Inventory Keyboard Navigation
-	if is_instance_valid(inventory_panel) and inventory_panel.visible and (not pause_panel or not pause_panel.visible):
-		if event.is_action_pressed("ui_right"):
-			_nav_grid(1, 0)
-			_consume_input()
-		elif event.is_action_pressed("ui_left"):
-			_nav_grid(-1, 0)
-			_consume_input()
-		elif event.is_action_pressed("ui_down"):
-			_nav_grid(0, 1)
-			_consume_input()
-		elif event.is_action_pressed("ui_up"):
-			_nav_grid(0, -1)
-			_consume_input()
-		elif event.is_action_pressed("action_mine") or event.is_action_pressed("ui_accept"):
-			_on_equip_pressed()
-			_consume_input()
-		elif event.is_action_pressed("action_drag") or (event is InputEventKey and event.pressed and event.physical_keycode == KEY_X):
-			_on_drop_pressed()
-			_consume_input()
+func _on_level_up(new_lvl: int, exp_req: int) -> void:
+	show_level_up_vfx(new_lvl, exp_req)
 
-func toggle_equipment() -> void:
-	if is_instance_valid(equipment_panel) and equipment_panel.visible:
-		close_equipment()
-	else:
-		open_equipment()
+func show_level_up_vfx(new_lvl: int, exp_req: int) -> void:
+	if not is_instance_valid(level_up_panel):
+		level_up_panel = find_child("LevelUpPanel", true, false)
+	if is_instance_valid(level_up_panel):
+		level_up_panel.visible = true
+		level_up_panel.modulate.a = 0.0
+		level_up_panel.scale = Vector2(0.8, 0.8)
+		if is_instance_valid(level_up_title):
+			level_up_title.text = "★ NÍVEL %d ALCANÇADO! ★" % new_lvl
+		if is_instance_valid(level_up_subtitle):
+			level_up_subtitle.text = "EXP Necessária para Nível %d: %d EXP" % [new_lvl + 1, exp_req]
+		
+		var tween = create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(level_up_panel, "modulate:a", 1.0, 0.2)
+		tween.tween_property(level_up_panel, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+		var timer = get_tree().create_timer(1.2) if get_tree() else null
+		if timer:
+			timer.timeout.connect(func():
+				if is_instance_valid(level_up_panel):
+					var out_tween = create_tween()
+					out_tween.tween_property(level_up_panel, "modulate:a", 0.0, 0.3)
+					out_tween.tween_callback(func():
+						if is_instance_valid(level_up_panel):
+							level_up_panel.visible = false
+					)
+			)
 
-func open_equipment() -> void:
-	if is_instance_valid(forge_panel) and forge_panel.visible:
-		close_forge()
-	if is_instance_valid(chest_panel) and chest_panel.visible:
-		close_chest()
-	if is_instance_valid(inventory_panel) and inventory_panel.visible:
-		close_inventory()
-	if is_instance_valid(shop_panel) and shop_panel.visible:
-		close_shop()
-	if is_instance_valid(pause_panel) and pause_panel.visible:
-		close_pause()
-	if is_instance_valid(equipment_panel):
-		equipment_panel.visible = true
-		if is_instance_valid(equip_close_btn):
-			_safe_grab_focus(equip_close_btn)
+# Forge Crafting Handlers
+func _on_craft_pickaxe() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_pickaxe():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Recursos insuficientes! Requer 1 Ferro, 2 Madeiras e 1 Pedra.", "pickaxe")
 
-func close_equipment() -> void:
-	if is_instance_valid(equipment_panel):
-		equipment_panel.visible = false
+func _on_craft_lamp() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_lamp():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Recursos insuficientes! Requer 3 Carvões e 2 Ferros.", "lamp")
 
-func toggle_pause() -> void:
-	if is_instance_valid(pause_panel) and pause_panel.visible:
-		close_pause()
-	else:
-		open_pause()
+func _on_craft_ladder() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_ladders():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Sem madeira suficiente! Requer 1 Tronco de Madeira.", "wood")
 
-func open_pause() -> void:
-	if is_instance_valid(forge_panel) and forge_panel.visible:
-		close_forge()
-	if is_instance_valid(chest_panel) and chest_panel.visible:
-		close_chest()
-	if is_instance_valid(inventory_panel) and inventory_panel.visible:
-		close_inventory()
-	if is_instance_valid(equipment_panel) and equipment_panel.visible:
-		close_equipment()
-	if is_instance_valid(shop_panel) and shop_panel.visible:
-		close_shop()
-	if is_instance_valid(pause_panel):
-		pause_panel.visible = true
-	if is_inside_tree() and get_tree():
-		get_tree().paused = true
-	if is_inside_tree() and is_instance_valid(resume_btn):
-		_safe_grab_focus(resume_btn)
+func _on_craft_plank() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_planks():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Sem madeira suficiente! Requer 1 Tronco de Madeira.", "wood")
 
-func close_pause() -> void:
-	if is_instance_valid(pause_panel):
-		pause_panel.visible = false
-	if is_inside_tree() and get_tree():
-		get_tree().paused = false
+func _on_craft_brick_floor() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_brick_floor():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Recursos insuficientes! Requer 1 Terra e 1 Pedra.", "plank")
 
-func _on_save_pressed() -> void:
-	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
-		get_tree().root.get_node("SaveManager").save_game(true)
-	else:
-		show_toast("Progresso Salvo!", "save")
-
+func _on_craft_portable_forge() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_portable_forge():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Recursos insuficientes! Requer 5 Pedras e 3 Ferros.", "forge")
 
 func toggle_forge(forge_node: Node = null) -> void:
-	if is_instance_valid(forge_panel) and forge_panel.visible:
+	if not forge_panel: return
+	if forge_panel.visible:
 		close_forge()
 	else:
 		open_forge(forge_node)
 
 func open_forge(forge_node: Node = null) -> void:
-	if forge_node:
-		current_forge_node = forge_node
-	elif not is_instance_valid(current_forge_node):
-		if is_inside_tree() and get_tree() and get_tree().current_scene:
-			current_forge_node = get_tree().current_scene.get_node_or_null("Forge")
-			
-	if is_instance_valid(chest_panel) and chest_panel.visible: close_chest()
-	if is_instance_valid(inventory_panel) and inventory_panel.visible: close_inventory()
-	if is_instance_valid(equipment_panel) and equipment_panel.visible: close_equipment()
-	if is_instance_valid(shop_panel) and shop_panel.visible: close_shop()
-	if is_instance_valid(pause_panel) and pause_panel.visible: close_pause()
-	
-	if is_instance_valid(forge_panel):
+	current_forge_node = forge_node
+	if forge_panel:
 		forge_panel.visible = true
 		update_forge_ui()
-		if is_instance_valid(craft_lamp_btn):
+		if craft_lamp_btn:
 			_safe_grab_focus(craft_lamp_btn)
 
 func close_forge() -> void:
-	if is_instance_valid(forge_panel):
+	if forge_panel:
 		forge_panel.visible = false
+	current_forge_node = null
 
 func update_forge_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
-	var mat_lbl = find_child("MaterialsLabel", true, false)
-	if mat_lbl:
-		mat_lbl.text = "🪵 Troncos: %d  |  🪨 Carvão: %d  |  ⛓️ Ferro: %d  |  🟫 Lama: %d  |  🗿 Pedra: %d" % [
-			inv.wood_logs if "wood_logs" in inv else 0,
-			inv.coal,
-			inv.iron,
-			inv.dirt if "dirt" in inv else 0,
-			inv.stone if "stone" in inv else 0
-		]
-	var btn_lamp = find_child("CraftLampBtn", true, false)
-	if btn_lamp:
-		btn_lamp.disabled = not (inv.has_method("can_craft_lamp") and inv.can_craft_lamp())
-	var btn_ladder = find_child("CraftLadderBtn", true, false)
-	if btn_ladder:
-		btn_ladder.disabled = not (inv.has_method("can_craft_ladders") and inv.can_craft_ladders())
-	var btn_plank = find_child("CraftPlankBtn", true, false)
-	if btn_plank:
-		btn_plank.disabled = not (inv.has_method("can_craft_planks") and inv.can_craft_planks())
-	var btn_brick = find_child("CraftBrickFloorBtn", true, false)
-	if btn_brick:
-		btn_brick.disabled = not (inv.has_method("can_craft_brick_floor") and inv.can_craft_brick_floor())
-
-func _on_craft_lamp() -> void:
-	var inv = _get_inv()
-	if inv and inv.has_method("craft_lamp"):
-		inv.craft_lamp()
-		update_forge_ui()
-		update_ui()
-
-func _on_craft_ladder() -> void:
-	var inv = _get_inv()
-	if inv and inv.has_method("craft_ladders"):
-		inv.craft_ladders()
-		update_forge_ui()
-		update_ui()
-
-func _on_craft_plank() -> void:
-	var inv = _get_inv()
-	if inv and inv.has_method("craft_planks"):
-		inv.craft_planks()
-		update_forge_ui()
-		update_ui()
-
-func _on_craft_brick_floor() -> void:
-	var inv = _get_inv()
-	if inv and inv.has_method("craft_brick_floor"):
-		inv.craft_brick_floor()
-		update_forge_ui()
-		update_ui()
-
-func _on_level_up(new_level: int, exp_needed_next: int) -> void:
-	show_level_up_vfx(new_level, exp_needed_next)
-
-func show_level_up_vfx(new_level: int, exp_needed_next: int) -> void:
-	if not is_instance_valid(level_up_panel):
-		level_up_panel = find_child("LevelUpPanel", true, false)
-	if not is_instance_valid(level_up_panel): return
-	if not is_instance_valid(level_up_title):
-		level_up_title = find_child("LevelUpTitle", true, false)
-	if not is_instance_valid(level_up_subtitle):
-		level_up_subtitle = find_child("LevelUpSubtitle", true, false)
-		
-	if is_instance_valid(level_up_title):
-		level_up_title.text = "⭐ NÍVEL %d ALCANÇADO! ⭐" % new_level
-	if is_instance_valid(level_up_subtitle):
-		level_up_subtitle.text = "Próximo Nível: %d EXP" % exp_needed_next
-		
-	level_up_panel.visible = true
-	level_up_panel.modulate.a = 0.0
-	level_up_panel.scale = Vector2(0.8, 0.8)
 	
-	var tween = create_tween()
-	tween.tween_property(level_up_panel, "modulate:a", 1.0, 0.2)
-	tween.parallel().tween_property(level_up_panel, "scale", Vector2(1.0, 1.0), 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_interval(1.0)
-	tween.tween_property(level_up_panel, "modulate:a", 0.0, 0.25)
-	tween.tween_callback(func(): if is_instance_valid(level_up_panel): level_up_panel.visible = false)
+	# Update Forge resource indicators
+	var f_coal = find_child("ForgeCoalCount", true, false)
+	var f_iron = find_child("ForgeIronCount", true, false)
+	var f_wood = find_child("ForgeWoodCount", true, false)
+	var f_stone = find_child("ForgeStoneCount", true, false)
+	var f_dirt = find_child("ForgeDirtCount", true, false)
+	
+	if f_coal: f_coal.text = "%d" % inv.coal
+	if f_iron: f_iron.text = "%d" % inv.iron
+	if f_wood: f_wood.text = "%d" % inv.wood_logs
+	if f_stone: f_stone.text = "%d" % inv.stone
+	if f_dirt: f_dirt.text = "%d" % inv.dirt
+	
+	if not craft_pickaxe_btn: craft_pickaxe_btn = find_child("CraftPickaxeBtn", true, false)
+	if craft_pickaxe_btn:
+		craft_pickaxe_btn.disabled = not inv.can_craft_pickaxe()
+	if craft_lamp_btn:
+		craft_lamp_btn.disabled = not inv.can_craft_lamp()
+	if craft_ladder_btn:
+		craft_ladder_btn.disabled = not inv.can_craft_ladders()
+	if craft_plank_btn:
+		craft_plank_btn.disabled = not inv.can_craft_planks()
+	if not craft_brick_floor_btn: craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
+	if craft_brick_floor_btn:
+		craft_brick_floor_btn.disabled = not inv.can_craft_brick_floor()
+	if not craft_portable_forge_btn: craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
+	if craft_portable_forge_btn:
+		craft_portable_forge_btn.disabled = not inv.can_craft_portable_forge()
 
-func _on_reset_mine_pressed() -> void:
-	if is_inside_tree() and get_tree():
-		get_tree().paused = false
-		if is_instance_valid(pause_panel): pause_panel.visible = false
-		if is_instance_valid(shop_panel): shop_panel.visible = false
-		if is_instance_valid(equipment_panel): equipment_panel.visible = false
-		if is_instance_valid(inventory_panel): inventory_panel.visible = false
-		if is_instance_valid(chest_panel): chest_panel.visible = false
-		if is_instance_valid(forge_panel): forge_panel.visible = false
-		if get_tree().root and get_tree().root.has_node("SaveManager"):
-			get_tree().root.get_node("SaveManager").reset_mine_completely()
-		else:
-			get_tree().reload_current_scene()
+func toggle_equipment() -> void:
+	if not equipment_panel: return
+	if equipment_panel.visible:
+		close_equipment()
+	else:
+		open_equipment()
+
+func open_equipment() -> void:
+	if equipment_panel:
+		equipment_panel.visible = true
+		idle_anim_timer = 0.0
+		idle_anim_frame = 0
+		if equip_close_btn:
+			_safe_grab_focus(equip_close_btn)
+
+func close_equipment() -> void:
+	if equipment_panel:
+		equipment_panel.visible = false
+
+func toggle() -> void:
+	if not inventory_panel: return
+	if inventory_panel.visible:
+		close_inventory()
+	else:
+		open_inventory()
+
+func open_inventory() -> void:
+	if inventory_panel:
+		inventory_panel.visible = true
+		update_ui()
+		select_slot(selected_index)
+		if close_button:
+			_safe_grab_focus(close_button)
+
+func close_inventory() -> void:
+	if inventory_panel:
+		inventory_panel.visible = false
+
+func toggle_pause() -> void:
+	if not pause_panel: return
+	if pause_panel.visible:
+		close_pause()
+	else:
+		open_pause()
+
+func open_pause() -> void:
+	if pause_panel:
+		pause_panel.visible = true
+		if resume_btn:
+			_safe_grab_focus(resume_btn)
+
+func close_pause() -> void:
+	if pause_panel:
+		pause_panel.visible = false
+
+func _on_save_pressed() -> void:
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").save_game(true)
+	close_pause()
 
 func _on_restart_pressed() -> void:
-	if is_inside_tree() and get_tree():
-		get_tree().paused = false
-		if is_instance_valid(pause_panel):
-			pause_panel.visible = false
-		if is_instance_valid(shop_panel):
-			shop_panel.visible = false
-		if is_instance_valid(equipment_panel):
-			equipment_panel.visible = false
-		if is_instance_valid(inventory_panel):
-			inventory_panel.visible = false
-		if get_tree().root and get_tree().root.has_node("SaveManager"):
-			get_tree().root.get_node("SaveManager").restart_run_to_surface()
-		get_tree().reload_current_scene()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").restart_run_to_surface()
+	close_pause()
+
+func _on_reset_mine_pressed() -> void:
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").reset_mine_completely()
 
 func _on_exit_pressed() -> void:
-	if is_inside_tree() and get_tree():
-		get_tree().paused = false
-		if OS.has_feature("pc") and not OS.has_feature("web"):
-			get_tree().quit()
-		else:
-			get_tree().change_scene_to_file("res://scenes/ui/start_screen.tscn")
-
-func _nav_grid(dx: int, dy: int) -> void:
-	var total = chest_items_def.size()
-	var cols = 4
-	var cur_col = selected_index % cols
-	var cur_row = selected_index / cols
-	
-	var new_col = clamp(cur_col + dx, 0, cols - 1)
-	var new_row = clamp(cur_row + dy, 0, (total - 1) / cols)
-	var new_idx = new_row * cols + new_col
-	
-	if new_idx < total and new_idx != selected_index:
-		select_slot(new_idx)
-
-func _on_shop_pressed() -> void:
-	if shop_button:
-		var tween = create_tween()
-		tween.tween_property(shop_button, "scale", Vector2(1.15, 1.15), 0.08)
-		tween.tween_property(shop_button, "scale", Vector2.ONE, 0.08)
-	toggle_shop()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").save_game(false)
+	get_tree().quit()
 
 func toggle_shop() -> void:
-	if is_instance_valid(shop_panel) and shop_panel.visible:
+	if not shop_panel: return
+	if shop_panel.visible:
 		close_shop()
 	else:
 		open_shop()
 
 func open_shop() -> void:
-	if is_instance_valid(forge_panel) and forge_panel.visible:
-		close_forge()
-	if is_instance_valid(chest_panel) and chest_panel.visible:
-		close_chest()
-	if is_instance_valid(inventory_panel) and inventory_panel.visible:
-		close_inventory()
-	if is_instance_valid(equipment_panel) and equipment_panel.visible:
-		close_equipment()
-	if is_instance_valid(pause_panel) and pause_panel.visible:
-		close_pause()
-	if is_instance_valid(shop_panel):
+	if shop_panel:
 		shop_panel.visible = true
-		switch_shop_tab("sell")
+		_on_shop_tab_sell()
 		update_shop_ui()
-		if is_instance_valid(shop_tab_sell_btn):
+		if shop_tab_sell_btn:
 			_safe_grab_focus(shop_tab_sell_btn)
 
 func close_shop() -> void:
-	if is_instance_valid(shop_panel):
+	if shop_panel:
 		shop_panel.visible = false
 
+func _on_shop_pressed() -> void:
+	toggle_shop()
+
 func _on_shop_tab_buy() -> void:
-	switch_shop_tab("buy")
+	if shop_buy_view: shop_buy_view.visible = true
+	if shop_sell_view: shop_sell_view.visible = false
+	if shop_tab_buy_btn: shop_tab_buy_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
+	if shop_tab_sell_btn: shop_tab_sell_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
 
 func _on_shop_tab_sell() -> void:
-	switch_shop_tab("sell")
-
-func switch_shop_tab(tab: String) -> void:
-	if tab == "buy":
-		if is_instance_valid(shop_buy_view): shop_buy_view.visible = true
-		if is_instance_valid(shop_sell_view): shop_sell_view.visible = false
-		if is_instance_valid(shop_tab_buy_btn):
-			shop_tab_buy_btn.modulate = Color(1, 1, 1, 1.0)
-		if is_instance_valid(shop_tab_sell_btn):
-			shop_tab_sell_btn.modulate = Color(0.7, 0.7, 0.7, 0.8)
-	else:
-		if is_instance_valid(shop_buy_view): shop_buy_view.visible = false
-		if is_instance_valid(shop_sell_view): shop_sell_view.visible = true
-		if is_instance_valid(shop_tab_sell_btn):
-			shop_tab_sell_btn.modulate = Color(1, 1, 1, 1.0)
-		if is_instance_valid(shop_tab_buy_btn):
-			shop_tab_buy_btn.modulate = Color(0.7, 0.7, 0.7, 0.8)
-		update_shop_ui()
+	if shop_buy_view: shop_buy_view.visible = false
+	if shop_sell_view: shop_sell_view.visible = true
+	if shop_tab_sell_btn: shop_tab_sell_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
+	if shop_tab_buy_btn: shop_tab_buy_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+	update_shop_ui()
 
 func update_shop_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
 	
-	if is_instance_valid(shop_coins_label):
-		shop_coins_label.text = "Moedas: %d" % inv.coins
+	if shop_coins_label:
+		shop_coins_label.text = "Suas Moedas de Ouro: %d" % inv.coins
 		
-	var coal_row = find_child("CoalRow", true, false)
-	var iron_row = find_child("IronRow", true, false)
-	var gold_row = find_child("GoldRow", true, false)
-	
-	if coal_row: coal_row.visible = (inv.coal > 0)
-	if iron_row: iron_row.visible = (inv.iron > 0)
-	if gold_row: gold_row.visible = (inv.gold > 0)
-	
-	var sell_coal_lbl = find_child("SellCoalCount", true, false)
-	if sell_coal_lbl:
-		sell_coal_lbl.text = "x%d" % inv.coal
+	# Update dynamically sellable items list in Shop
+	var sell_container = find_child("SellRowsContainer", true, false)
+	if sell_container:
+		for child in sell_container.get_children():
+			child.queue_free()
+			
+		var sellable = [
+			{"key": "coal", "name": "Carvão Mineral", "price": inv.COAL_PRICE, "count": inv.coal, "tex": "ores_coal"},
+			{"key": "iron", "name": "Minério de Ferro", "price": inv.IRON_PRICE, "count": inv.iron, "tex": "ores_iron"},
+			{"key": "gold", "name": "Minério de Ouro", "price": inv.GOLD_PRICE, "count": inv.gold, "tex": "ores_gold"},
+			{"key": "wood", "name": "Madeira (Troncos)", "price": inv.WOOD_PRICE, "count": inv.wood_logs, "tex": "wood"},
+			{"key": "stone", "name": "Pedra", "price": inv.STONE_PRICE, "count": inv.stone, "tex": "stone"},
+			{"key": "dirt", "name": "Lama / Terra", "price": inv.DIRT_PRICE, "count": inv.dirt, "tex": "dirt"},
+			{"key": "plank", "name": "Tábua de Madeira", "price": inv.PLANK_PRICE, "count": inv.planks, "tex": "plank"},
+			{"key": "brick", "name": "Piso de Tijolo", "price": inv.BRICK_PRICE, "count": inv.brick_floors, "tex": "brick"},
+			{"key": "ladder", "name": "Escada", "price": inv.LADDER_PRICE, "count": inv.ladders, "tex": "rope"}
+		]
 		
-	var sell_iron_lbl = find_child("SellIronCount", true, false)
-	if sell_iron_lbl:
-		sell_iron_lbl.text = "x%d" % inv.iron
-		
-	var sell_gold_lbl = find_child("SellGoldCount", true, false)
-	if sell_gold_lbl:
-		sell_gold_lbl.text = "x%d" % inv.gold
-		
-	var sc1 = find_child("SellCoalOneBtn", true, false)
-	if sc1: sc1.disabled = (inv.coal <= 0)
-	var sca = find_child("SellCoalAllBtn", true, false)
-	if sca: sca.disabled = (inv.coal <= 0)
+		var has_any = false
+		for item in sellable:
+			if item.count > 0:
+				has_any = true
+				var row = _create_shop_sell_row(item)
+				sell_container.add_child(row)
+				
+		var empty_lbl = find_child("SellEmptyLabel", true, false)
+		if empty_lbl:
+			empty_lbl.visible = not has_any
+
+func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
+	var row = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.18, 0.11, 0.06, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.45, 0.3, 0.16, 1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	row.add_theme_stylebox_override("panel", style)
 	
-	var si1 = find_child("SellIronOneBtn", true, false)
-	if si1: si1.disabled = (inv.iron <= 0)
-	var sia = find_child("SellIronAllBtn", true, false)
-	if sia: sia.disabled = (inv.iron <= 0)
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	row.add_child(margin)
 	
-	var sg1 = find_child("SellGoldOneBtn", true, false)
-	if sg1: sg1.disabled = (inv.gold <= 0)
-	var sga = find_child("SellGoldAllBtn", true, false)
-	if sga: sga.disabled = (inv.gold <= 0)
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	margin.add_child(hbox)
 	
-	var sell_all = find_child("SellAllMineralsBtn", true, false)
-	if sell_all:
-		sell_all.visible = (inv.coal > 0 or inv.iron > 0 or inv.gold > 0)
-		sell_all.disabled = (inv.coal <= 0 and inv.iron <= 0 and inv.gold <= 0)
-
-	var sell_header = find_child("SellHeaderLabel", true, false)
-	if sell_header:
-		if inv.coal <= 0 and inv.iron <= 0 and inv.gold <= 0:
-			sell_header.text = "Nenhum minério disponível para venda na mochila."
-		else:
-			sell_header.text = "VENDA SEUS RECURSOS POR MOEDAS DE OURO:" 
-
-func _on_sell_coal_one() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_resource("coal", 1)
-		update_shop_ui()
-
-func _on_sell_coal_all() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_all_resource("coal")
-		update_shop_ui()
-
-func _on_sell_iron_one() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_resource("iron", 1)
-		update_shop_ui()
-
-func _on_sell_iron_all() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_all_resource("iron")
-		update_shop_ui()
-
-func _on_sell_gold_one() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_resource("gold", 1)
-		update_shop_ui()
-
-func _on_sell_gold_all() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_all_resource("gold")
-		update_shop_ui()
-
-func _on_sell_all_minerals() -> void:
-	var inv = _get_inv()
-	if inv:
-		inv.sell_all_minerals()
-		update_shop_ui()
+	var lbl = Label.new()
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.text = "%s (x%d) — Preço: %d moedas cada" % [item.name, item.count, item.price]
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.94, 0.8, 1.0))
+	hbox.add_child(lbl)
+	
+	var btn_1 = Button.new()
+	btn_1.text = "Vender 1 (+%d)" % item.price
+	var item_key = item.key
+	btn_1.pressed.connect(func():
+		var inv = _get_inv()
+		if inv:
+			inv.sell_resource(item_key, 1)
+			update_shop_ui()
+			update_ui()
+	)
+	hbox.add_child(btn_1)
+	
+	var btn_all = Button.new()
+	btn_all.text = "Vender Tudo (+%d)" % (item.price * item.count)
+	btn_all.pressed.connect(func():
+		var inv = _get_inv()
+		if inv:
+			inv.sell_all_resource(item_key)
+			update_shop_ui()
+			update_ui()
+	)
+	hbox.add_child(btn_all)
+	
+	return row
 
 func setup_hotbar() -> void:
 	slots.clear()
@@ -805,20 +898,13 @@ func setup_hotbar() -> void:
 	for child in hotbar.get_children():
 		child.queue_free()
 		
-	# 7 Hotbar items: 4 Tools (1-4) + 3 Ores (Ferro, Ouro, Carvão)
-	var defs = [
-		{"key": "pickaxe", "num": "1", "type": "tool", "atlas": "extras", "region": Rect2(0, 0, 16, 16)},
-		{"key": "lamp", "num": "2", "type": "tool", "atlas": "lamp", "region": Rect2(0, 0, 16, 16)},
-		{"key": "ladder", "num": "3", "type": "tool", "direct": "rope"},
-		{"key": "plank", "num": "4", "type": "tool", "direct": "plank"},
-		{"key": "iron", "num": "Fe", "type": "res", "atlas": "ores", "region": Rect2(32, 128, 16, 16)},
-		{"key": "gold", "num": "Au", "type": "res", "atlas": "ores", "region": Rect2(128, 128, 16, 16)},
-		{"key": "coal", "num": "C", "type": "res", "atlas": "ores", "region": Rect2(0, 128, 16, 16)}
-	]
+	var inv = _get_inv()
+	var h_slots = inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
 	
-	for i in range(defs.size()):
-		var d = defs[i]
-		var slot = _create_slot_panel(d, i < 4)
+	for i in range(h_slots.size()):
+		var key = h_slots[i]
+		var def = {"key": key, "num": str(i + 1), "index": i}
+		var slot = _create_slot_panel(def, true)
 		hotbar.add_child(slot)
 		slots.append(slot)
 
@@ -863,18 +949,26 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	margin.add_child(vbox)
 	
 	var icon = TextureRect.new()
+	icon.name = "SlotIcon"
 	icon.custom_minimum_size = Vector2(22, 22)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	
-	if def.has("direct"):
-		if def.direct == "rope": icon.texture = rope_tex
-		elif def.direct == "plank": icon.texture = plank_tex
+	var k = def.get("key", "")
+	if k == "ladder": icon.texture = rope_tex
+	elif k == "plank": icon.texture = plank_tex
+	elif k == "brick": icon.texture = brick_tex
+	elif k == "forge": icon.texture = stone_tex
+	elif k == "lamp":
+		var atlas = AtlasTexture.new()
+		atlas.atlas = lamp_tex
+		atlas.region = Rect2(0, 0, 16, 16)
+		icon.texture = atlas
 	else:
 		var atlas = AtlasTexture.new()
-		atlas.atlas = extras_tex if def.atlas == "extras" else (lamp_tex if def.atlas == "lamp" else ores_tex)
-		atlas.region = def.region
+		atlas.atlas = extras_tex
+		atlas.region = Rect2(0, 0, 16, 16)
 		icon.texture = atlas
 		
 	vbox.add_child(icon)
@@ -886,7 +980,7 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	label.add_theme_color_override("font_color", Color(1, 0.9, 0.6, 1))
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	label.add_theme_constant_override("outline_size", 3)
-	label.text = def.num
+	label.text = def.get("num", "1")
 	vbox.add_child(label)
 	
 	panel.set_meta("def", def)
@@ -927,14 +1021,26 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	
-	if def.get("icon_type") == "direct" or def.has("direct") or def.has("tex"):
-		var tname = def.get("tex", def.get("direct", ""))
-		if tname == "rope": icon.texture = rope_tex
-		elif tname == "plank": icon.texture = plank_tex
+	var k = def.get("key", "")
+	if k == "ladder": icon.texture = rope_tex
+	elif k == "plank": icon.texture = plank_tex
+	elif k == "brick": icon.texture = brick_tex
+	elif k == "wood": icon.texture = wood_tex
+	elif k == "stone" or k == "forge": icon.texture = stone_tex
+	elif k == "dirt": icon.texture = dirt_tex
+	elif k == "lamp":
+		var atlas = AtlasTexture.new()
+		atlas.atlas = lamp_tex
+		atlas.region = Rect2(0, 0, 16, 16)
+		icon.texture = atlas
+	elif k == "pickaxe":
+		var atlas = AtlasTexture.new()
+		atlas.atlas = extras_tex
+		atlas.region = Rect2(0, 0, 16, 16)
+		icon.texture = atlas
 	else:
 		var atlas = AtlasTexture.new()
-		var aname = def.get("atlas", "ores")
-		atlas.atlas = extras_tex if aname == "extras" else (lamp_tex if aname == "lamp" else ores_tex)
+		atlas.atlas = ores_tex
 		atlas.region = def.get("region", Rect2(0, 0, 16, 16))
 		icon.texture = atlas
 	vbox.add_child(icon)
@@ -989,13 +1095,18 @@ func select_slot(idx: int) -> void:
 			
 	if selected_index >= 0 and selected_index < chest_items_def.size():
 		var def = chest_items_def[selected_index]
+		var inv = _get_inv()
 		if item_title: item_title.text = def.name
-		if item_desc: item_desc.text = def.desc
+		if item_desc:
+			if def.key == "pickaxe" and inv:
+				item_desc.text = "%s\n\nDurabilidade: %d%% (%d/100)" % [def.desc, inv.pickaxe_durability, inv.pickaxe_durability]
+			else:
+				item_desc.text = def.desc
 		if equip_button:
 			equip_button.visible = def.is_tool
 			equip_button.text = "Equipar [%s]" % def.shortcut
 		if drop_button:
-			drop_button.visible = not def.is_tool or (def.key == "plank" or def.key == "lamp")
+			drop_button.visible = not def.is_tool or (def.key in ["plank", "lamp", "brick", "forge"])
 
 func _on_equip_pressed() -> void:
 	if selected_index < 0 or selected_index >= chest_items_def.size(): return
@@ -1029,14 +1140,18 @@ func _get_item_count(key: String) -> int:
 	var inv = _get_inv()
 	if not inv: return 0
 	match key:
-		"pickaxe": return 1
+		"pickaxe": return 1 if inv.has_pickaxe else 0
 		"lamp": return inv.starter_lamps if "starter_lamps" in inv else 0
 		"ladder": return inv.ladders if "ladders" in inv else 0
 		"plank": return inv.planks
+		"brick": return inv.brick_floors if "brick_floors" in inv else 0
+		"forge": return inv.portable_forges if "portable_forges" in inv else 0
+		"wood": return inv.wood_logs if "wood_logs" in inv else 0
 		"iron": return inv.iron
 		"gold": return inv.gold
 		"coal": return inv.coal
-		"wood": return inv.wood_logs if "wood_logs" in inv else 0
+		"stone": return inv.stone if "stone" in inv else 0
+		"dirt": return inv.dirt if "dirt" in inv else 0
 		_: return 0
 
 func update_ui() -> void:
@@ -1061,18 +1176,19 @@ func update_ui() -> void:
 		exp_progress_bar.max_value = float(req)
 		exp_progress_bar.value = float(cur)
 	
-	var can_craft_lamp = inv.can_place_lamp() if inv.has_method("can_place_lamp") else (inv.starter_lamps > 0 if "starter_lamps" in inv else false)
-	var craftable_lamps = inv.starter_lamps if "starter_lamps" in inv else 0
-	
-	# Update 7 Hotbar items
+	# Update Hotbar Slots
+	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
+	if slots.size() != h_slots.size():
+		setup_hotbar()
+		
 	for i in range(slots.size()):
 		var slot = slots[i]
-		var def = slot.get_meta("def")
+		var key = h_slots[i] if i < h_slots.size() else "pickaxe"
 		var count_lbl = slot.find_child("CountLabel", true, false)
 		var style = slot.get_theme_stylebox("panel")
 		
-		var is_selected_tool = (i == inv.active_slot and i < 4)
-		if is_selected_tool:
+		var is_selected = (i == inv.active_slot)
+		if is_selected:
 			style.border_color = Color(1.0, 0.88, 0.25, 1.0)
 			style.border_width_left = 3
 			style.border_width_top = 3
@@ -1087,140 +1203,86 @@ func update_ui() -> void:
 			style.border_width_bottom = 2
 			style.bg_color = Color(0.16, 0.1, 0.05, 0.95)
 			
-		if def.key == "pickaxe":
-			count_lbl.text = "[1]"
-			slot.modulate = Color(1, 1, 1, 1.0)
-		elif def.key == "lamp":
-			count_lbl.text = "%d" % craftable_lamps
-			if can_craft_lamp:
-				slot.modulate = Color(1, 1, 1, 1.0)
+		if key == "pickaxe":
+			if inv.has_pickaxe:
+				count_lbl.text = "%d%%" % inv.pickaxe_durability
+				slot.modulate = Color.WHITE
 			else:
-				slot.modulate = Color(1, 1, 1, 0.4) # Semi-opaco indicando indisponibilidade
-		elif def.key == "ladder":
-			count_lbl.text = "%d" % (inv.ladders if "ladders" in inv else 0)
-			slot.modulate = Color(1, 1, 1, 1.0)
-		elif def.key == "plank":
+				count_lbl.text = "QUEBR."
+				slot.modulate = Color(1.0, 0.4, 0.4, 0.8)
+		elif key == "lamp":
+			count_lbl.text = "%d" % inv.starter_lamps
+			slot.modulate = Color.WHITE if inv.starter_lamps > 0 else Color(1, 1, 1, 0.4)
+		elif key == "ladder":
+			count_lbl.text = "%d" % inv.ladders
+			slot.modulate = Color.WHITE if inv.ladders > 0 else Color(1, 1, 1, 0.4)
+		elif key == "plank":
 			count_lbl.text = "%d" % inv.planks
-			slot.modulate = Color(1, 1, 1, 1.0)
-		elif def.key == "iron":
-			count_lbl.text = "%d" % inv.iron
-			slot.modulate = Color(1, 1, 1, 1.0)
-		elif def.key == "gold":
-			count_lbl.text = "%d" % inv.gold
-			slot.modulate = Color(1, 1, 1, 1.0)
-		elif def.key == "coal":
-			count_lbl.text = "%d" % inv.coal
-			slot.modulate = Color(1, 1, 1, 1.0)
-			
-	# Update chest slot cards
+			slot.modulate = Color.WHITE if inv.planks > 0 else Color(1, 1, 1, 0.4)
+		elif key == "brick":
+			count_lbl.text = "%d" % inv.brick_floors
+			slot.modulate = Color.WHITE if inv.brick_floors > 0 else Color(1, 1, 1, 0.4)
+		elif key == "forge":
+			count_lbl.text = "%d" % inv.portable_forges
+			slot.modulate = Color.WHITE if inv.portable_forges > 0 else Color(1, 1, 1, 0.4)
+
+	# Update Chest Grid slots counts
 	for i in range(chest_slots.size()):
-		var card = chest_slots[i]
-		var def = chest_items_def[i]
-		var lbl = card.find_child("SlotCount", true, false)
-		if lbl:
-			var c = _get_item_count(def.key)
-			if def.key == "ladder":
-				lbl.text = "%d un." % (inv.ladders if "ladders" in inv else 0)
-			elif def.key == "pickaxe":
-				lbl.text = "Nível 1"
-			elif def.key == "lamp":
-				lbl.text = "%d un." % (inv.starter_lamps if "starter_lamps" in inv else 0)
-			else:
-				lbl.text = "%d un." % c
+		if i < chest_items_def.size():
+			var card = chest_slots[i]
+			var def = chest_items_def[i]
+			var count_label = card.find_child("SlotCount", true, false)
+			if count_label:
+				var c = _get_item_count(def.key)
+				if def.key == "pickaxe":
+					count_label.text = "%d%%" % inv.pickaxe_durability if inv.has_pickaxe else "QUEBRADA"
+				else:
+					count_label.text = "%d" % c
 				
+				if c == 0 and def.key != "pickaxe":
+					card.modulate = Color(1, 1, 1, 0.4)
+				else:
+					card.modulate = Color(1, 1, 1, 1.0)
+					
 	_update_capacity_badge()
-	if is_instance_valid(shop_panel) and shop_panel.visible:
-		update_shop_ui()
-	if is_instance_valid(chest_panel) and chest_panel.visible:
-		update_chest_ui()
-	if is_instance_valid(forge_panel) and forge_panel.visible:
-		update_forge_ui()
 
 func _update_capacity_badge() -> void:
 	var inv = _get_inv()
-	if not is_instance_valid(capacity_badge_label) or not inv:
-		return
-	
-	var used = inv.get_total_used()
-	var max_cap = inv.MAX_CAPACITY
-	var avail = inv.get_total_available()
-	
-	capacity_badge_label.text = "🎒 Carga: %d / %d  |  Livre: %d" % [used, max_cap, avail]
-	
-	var ratio = float(used) / float(max_cap)
-	if ratio >= 1.0:
-		capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35, 1.0))
-	elif ratio >= 0.75:
-		capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3, 1.0))
-	else:
-		capacity_badge_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.85, 1.0))
-
-func toggle() -> void:
-	if is_instance_valid(inventory_panel) and inventory_panel.visible:
-		close_inventory()
-	else:
-		open_inventory()
-
-func open_inventory() -> void:
-	if is_instance_valid(forge_panel) and forge_panel.visible:
-		close_forge()
-	if is_instance_valid(chest_panel) and chest_panel.visible:
-		close_chest()
-	if is_instance_valid(equipment_panel) and equipment_panel.visible:
-		close_equipment()
-	if is_instance_valid(shop_panel) and shop_panel.visible:
-		close_shop()
-	if is_instance_valid(pause_panel) and pause_panel.visible:
-		close_pause()
-	if is_instance_valid(inventory_panel):
-		inventory_panel.visible = true
-	select_slot(selected_index)
-	update_ui()
-
-func close_inventory() -> void:
-	if is_instance_valid(inventory_panel):
-		inventory_panel.visible = false
+	if not inv: return
+	if capacity_badge_label:
+		var used = inv.get_total_used()
+		capacity_badge_label.text = "Minérios: %d / %d" % [used, inv.MAX_CAPACITY]
 
 func toggle_chest(chest_node: Node = null) -> void:
-	if is_instance_valid(chest_panel) and chest_panel.visible:
+	if not chest_panel: return
+	if chest_panel.visible:
 		close_chest()
 	else:
 		open_chest(chest_node)
 
 func open_chest(chest_node: Node = null) -> void:
-	if is_instance_valid(forge_panel) and forge_panel.visible:
-		close_forge()
-	if chest_node:
-		current_chest_node = chest_node
-	elif not is_instance_valid(current_chest_node):
-		if is_inside_tree() and get_tree() and get_tree().current_scene:
-			current_chest_node = get_tree().current_scene.get_node_or_null("Chest")
-			
-	if is_instance_valid(inventory_panel) and inventory_panel.visible:
-		close_inventory()
-	if is_instance_valid(equipment_panel) and equipment_panel.visible:
-		close_equipment()
-	if is_instance_valid(shop_panel) and shop_panel.visible:
-		close_shop()
-	if is_instance_valid(pause_panel) and pause_panel.visible:
-		close_pause()
-		
-	if is_instance_valid(chest_panel):
+	current_chest_node = chest_node
+	if chest_panel:
 		chest_panel.visible = true
 		update_chest_ui()
-		if is_instance_valid(chest_deposit_btn):
+		if chest_deposit_btn:
 			_safe_grab_focus(chest_deposit_btn)
 
 func close_chest() -> void:
-	if is_instance_valid(chest_panel):
+	if chest_panel:
 		chest_panel.visible = false
+	current_chest_node = null
 
 func update_chest_ui() -> void:
 	var inv = _get_inv()
-	var c_coal = current_chest_node.stored_coal if is_instance_valid(current_chest_node) else 0
-	var c_iron = current_chest_node.stored_iron if is_instance_valid(current_chest_node) else 0
-	var c_gold = current_chest_node.stored_gold if is_instance_valid(current_chest_node) else 0
-	
+	var c_coal = 0
+	var c_iron = 0
+	var c_gold = 0
+	if is_instance_valid(current_chest_node):
+		c_coal = current_chest_node.stored_coal
+		c_iron = current_chest_node.stored_iron
+		c_gold = current_chest_node.stored_gold
+		
 	if chest_coal_lbl:
 		chest_coal_lbl.visible = (c_coal > 0)
 		chest_coal_lbl.text = "• Carvão: %d" % c_coal
@@ -1230,21 +1292,7 @@ func update_chest_ui() -> void:
 	if chest_gold_lbl:
 		chest_gold_lbl.visible = (c_gold > 0)
 		chest_gold_lbl.text = "• Minério de Ouro: %d" % c_gold
-	
-	var left_box = find_child("LeftBox", true, false)
-	var chest_empty_lbl = find_child("ChestEmptyLabel", true, false)
-	if not chest_empty_lbl and left_box:
-		var vbox = left_box.find_child("VBox", true, false)
-		if vbox:
-			chest_empty_lbl = Label.new()
-			chest_empty_lbl.name = "ChestEmptyLabel"
-			chest_empty_lbl.add_theme_font_size_override("font_size", 12)
-			chest_empty_lbl.add_theme_color_override("font_color", Color(0.7, 0.65, 0.6, 1))
-			chest_empty_lbl.text = "(Baú vazio)"
-			vbox.add_child(chest_empty_lbl)
-	if chest_empty_lbl:
-		chest_empty_lbl.visible = (c_coal <= 0 and c_iron <= 0 and c_gold <= 0)
-	
+		
 	var b_coal = inv.coal if inv else 0
 	var b_iron = inv.iron if inv else 0
 	var b_gold = inv.gold if inv else 0
@@ -1258,20 +1306,6 @@ func update_chest_ui() -> void:
 	if backpack_gold_lbl:
 		backpack_gold_lbl.visible = (b_gold > 0)
 		backpack_gold_lbl.text = "• Minério de Ouro: %d" % b_gold
-	
-	var right_box = find_child("RightBox", true, false)
-	var bp_empty_lbl = find_child("BackpackEmptyLabel", true, false)
-	if not bp_empty_lbl and right_box:
-		var vbox = right_box.find_child("VBox", true, false)
-		if vbox:
-			bp_empty_lbl = Label.new()
-			bp_empty_lbl.name = "BackpackEmptyLabel"
-			bp_empty_lbl.add_theme_font_size_override("font_size", 12)
-			bp_empty_lbl.add_theme_color_override("font_color", Color(0.7, 0.65, 0.6, 1))
-			bp_empty_lbl.text = "(Mochila sem recursos)"
-			vbox.add_child(bp_empty_lbl)
-	if bp_empty_lbl:
-		bp_empty_lbl.visible = (b_coal <= 0 and b_iron <= 0 and b_gold <= 0)
 	
 	if chest_deposit_btn:
 		chest_deposit_btn.disabled = (b_coal <= 0 and b_iron <= 0 and b_gold <= 0)
@@ -1350,24 +1384,23 @@ func show_toast(text: String, icon_type: String = "") -> void:
 			icon.texture = atlas
 		elif icon_type == "plank":
 			icon.texture = plank_tex
+		elif icon_type == "stone" or icon_type == "forge":
+			icon.texture = stone_tex
+		elif icon_type == "dirt":
+			icon.texture = dirt_tex
 		elif icon_type == "lamp":
 			var atlas = AtlasTexture.new()
 			atlas.atlas = lamp_tex
 			atlas.region = Rect2(0, 0, 16, 16)
 			icon.texture = atlas
-		elif icon_type == "save" or icon_type == "chest":
+		elif icon_type in ["save", "chest"]:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = extras_tex
 			atlas.region = Rect2(160, 32, 16, 16)
 			icon.texture = atlas
 		elif icon_type == "ladder":
 			icon.texture = rope_tex
-		elif icon_type == "dash":
-			var atlas = AtlasTexture.new()
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(0, 0, 16, 16)
-			icon.texture = atlas
-		elif icon_type == "pickaxe":
+		elif icon_type in ["dash", "pickaxe"]:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = extras_tex
 			atlas.region = Rect2(0, 0, 16, 16)

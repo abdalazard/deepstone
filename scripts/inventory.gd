@@ -3,6 +3,7 @@ extends Node
 signal inventory_changed
 signal notification_triggered(text: String, icon_type: String)
 signal level_up(new_level: int, exp_needed_next: int)
+signal pickaxe_broken
 
 const MAX_STACK: int = 20
 const MAX_CAPACITY: int = 60 # Capacidade total de minérios (Ferro + Ouro + Carvão)
@@ -11,20 +12,38 @@ var gold: int = 0
 var coal: int = 0
 var coins: int = 0 # Moedas obtidas na loja
 var signs: int = 10 # Mini-poste / lamp
-var starter_lamps: int = 1 # 1 lanterna inicial grátis (forja exclusiva para novas)
+var starter_lamps: int = 1 # 1 lanterna inicial grátis
 var wood_logs: int = 0 # Troncos de madeira obtidos de árvores
 var ladders: int = 0 # Escadas de madeira forjadas (1 tronco -> 5 escadas)
 var planks: int = 0 # Tábuas de madeira forjadas (1 tronco -> 5 tábuas)
 var dirt: int = 0 # Lama/Terra obtida de escavação
 var stone: int = 0 # Pedra obtida de escavação
 var brick_floors: int = 0 # Pisos de tijolo forjados (1 lama + 1 pedra)
+var portable_forges: int = 0 # Forjas portáteis (5 pedras + 3 ferros)
+
+# Picareta & Durabilidade
+var has_pickaxe: bool = true
+var pickaxe_durability: int = 100
+var max_pickaxe_durability: int = 100
+
+# Nível e Progressão
 var level: int = 0 # Começa no nível zero
 var current_exp: int = 0 # EXP acumulada no nível atual
-var active_slot: int = 0 # 0=Pickaxe, 1=Lamp, 2=Escada, 3=Tábua
 
+# Hotbar e Atalhos customizáveis
+var active_slot: int = 0 # 0..5
+var hotbar_slots: Array = ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
+
+# Preços de Venda na Loja
 const COAL_PRICE: int = 5
 const IRON_PRICE: int = 15
 const GOLD_PRICE: int = 50
+const WOOD_PRICE: int = 8
+const STONE_PRICE: int = 4
+const DIRT_PRICE: int = 2
+const PLANK_PRICE: int = 10
+const BRICK_PRICE: int = 12
+const LADDER_PRICE: int = 8
 
 func get_exp_required_for_level(lvl: int) -> int:
 	return 100 + lvl * 70
@@ -53,6 +72,15 @@ func add_coins(amount: int) -> void:
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 
+func damage_pickaxe(amount: int = 1) -> void:
+	if not has_pickaxe: return
+	pickaxe_durability = max(0, pickaxe_durability - amount)
+	inventory_changed.emit()
+	if pickaxe_durability <= 0:
+		has_pickaxe = false
+		pickaxe_broken.emit()
+		notify("Sua picareta quebrou! Colete os materiais e forje uma nova.", "pickaxe")
+
 func sell_resource(key: String, amount: int = 1) -> int:
 	var earned = 0
 	var exp_gain = 0
@@ -68,6 +96,30 @@ func sell_resource(key: String, amount: int = 1) -> int:
 		gold -= amount
 		earned = amount * GOLD_PRICE
 		exp_gain = amount * 15
+	elif key == "wood" and wood_logs >= amount:
+		wood_logs -= amount
+		earned = amount * WOOD_PRICE
+		exp_gain = amount * 3
+	elif key == "stone" and stone >= amount:
+		stone -= amount
+		earned = amount * STONE_PRICE
+		exp_gain = amount * 2
+	elif key == "dirt" and dirt >= amount:
+		dirt -= amount
+		earned = amount * DIRT_PRICE
+		exp_gain = amount * 1
+	elif key == "plank" and planks >= amount:
+		planks -= amount
+		earned = amount * PLANK_PRICE
+		exp_gain = amount * 4
+	elif key == "brick" and brick_floors >= amount:
+		brick_floors -= amount
+		earned = amount * BRICK_PRICE
+		exp_gain = amount * 5
+	elif key == "ladder" and ladders >= amount:
+		ladders -= amount
+		earned = amount * LADDER_PRICE
+		exp_gain = amount * 3
 		
 	if earned > 0:
 		coins += earned
@@ -84,6 +136,12 @@ func sell_all_resource(key: String) -> int:
 	if key == "coal": count = coal
 	elif key == "iron": count = iron
 	elif key == "gold": count = gold
+	elif key == "wood": count = wood_logs
+	elif key == "stone": count = stone
+	elif key == "dirt": count = dirt
+	elif key == "plank": count = planks
+	elif key == "brick": count = brick_floors
+	elif key == "ladder": count = ladders
 	if count > 0:
 		return sell_resource(key, count)
 	return 0
@@ -93,6 +151,12 @@ func sell_all_minerals() -> int:
 	total_earned += sell_all_resource("coal")
 	total_earned += sell_all_resource("iron")
 	total_earned += sell_all_resource("gold")
+	total_earned += sell_all_resource("wood")
+	total_earned += sell_all_resource("stone")
+	total_earned += sell_all_resource("dirt")
+	total_earned += sell_all_resource("plank")
+	total_earned += sell_all_resource("brick")
+	total_earned += sell_all_resource("ladder")
 	return total_earned
 
 func get_available_lamps() -> int:
@@ -105,6 +169,25 @@ func consume_lamp() -> bool:
 	if starter_lamps > 0:
 		starter_lamps -= 1
 		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
+# Receitas de Forja
+func can_craft_pickaxe() -> bool:
+	return iron >= 1 and wood_logs >= 2 and stone >= 1
+
+func craft_pickaxe() -> bool:
+	if can_craft_pickaxe():
+		iron -= 1
+		wood_logs -= 2
+		stone -= 1
+		has_pickaxe = true
+		pickaxe_durability = max_pickaxe_durability
+		add_exp(20)
+		inventory_changed.emit()
+		notify("Nova Picareta Forjada!", "pickaxe")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -172,6 +255,22 @@ func craft_brick_floor() -> bool:
 		return true
 	return false
 
+func can_craft_portable_forge() -> bool:
+	return stone >= 5 and iron >= 3
+
+func craft_portable_forge() -> bool:
+	if can_craft_portable_forge():
+		stone -= 5
+		iron -= 3
+		portable_forges += 1
+		add_exp(30)
+		inventory_changed.emit()
+		notify("+1 Forja Portátil Criada!", "forge")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
 func add_wood(amount: int = 10) -> void:
 	wood_logs += amount
 	add_exp(10)
@@ -191,11 +290,16 @@ func reset_inventory() -> void:
 	dirt = 0
 	stone = 0
 	brick_floors = 0
+	portable_forges = 0
+	has_pickaxe = true
+	pickaxe_durability = 100
 	level = 0
 	current_exp = 0
-	starter_lamps = 1
 	active_slot = 0
+	hotbar_slots = ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
 	inventory_changed.emit()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
 
 func add_starter_lamp(amount: int = 1) -> void:
 	starter_lamps += amount
@@ -257,13 +361,28 @@ func remove_all() -> Dictionary:
 		get_node("/root/SaveManager").request_save()
 	return dropped
 
+func get_active_item_key() -> String:
+	if active_slot >= 0 and active_slot < hotbar_slots.size():
+		return hotbar_slots[active_slot]
+	return "pickaxe"
+
 func get_active_item_name() -> String:
-	match active_slot:
-		0: return "Picareta"
-		1: return "Lâmpada"
-		2: return "Escada"
-		3: return "Tábua"
+	var key = get_active_item_key()
+	match key:
+		"pickaxe": return "Picareta" if has_pickaxe else "Picareta (Quebrada)"
+		"lamp": return "Poste de Luz"
+		"ladder": return "Escada"
+		"plank": return "Tábua"
+		"brick": return "Piso de Tijolo"
+		"forge": return "Forja Portátil"
 		_: return ""
+
+func set_hotbar_slot(index: int, item_key: String) -> void:
+	if index >= 0 and index < hotbar_slots.size():
+		hotbar_slots[index] = item_key
+		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
 
 func drop_item(item_key: String, amount: int = 1) -> int:
 	var tree = get_tree()
@@ -309,6 +428,18 @@ func drop_item(item_key: String, amount: int = 1) -> int:
 		ladders -= amount
 		drop.type = 6 # LADDER
 		dropped_amount = amount
+	elif (item_key == "stone") and stone >= amount:
+		stone -= amount
+		drop.type = 7 # STONE
+		dropped_amount = amount
+	elif (item_key == "dirt") and dirt >= amount:
+		dirt -= amount
+		drop.type = 8 # DIRT
+		dropped_amount = amount
+	elif (item_key == "forge") and portable_forges >= amount:
+		portable_forges -= amount
+		drop.type = 10 # FORGE
+		dropped_amount = amount
 		
 	if dropped_amount > 0:
 		drop.is_player_drop = true
@@ -322,4 +453,3 @@ func drop_item(item_key: String, amount: int = 1) -> int:
 			get_node("/root/SaveManager").request_save()
 		return dropped_amount
 	return 0
-
