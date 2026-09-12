@@ -7,6 +7,8 @@ extends CanvasLayer
 @onready var item_title = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ItemTitle
 @onready var item_desc = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ItemDesc
 @onready var capacity_label = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox/CapacityLabel
+@onready var shop_button = $TopRightContainer/ShopButton
+@onready var toast_list = $ToastContainer/ToastList
 
 var slots: Array = []
 var chest_slots: Array = []
@@ -96,8 +98,11 @@ func _ready() -> void:
 	
 	if close_button:
 		close_button.pressed.connect(toggle)
+	if shop_button:
+		shop_button.pressed.connect(_on_shop_pressed)
 		
 	Inventory.inventory_changed.connect(_on_resources_changed)
+	Inventory.notification_triggered.connect(show_toast)
 	_on_resources_changed()
 	inventory_panel.hide()
 
@@ -360,3 +365,107 @@ func _on_resources_changed() -> void:
 	if capacity_label:
 		var total_ores = Inventory.iron + Inventory.gold
 		capacity_label.text = "Carga: " + str(total_ores) + "/40 minérios  (Ferro: " + str(Inventory.iron) + "/20 | Ouro: " + str(Inventory.gold) + "/20)"
+
+func _on_shop_pressed() -> void:
+	if shop_button:
+		var tween = create_tween()
+		tween.tween_property(shop_button, "scale", Vector2(1.1, 1.1), 0.08)
+		tween.tween_property(shop_button, "scale", Vector2.ONE, 0.08)
+	show_toast("Loja em breve! Guarde seus ouros para novas ferramentas e melhorias.", "shop")
+
+func show_toast(text: String, icon_type: String = "") -> void:
+	if not toast_list: return
+	
+	if toast_list.get_child_count() >= 4:
+		var oldest = toast_list.get_child(0)
+		if is_instance_valid(oldest):
+			oldest.queue_free()
+	
+	var toast = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.09, 0.05, 0.94)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.85, 0.7, 0.25, 1.0)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_right = 4
+	style.corner_radius_bottom_left = 4
+	style.shadow_color = Color(0, 0, 0, 0.6)
+	style.shadow_size = 4
+	toast.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+	
+	if icon_type != "":
+		var icon = TextureRect.new()
+		icon.custom_minimum_size = Vector2(20, 20)
+		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		
+		if icon_type == "iron":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = ores_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		elif icon_type == "gold":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = ores_tex
+			atlas.region = Rect2(64, 0, 16, 16)
+			icon.texture = atlas
+		elif icon_type == "save" or icon_type == "chest":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = extras_tex
+			atlas.region = Rect2(160, 32, 16, 16)
+			icon.texture = atlas
+		elif icon_type == "shop":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = extras_tex
+			atlas.region = Rect2(32, 0, 16, 16)
+			icon.texture = atlas
+		elif icon_type == "sign":
+			var sign_tex = load("res://assets/sprites/signpost.png")
+			if sign_tex: icon.texture = sign_tex
+		hbox.add_child(icon)
+		
+	var label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", Color(1.0, 0.94, 0.82, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
+	label.add_theme_constant_override("outline_size", 4)
+	hbox.add_child(label)
+	
+	margin.add_child(hbox)
+	toast.add_child(margin)
+	toast_list.add_child(toast)
+	
+	toast.modulate.a = 0.0
+	toast.scale = Vector2(0.85, 0.85)
+	var tween = toast.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(toast, "modulate:a", 1.0, 0.15)
+	tween.tween_property(toast, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	var timer = toast.get_tree().create_timer(2.2)
+	timer.timeout.connect(func():
+		if is_instance_valid(toast):
+			var out_tween = toast.create_tween()
+			out_tween.set_parallel(true)
+			out_tween.tween_property(toast, "modulate:a", 0.0, 0.25)
+			out_tween.tween_property(toast, "position:x", toast.position.x - 25.0, 0.25)
+			out_tween.finished.connect(func():
+				if is_instance_valid(toast):
+					toast.queue_free()
+			)
+	)

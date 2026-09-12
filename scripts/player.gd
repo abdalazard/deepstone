@@ -25,6 +25,8 @@ var tex_mine = preload("res://assets/sprites/Minering.png")
 var tex_climb = preload("res://assets/sprites/Rope.png")
 
 func _ready() -> void:
+	if has_node("/root/SaveManager") and SaveManager.has_loaded_save and SaveManager.player_saved_pos != Vector2.ZERO:
+		global_position = SaveManager.player_saved_pos
 	var sprite = $Sprite2D
 	if sprite:
 		sprite.scale = sprite_scale
@@ -192,7 +194,10 @@ func place_torch() -> void:
 	var snapped_x = floor(global_position.x / 32.0) * 32.0 + 16.0
 	var snapped_y = round(global_position.y / 32.0) * 32.0
 	torch.position = Vector2(snapped_x, snapped_y)
+	torch.add_to_group("placed_torches")
 	get_tree().current_scene.add_child(torch)
+	if has_node("/root/SaveManager"):
+		SaveManager.request_save()
 
 func place_rope() -> void:
 	# Rope is infinite, no decrement needed
@@ -202,7 +207,10 @@ func place_rope() -> void:
 	var snapped_x = floor(global_position.x / 32.0) * 32.0 + 16.0
 	var snapped_y = round(global_position.y / 32.0) * 32.0
 	rope.position = Vector2(snapped_x, snapped_y)
+	rope.add_to_group("placed_ropes")
 	get_tree().current_scene.add_child(rope)
+	if has_node("/root/SaveManager"):
+		SaveManager.request_save()
 
 func try_collect() -> void:
 	if has_node("PickupArea"):

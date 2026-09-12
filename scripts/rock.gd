@@ -18,6 +18,10 @@ var shine_timer: float = 0.0
 var sparkle_overlay: Node2D
 var sparkle_alpha: float = 0.0
 var sparkle_points: Array[Vector2] = []
+var grid_pos: Vector2i = Vector2i(-1, -1)
+
+func set_grid_pos(pos: Vector2i) -> void:
+	grid_pos = pos
 
 func _ready() -> void:
 	if is_unbreakable:
@@ -29,7 +33,7 @@ func _ready() -> void:
 	elif is_dirt:
 		max_hp = 1
 		hp = 1
-		if sprite_2d:
+		if sprite_2d and sprite_2d.hframes == 11:
 			sprite_2d.frame = 2 # Dirt block
 			sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0) # Brown tint for dirt
 	elif is_copper:
@@ -119,7 +123,9 @@ func hit() -> void:
 	
 	if sprite_2d:
 		sprite_2d.modulate = sprite_2d.modulate + Color(0.5, 0, 0, 0) # Flash reddish
-		var original_color = Color(0.5, 0.35, 0.2, 1.0) if is_dirt else Color(1, 1, 1, 1)
+		var original_color = Color(1, 1, 1, 1)
+		if is_dirt and sprite_2d.hframes == 11:
+			original_color = Color(0.5, 0.35, 0.2, 1.0)
 		var tween = create_tween()
 		tween.tween_property(sprite_2d, "modulate", original_color, 0.15)
 		
@@ -142,6 +148,8 @@ func hit() -> void:
 		destroy()
 
 func destroy() -> void:
+	if grid_pos != Vector2i(-1, -1) and has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").mark_block_mined(grid_pos)
 	spawn_particles()
 	_wake_block_above()
 	

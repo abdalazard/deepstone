@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://bajx2nbvjune4"]
+
+[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" path="res://assets/sprites/grass_tile.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dirt"]
+size = Vector2(32, 32)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_dirt"]
+polygon = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+
+[node name="GrassDirt" type="RigidBody2D"]
+script = ExtResource("1_rock")
+is_dirt = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_dirt")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(2, 2)
+texture = ExtResource("2_tex")
+hframes = 2
+vframes = 1
+frame = 1
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("OccluderPolygon2D_dirt")

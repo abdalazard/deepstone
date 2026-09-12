@@ -9,6 +9,9 @@ var is_closed: bool = false
 @onready var player_detect = $InteractArea
 
 func _ready() -> void:
+	if has_node("/root/SaveManager") and SaveManager.has_loaded_save:
+		stored_load = SaveManager.chest_saved_load
+		is_closed = SaveManager.chest_saved_closed
 	if prompt_label:
 		prompt_label.modulate.a = 0.0
 		prompt_label.visible = false
@@ -61,6 +64,10 @@ func deposit(items: Dictionary) -> void:
 	if stored_load >= MAX_CAPACITY:
 		close_chest()
 	update_visuals()
+	
+	Inventory.notify("Recursos guardados no Baú! (Carga: %d/%d)" % [stored_load, MAX_CAPACITY], "chest")
+	if has_node("/root/SaveManager"):
+		SaveManager.request_save()
 
 func close_chest() -> void:
 	is_closed = true
@@ -91,10 +98,13 @@ func extract() -> void:
 	if is_closed:
 		# Player gains EXP
 		print("Chest extracted! Gained EXP based on load: ", stored_load)
+		Inventory.notify("Carga do Baú extraída com sucesso!", "chest")
 		# Reset Chest
 		stored_load = 0
 		is_closed = false
 		update_visuals()
+		if has_node("/root/SaveManager"):
+			SaveManager.request_save()
 
 func is_chest() -> bool:
 	return true
