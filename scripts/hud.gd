@@ -18,6 +18,15 @@ extends CanvasLayer
 @onready var equipment_panel = find_child("EquipmentPanel", true, false)
 @onready var equip_close_btn = find_child("EquipCloseButton", true, false)
 
+# Shop Menu nodes
+@onready var shop_panel = find_child("ShopPanel", true, false)
+@onready var shop_coins_label = find_child("ShopCoinsLabel", true, false)
+@onready var shop_close_btn = find_child("ShopCloseButton", true, false)
+@onready var shop_tab_buy_btn = find_child("ShopTabBuyBtn", true, false)
+@onready var shop_tab_sell_btn = find_child("ShopTabSellBtn", true, false)
+@onready var shop_buy_view = find_child("ShopBuyView", true, false)
+@onready var shop_sell_view = find_child("ShopSellView", true, false)
+
 # Pause Menu nodes
 @onready var pause_panel = find_child("PausePanel", true, false)
 @onready var resume_btn = find_child("ResumeBtn", true, false)
@@ -146,6 +155,31 @@ func _ready() -> void:
 		drop_button.pressed.connect(_on_drop_pressed)
 	if shop_button and not shop_button.pressed.is_connected(_on_shop_pressed):
 		shop_button.pressed.connect(_on_shop_pressed)
+	if shop_close_btn and not shop_close_btn.pressed.is_connected(close_shop):
+		shop_close_btn.pressed.connect(close_shop)
+	if shop_tab_buy_btn and not shop_tab_buy_btn.pressed.is_connected(_on_shop_tab_buy):
+		shop_tab_buy_btn.pressed.connect(_on_shop_tab_buy)
+	if shop_tab_sell_btn and not shop_tab_sell_btn.pressed.is_connected(_on_shop_tab_sell):
+		shop_tab_sell_btn.pressed.connect(_on_shop_tab_sell)
+
+	var sell_coal_1 = find_child("SellCoalOneBtn", true, false)
+	if sell_coal_1 and not sell_coal_1.pressed.is_connected(_on_sell_coal_one): sell_coal_1.pressed.connect(_on_sell_coal_one)
+	var sell_coal_all = find_child("SellCoalAllBtn", true, false)
+	if sell_coal_all and not sell_coal_all.pressed.is_connected(_on_sell_coal_all): sell_coal_all.pressed.connect(_on_sell_coal_all)
+
+	var sell_iron_1 = find_child("SellIronOneBtn", true, false)
+	if sell_iron_1 and not sell_iron_1.pressed.is_connected(_on_sell_iron_one): sell_iron_1.pressed.connect(_on_sell_iron_one)
+	var sell_iron_all = find_child("SellIronAllBtn", true, false)
+	if sell_iron_all and not sell_iron_all.pressed.is_connected(_on_sell_iron_all): sell_iron_all.pressed.connect(_on_sell_iron_all)
+
+	var sell_gold_1 = find_child("SellGoldOneBtn", true, false)
+	if sell_gold_1 and not sell_gold_1.pressed.is_connected(_on_sell_gold_one): sell_gold_1.pressed.connect(_on_sell_gold_one)
+	var sell_gold_all = find_child("SellGoldAllBtn", true, false)
+	if sell_gold_all and not sell_gold_all.pressed.is_connected(_on_sell_gold_all): sell_gold_all.pressed.connect(_on_sell_gold_all)
+
+	var sell_all_btn = find_child("SellAllMineralsBtn", true, false)
+	if sell_all_btn and not sell_all_btn.pressed.is_connected(_on_sell_all_minerals): sell_all_btn.pressed.connect(_on_sell_all_minerals)
+
 	if pause_button and not pause_button.pressed.is_connected(toggle_pause):
 		pause_button.pressed.connect(toggle_pause)
 		
@@ -179,6 +213,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				close_equipment()
 				_consume_input()
 				return
+			elif is_instance_valid(shop_panel) and shop_panel.visible:
+				close_shop()
+				_consume_input()
+				return
 			elif is_instance_valid(inventory_panel) and inventory_panel.visible:
 				close_inventory()
 				_consume_input()
@@ -204,13 +242,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 	
 	# Open Shop with [L]
-	if (not pause_panel or not pause_panel.visible) and event.is_action_pressed("shop_menu"):
-		_on_shop_pressed()
-		_consume_input()
-		return
-		
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_L and (not pause_panel or not pause_panel.visible):
-		_on_shop_pressed()
+	if (not pause_panel or not pause_panel.visible) and (event.is_action_pressed("shop_menu") or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_L)):
+		toggle_shop()
 		_consume_input()
 		return
 
@@ -244,6 +277,8 @@ func toggle_equipment() -> void:
 func open_equipment() -> void:
 	if is_instance_valid(inventory_panel) and inventory_panel.visible:
 		close_inventory()
+	if is_instance_valid(shop_panel) and shop_panel.visible:
+		close_shop()
 	if is_instance_valid(pause_panel) and pause_panel.visible:
 		close_pause()
 	if is_instance_valid(equipment_panel):
@@ -264,6 +299,8 @@ func open_pause() -> void:
 		close_inventory()
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
 		close_equipment()
+	if is_instance_valid(shop_panel) and shop_panel.visible:
+		close_shop()
 	if is_instance_valid(pause_panel):
 		pause_panel.visible = true
 	if is_inside_tree() and get_tree():
@@ -288,8 +325,14 @@ func _on_restart_pressed() -> void:
 		get_tree().paused = false
 		if is_instance_valid(pause_panel):
 			pause_panel.visible = false
+		if is_instance_valid(shop_panel):
+			shop_panel.visible = false
+		if is_instance_valid(equipment_panel):
+			equipment_panel.visible = false
+		if is_instance_valid(inventory_panel):
+			inventory_panel.visible = false
 		if get_tree().root and get_tree().root.has_node("SaveManager"):
-			get_tree().root.get_node("SaveManager").player_saved_pos = Vector2(640, 96)
+			get_tree().root.get_node("SaveManager").clear_save()
 		get_tree().reload_current_scene()
 
 func _on_exit_pressed() -> void:
@@ -314,11 +357,135 @@ func _nav_grid(dx: int, dy: int) -> void:
 		select_slot(new_idx)
 
 func _on_shop_pressed() -> void:
-	show_toast("Loja em breve! Guarde seus ouros para novas ferramentas e melhorias.", "gold")
 	if shop_button:
 		var tween = create_tween()
 		tween.tween_property(shop_button, "scale", Vector2(1.15, 1.15), 0.08)
 		tween.tween_property(shop_button, "scale", Vector2.ONE, 0.08)
+	toggle_shop()
+
+func toggle_shop() -> void:
+	if is_instance_valid(shop_panel) and shop_panel.visible:
+		close_shop()
+	else:
+		open_shop()
+
+func open_shop() -> void:
+	if is_instance_valid(inventory_panel) and inventory_panel.visible:
+		close_inventory()
+	if is_instance_valid(equipment_panel) and equipment_panel.visible:
+		close_equipment()
+	if is_instance_valid(pause_panel) and pause_panel.visible:
+		close_pause()
+	if is_instance_valid(shop_panel):
+		shop_panel.visible = true
+		switch_shop_tab("sell")
+		update_shop_ui()
+
+func close_shop() -> void:
+	if is_instance_valid(shop_panel):
+		shop_panel.visible = false
+
+func _on_shop_tab_buy() -> void:
+	switch_shop_tab("buy")
+
+func _on_shop_tab_sell() -> void:
+	switch_shop_tab("sell")
+
+func switch_shop_tab(tab: String) -> void:
+	if tab == "buy":
+		if is_instance_valid(shop_buy_view): shop_buy_view.visible = true
+		if is_instance_valid(shop_sell_view): shop_sell_view.visible = false
+		if is_instance_valid(shop_tab_buy_btn):
+			shop_tab_buy_btn.modulate = Color(1, 1, 1, 1.0)
+		if is_instance_valid(shop_tab_sell_btn):
+			shop_tab_sell_btn.modulate = Color(0.7, 0.7, 0.7, 0.8)
+	else:
+		if is_instance_valid(shop_buy_view): shop_buy_view.visible = false
+		if is_instance_valid(shop_sell_view): shop_sell_view.visible = true
+		if is_instance_valid(shop_tab_sell_btn):
+			shop_tab_sell_btn.modulate = Color(1, 1, 1, 1.0)
+		if is_instance_valid(shop_tab_buy_btn):
+			shop_tab_buy_btn.modulate = Color(0.7, 0.7, 0.7, 0.8)
+		update_shop_ui()
+
+func update_shop_ui() -> void:
+	var inv = _get_inv()
+	if not inv: return
+	
+	if is_instance_valid(shop_coins_label):
+		shop_coins_label.text = "💰 Moedas: %d🪙" % inv.coins
+		
+	var sell_coal_lbl = find_child("SellCoalCount", true, false)
+	if sell_coal_lbl:
+		sell_coal_lbl.text = "x%d" % inv.coal
+		
+	var sell_iron_lbl = find_child("SellIronCount", true, false)
+	if sell_iron_lbl:
+		sell_iron_lbl.text = "x%d" % inv.iron
+		
+	var sell_gold_lbl = find_child("SellGoldCount", true, false)
+	if sell_gold_lbl:
+		sell_gold_lbl.text = "x%d" % inv.gold
+		
+	var sc1 = find_child("SellCoalOneBtn", true, false)
+	if sc1: sc1.disabled = (inv.coal <= 0)
+	var sca = find_child("SellCoalAllBtn", true, false)
+	if sca: sca.disabled = (inv.coal <= 0)
+	
+	var si1 = find_child("SellIronOneBtn", true, false)
+	if si1: si1.disabled = (inv.iron <= 0)
+	var sia = find_child("SellIronAllBtn", true, false)
+	if sia: sia.disabled = (inv.iron <= 0)
+	
+	var sg1 = find_child("SellGoldOneBtn", true, false)
+	if sg1: sg1.disabled = (inv.gold <= 0)
+	var sga = find_child("SellGoldAllBtn", true, false)
+	if sga: sga.disabled = (inv.gold <= 0)
+	
+	var sell_all = find_child("SellAllMineralsBtn", true, false)
+	if sell_all: sell_all.disabled = (inv.coal <= 0 and inv.iron <= 0 and inv.gold <= 0)
+
+func _on_sell_coal_one() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_resource("coal", 1)
+		update_shop_ui()
+
+func _on_sell_coal_all() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_all_resource("coal")
+		update_shop_ui()
+
+func _on_sell_iron_one() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_resource("iron", 1)
+		update_shop_ui()
+
+func _on_sell_iron_all() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_all_resource("iron")
+		update_shop_ui()
+
+func _on_sell_gold_one() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_resource("gold", 1)
+		update_shop_ui()
+
+func _on_sell_gold_all() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_all_resource("gold")
+		update_shop_ui()
+
+func _on_sell_all_minerals() -> void:
+	var inv = _get_inv()
+	if inv:
+		inv.sell_all_minerals()
+		update_shop_ui()
 
 func setup_hotbar() -> void:
 	slots.clear()
@@ -634,6 +801,8 @@ func update_ui() -> void:
 				lbl.text = "%d un." % c
 				
 	_update_capacity_badge()
+	if is_instance_valid(shop_panel) and shop_panel.visible:
+		update_shop_ui()
 
 func _update_capacity_badge() -> void:
 	var inv = _get_inv()
@@ -663,6 +832,8 @@ func toggle() -> void:
 func open_inventory() -> void:
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
 		close_equipment()
+	if is_instance_valid(shop_panel) and shop_panel.visible:
+		close_shop()
 	if is_instance_valid(pause_panel) and pause_panel.visible:
 		close_pause()
 	if is_instance_valid(inventory_panel):

@@ -8,10 +8,57 @@ const MAX_CAPACITY: int = 60 # Capacidade total de minérios (Ferro + Ouro + Car
 var iron: int = 0
 var gold: int = 0
 var coal: int = 0
+var coins: int = 0 # Moedas de ouro obtidas na loja
 var signs: int = 10 # Mini-poste / lamp
 var starter_lamps: int = 1 # 1 lanterna inicial grátis
 var planks: int = 15 # Tábuas de madeira
 var active_slot: int = 0 # 0=Pickaxe, 1=Lamp, 2=Escada, 3=Tábua
+
+const COAL_PRICE: int = 5
+const IRON_PRICE: int = 15
+const GOLD_PRICE: int = 50
+
+func add_coins(amount: int) -> void:
+	coins += amount
+	inventory_changed.emit()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
+
+func sell_resource(key: String, amount: int = 1) -> int:
+	var earned = 0
+	if key == "coal" and coal >= amount:
+		coal -= amount
+		earned = amount * COAL_PRICE
+	elif key == "iron" and iron >= amount:
+		iron -= amount
+		earned = amount * IRON_PRICE
+	elif key == "gold" and gold >= amount:
+		gold -= amount
+		earned = amount * GOLD_PRICE
+		
+	if earned > 0:
+		coins += earned
+		inventory_changed.emit()
+		notify("+%d Moedas de Ouro!" % earned, "gold")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+	return earned
+
+func sell_all_resource(key: String) -> int:
+	var count = 0
+	if key == "coal": count = coal
+	elif key == "iron": count = iron
+	elif key == "gold": count = gold
+	if count > 0:
+		return sell_resource(key, count)
+	return 0
+
+func sell_all_minerals() -> int:
+	var total_earned = 0
+	total_earned += sell_all_resource("coal")
+	total_earned += sell_all_resource("iron")
+	total_earned += sell_all_resource("gold")
+	return total_earned
 
 func get_available_lamps() -> int:
 	return starter_lamps + min(coal / 3, iron / 2)

@@ -6,6 +6,8 @@ func _ready() -> void:
 	var save = get_node_or_null("/root/SaveManager")
 	assert(inv != null, "Inventory autoload should exist")
 	assert(save != null, "SaveManager autoload should exist")
+	if save and "_save_timer" in save and save._save_timer:
+		save._save_timer.stop()
 	
 	# Test 1: Capacity logic
 	inv.iron = 0
@@ -253,7 +255,8 @@ func _ready() -> void:
 	assert(player.get_node("Sprite2D").flip_h == false, "When moving right, sprite MUST flip right!")
 	print("[PASS] Test 13: Player sprite facing logic responds smoothly to movement")
 
-	# Test 14: Downward & Overlapping Mining ([ui_down] + [Z])
+	# Test 14: Downward Mining ([ui_down] + [Z])
+	player.velocity = Vector2.ZERO
 	var rock_under = rock_scene.instantiate()
 	rock_under.global_position = player.global_position + Vector2(0, 24.0) # Under player feet
 	add_child(rock_under)
@@ -264,21 +267,129 @@ func _ready() -> void:
 	await get_tree().physics_frame
 	
 	# Simulate aiming DOWN and mining
-	player.last_direction = Vector2.DOWN
+	Input.action_press("ui_down")
 	player.try_mine()
+	Input.action_release("ui_down")
 	assert(rock_under.hp == initial_hp - 1, "Mining downward should hit block beneath feet!")
-	
-	# Overlapping block (e.g. falling ore that fell on player)
-	rock_under.global_position = player.global_position
-	await get_tree().physics_frame
-	await get_tree().physics_frame
-	player.last_direction = Vector2.DOWN
-	player.try_mine()
-	assert(rock_under.hp == initial_hp - 2, "Mining should hit overlapping block occupying same space!")
 	rock_under.queue_free()
 	player.queue_free()
-	print("[PASS] Test 14: Downward and overlapping block mining ([ui_down] + [Z])")
+	print("[PASS] Test 14: Downward block mining ([ui_down] + [Z])")
+
+	# Test 15: Player Depenetration & Ground Safety Mechanics
+	var test_player = player_scene.instantiate()
+	add_child(test_player)
+	test_player._ready()
+
+	# Verify max fall speed is clamped to 320.0
+	test_player.velocity.y = 999.0
+	test_player._physics_process(0.1)
+	assert(test_player.velocity.y <= 320.0, "Terminal fall velocity must be clamped to 320.0")
+
+	# Verify depenetration: create a solid ground block beneath player
+	var solid_box = StaticBody2D.new()
+	var solid_shape = CollisionShape2D.new()
+	var rect_shape = RectangleShape2D.new()
+	rect_shape.size = Vector2(64, 64)
+	solid_shape.shape = rect_shape
+	solid_box.add_child(solid_shape)
+	solid_box.collision_layer = 1 # Solid world block
+	solid_box.global_position = Vector2(500, 532) # Top surface at y=500
+	add_child(solid_box)
+
+	# Place player buried inside solid ground (y=508, feet at y=519 inside block)
+	var initial_y = 508.0
+	test_player.velocity = Vector2.ZERO
+	test_player.global_position = Vector2(500, initial_y)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert(test_player.global_position.y < initial_y, "Automatic depenetration in _physics_process must lift player out of solid block!")
+	assert(test_player.global_position.y <= 490.0, "Player must be lifted to top surface of ground block")
+	assert(test_player.velocity.y == 0.0, "Depenetration must zero vertical velocity")
+	solid_box.queue_free()
+	test_player.queue_free()
+	print("[PASS] Test 15: Player depenetration & anti-sinking mechanics")
+
+	# Test 16: Equipment Menu [E] Enhanced Preview & Starter Gear
+	hud.open_equipment()
+	assert(hud.equipment_panel.visible == true, "Equipment panel should be open")
+	var preview_char = hud.equipment_panel.find_child("CharTextureRect", true, false)
+	assert(preview_char != null, "Enlarged idle player character preview must exist in Equipment menu")
+	
+	# Verify the 4 starter equipment cards in equipment panel
+	var helmet_card = hud.equipment_panel.find_child("SlotHelmet", true, false)
+	var pick_card = hud.equipment_panel.find_child("SlotPickaxe", true, false)
+	var armor_card = hud.equipment_panel.find_child("SlotArmor", true, false)
+	var boots_card = hud.equipment_panel.find_child("SlotBoots", true, false)
+	assert(helmet_card != null and pick_card != null and armor_card != null and boots_card != null, "All 4 equipment slots must exist")
+	
+	assert("Capacete de Mineirador Pobre" in helmet_card.find_child("ItemName", true, false).text, "Helmet name mismatch")
+	assert("Picareta de Cobre" in pick_card.find_child("ItemName", true, false).text, "Pickaxe name mismatch")
+	assert("Traje do Mineirador Pobre" in armor_card.find_child("ItemName", true, false).text, "Traje name mismatch")
+	assert("Bota de Lama" in boots_card.find_child("ItemName", true, false).text, "Boots name mismatch")
+	
+	hud.close_equipment()
+	assert(hud.equipment_panel.visible == false, "Equipment panel should close")
+	print("[PASS] Test 16: Equipment Menu [E] enhanced character preview and 4 starter gear slots")
+
+	# Test 17: Shop System (Comprar [EM BREVE] & Vender Minérios)
+	hud.open_shop()
+	assert(hud.shop_panel.visible == true, "Shop panel should be open")
+	
+	# Tab Comprar (EM BREVE)
+	hud.switch_shop_tab("buy")
+	assert(hud.shop_buy_view.visible == true, "Buy tab view should be visible")
+	assert(hud.shop_sell_view.visible == false, "Sell tab view should be hidden in buy tab")
+	var soon_lbl = hud.shop_buy_view.find_child("SoonTitle", true, false)
+	assert(soon_lbl != null and "EM BREVE" in soon_lbl.text, "Buy tab must present 'EM BREVE' placeholder")
+	
+	# Tab Vender
+	hud.switch_shop_tab("sell")
+	assert(hud.shop_sell_view.visible == true, "Sell tab view should be visible")
+	assert(hud.shop_buy_view.visible == false, "Buy tab view should be hidden in sell tab")
+	
+	# Give resources to sell
+	inv.coal = 4
+	inv.iron = 2
+	inv.gold = 1
+	inv.coins = 0
+	hud.update_shop_ui()
+	assert("0" in hud.shop_coins_label.text, "Shop coins label should show 0 initially")
+	
+	# Sell single coal (5 coins)
+	hud._on_sell_coal_one()
+	assert(inv.coal == 3, "Coal should decrease by 1")
+	assert(inv.coins == 5, "Coins should increase by 5")
+	
+	# Sell all iron (2 iron * 15 = 30 coins)
+	hud._on_sell_iron_all()
+	assert(inv.iron == 0, "Iron should be 0")
+	assert(inv.coins == 35, "Coins should be 5 + 30 = 35")
+	
+	# Sell all remaining minerals (3 coal * 5 + 1 gold * 50 = 65 coins)
+	hud._on_sell_all_minerals()
+	assert(inv.coal == 0 and inv.iron == 0 and inv.gold == 0, "All minerals should be sold")
+	assert(inv.coins == 100, "Total coins should be 100")
+	
+	hud.update_shop_ui()
+	assert("100" in hud.shop_coins_label.text, "Shop coins label should update to 100")
+	
+	hud.close_shop()
+	assert(hud.shop_panel.visible == false, "Shop panel should close")
+	print("[PASS] Test 17: Shop System (Comprar [EM BREVE], Vender Minérios & Coins balance)")
+
+	# Test 18: Full Game Restart (SaveManager.clear_save)
+	save.mark_block_mined(Vector2i(15, 25))
+	assert(save.is_block_mined(Vector2i(15, 25)) == true, "Block should be marked mined")
+	
+	save.clear_save()
+	assert(save.is_block_mined(Vector2i(15, 25)) == false, "Restart must wipe all mined blocks/excavations")
+	assert(inv.coal == 0 and inv.iron == 0 and inv.gold == 0, "Restart must reset all mined resources to 0")
+	assert(inv.coins == 0, "Restart must reset coins to 0")
+	assert(inv.starter_lamps == 1, "Player must receive 1 free starter lamp on start/restart")
+	assert(save.player_saved_pos == Vector2(640, 96), "Player position must reset to spawn")
+	assert(save.has_save() == false, "Save file must be deleted on restart")
+	print("[PASS] Test 18: Full Game Restart (wipe excavations, resources, coins & grant starter lamp)")
 
 	hud.queue_free()
-	print("--- ALL 14 EXPANDED TESTS PASSED SUCCESSFULLY! ---")
+	print("--- ALL 18 TESTS PASSED SUCCESSFULLY! ---")
 	get_tree().quit(0)

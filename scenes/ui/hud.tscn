@@ -1,7 +1,9 @@
-[gd_scene load_steps=22 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=29 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
+[ext_resource type="Texture2D" path="res://assets/sprites/Idle.png" id="3_idle"]
+[ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="4_ores"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chest_outer"]
 bg_color = Color(0.22, 0.13, 0.07, 0.98)
@@ -32,6 +34,22 @@ region = Rect2(160, 32, 16, 16)
 atlas = ExtResource("2_extras")
 region = Rect2(0, 0, 16, 16)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_char_idle"]
+atlas = ExtResource("3_idle")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coal_icon"]
+atlas = ExtResource("4_ores")
+region = Rect2(0, 128, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iron_icon"]
+atlas = ExtResource("4_ores")
+region = Rect2(32, 128, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gold_icon"]
+atlas = ExtResource("4_ores")
+region = Rect2(128, 128, 16, 16)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn"]
 bg_color = Color(0.35, 0.12, 0.1, 1)
 border_width_left = 1
@@ -56,25 +74,13 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn"]
-bg_color = Color(0.25, 0.18, 0.1, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_equip_btn"]
+bg_color = Color(0.2, 0.35, 0.15, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.65, 0.48, 0.22, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn_hover"]
-bg_color = Color(0.38, 0.28, 0.15, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.9, 0.75, 0.35, 1)
+border_color = Color(0.4, 0.7, 0.3, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -143,8 +149,6 @@ corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.5)
-shadow_size = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal_overlay"]
 bg_color = Color(0.04, 0.02, 0.01, 0.65)
@@ -199,6 +203,30 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_active"]
+bg_color = Color(0.36, 0.22, 0.1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1.0, 0.85, 0.35, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_inactive"]
+bg_color = Color(0.16, 0.1, 0.05, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.3, 0.15, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
 script = ExtResource("1_hud")
@@ -209,8 +237,8 @@ anchor_right = 1.0
 offset_right = -210.0
 offset_bottom = 70.0
 grow_horizontal = 2
-theme_override_constants/margin_top = 10
 theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
 
 [node name="TopHBox" type="HBoxContainer" parent="TopContainer"]
 layout_mode = 2
@@ -289,34 +317,35 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
 text = "🏪 LOJA [L]"
 
 [node name="ToastContainer" type="MarginContainer" parent="."]
-anchors_preset = 2
+anchors_preset = 3
+anchor_left = 1.0
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -220.0
-offset_right = 320.0
+offset_left = -320.0
+offset_top = -200.0
+grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
-theme_override_constants/margin_left = 16
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
 
 [node name="ToastList" type="VBoxContainer" parent="ToastContainer"]
 layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 8
 alignment = 2
 
 [node name="InventoryPanel" type="PanelContainer" parent="."]
 visible = false
-custom_minimum_size = Vector2(480, 420)
+custom_minimum_size = Vector2(560, 360)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -240.0
-offset_top = -210.0
-offset_right = 240.0
-offset_bottom = 210.0
+offset_left = -280.0
+offset_top = -180.0
+offset_right = 280.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_chest_outer")
@@ -354,7 +383,7 @@ theme_override_colors/font_color = Color(0.96, 0.85, 0.55, 1)
 theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.02, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 16
-text = "BAÚ DA SUPERFÍCIE & INVENTÁRIO"
+text = "📦 MOCHILA & RECURSOS [I]"
 
 [node name="CloseButton" type="Button" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
 custom_minimum_size = Vector2(28, 28)
@@ -373,97 +402,102 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 12
 
-[node name="InnerVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin"]
+[node name="HBoxContainer" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
-[node name="GridLabel" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+[node name="LeftCol" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SubTitle" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/LeftCol"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.65, 0.5, 1)
 theme_override_font_sizes/font_size = 12
-text = "ITENS DISPONÍVEIS ([Setas] Navegar | [Z/Enter] Equipar | [X] Dropar):"
+text = "ITENS NA MOCHILA:"
 
-[node name="ChestGrid" type="GridContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+[node name="ScrollContainer" type="ScrollContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/LeftCol"]
 layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ChestGrid" type="GridContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/LeftCol/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 4
 
-[node name="InfoPlaque" type="PanelContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+[node name="RightCol" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DetailsPanel" type="PanelContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_plaque")
 
-[node name="PlaqueMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque"]
+[node name="Margin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol/DetailsPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_bottom = 10
 
-[node name="PlaqueVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin"]
+[node name="VBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol/DetailsPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
-[node name="ItemTitle" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
+[node name="ItemTitle" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol/DetailsPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
-theme_override_font_sizes/font_size = 14
-text = "Selecione um item..."
+theme_override_font_sizes/font_size = 13
+text = "Selecione um item"
 
-[node name="ItemDesc" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
+[node name="ItemDesc" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol/DetailsPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.85, 0.8, 0.75, 1)
-theme_override_font_sizes/font_size = 12
-text = "Clique ou navegue com as setas para ver detalhes do item."
+theme_override_font_sizes/font_size = 11
+text = "Clique ou navegue com as setas para inspecionar e interagir."
 autowrap_mode = 2
 
-[node name="ActionHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
+[node name="ActionsVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
-[node name="EquipButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox"]
-custom_minimum_size = Vector2(140, 30)
+[node name="EquipButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol/ActionsVBox"]
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+theme_override_colors/font_color = Color(0.9, 1, 0.85, 1)
 theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_action_btn_hover")
-text = "Equipar Ferramenta"
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Equipar [Z]"
 
-[node name="DropButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox"]
-custom_minimum_size = Vector2(130, 30)
+[node name="DropButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/HBoxContainer/RightCol/ActionsVBox"]
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 focus_mode = 0
-theme_override_colors/font_color = Color(1, 0.75, 0.7, 1)
+theme_override_colors/font_color = Color(1, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_drop_btn_hover")
-text = "Dropar no Chão [X]"
-
-[node name="FooterHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
-layout_mode = 2
-
-[node name="CapacityLabel" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.7, 0.8, 0.7, 1)
-theme_override_font_sizes/font_size = 12
-text = "📦 Baú da Mina: Ilimitado | [I] Fechar"
+text = "Soltar no Mapa [X]"
 
 [node name="EquipmentPanel" type="PanelContainer" parent="."]
 visible = false
-custom_minimum_size = Vector2(440, 380)
+custom_minimum_size = Vector2(560, 380)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -220.0
+offset_left = -280.0
 offset_top = -190.0
-offset_right = 220.0
+offset_right = 280.0
 offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -517,235 +551,225 @@ text = "X"
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 12
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_bottom = 10
 
 [node name="InnerVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="EquipSubLabel" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.65, 0.5, 1)
-theme_override_font_sizes/font_size = 12
-text = "SLOTS DE EQUIPAMENTOS ATIVOS:"
-
-[node name="EquipGrid" type="GridContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox"]
-layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 3
-
-[node name="SlotHelmet" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid"]
-custom_minimum_size = Vector2(130, 65)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotHelmet"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
-
-[node name="VBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotHelmet/Margin"]
-layout_mode = 2
-alignment = 1
-
-[node name="Title" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotHelmet/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 11
-text = "🪖 Capacete"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotHelmet/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.6, 0.55, 1)
-theme_override_font_sizes/font_size = 10
-text = "(Vazio)"
-horizontal_alignment = 1
-
-[node name="SlotPickaxe" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid"]
-custom_minimum_size = Vector2(130, 65)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotPickaxe"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
-
-[node name="VBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotPickaxe/Margin"]
-layout_mode = 2
-alignment = 1
-
-[node name="Title" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotPickaxe/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 11
-text = "⛏️ Picareta"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotPickaxe/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 10
-text = "Ferro Nv. 1"
-horizontal_alignment = 1
-
-[node name="SlotBackpack" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid"]
-custom_minimum_size = Vector2(130, 65)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBackpack"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
-
-[node name="VBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBackpack/Margin"]
-layout_mode = 2
-alignment = 1
-
-[node name="Title" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBackpack/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 11
-text = "🎒 Mochila"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBackpack/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 10
-text = "Capacidade: 60"
-horizontal_alignment = 1
-
-[node name="SlotArmor" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid"]
-custom_minimum_size = Vector2(130, 65)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotArmor"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
-
-[node name="VBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotArmor/Margin"]
-layout_mode = 2
-alignment = 1
-
-[node name="Title" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotArmor/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 11
-text = "🦺 Armadura"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotArmor/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.6, 0.55, 1)
-theme_override_font_sizes/font_size = 10
-text = "(Vazio)"
-horizontal_alignment = 1
-
-[node name="SlotBoots" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid"]
-custom_minimum_size = Vector2(130, 65)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBoots"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
-
-[node name="VBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBoots/Margin"]
-layout_mode = 2
-alignment = 1
-
-[node name="Title" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBoots/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 11
-text = "👢 Botas"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBoots/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.6, 0.55, 1)
-theme_override_font_sizes/font_size = 10
-text = "(Vazio)"
-horizontal_alignment = 1
-
-[node name="SlotBomb" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid"]
-custom_minimum_size = Vector2(130, 65)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBomb"]
-layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
-
-[node name="VBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBomb/Margin"]
-layout_mode = 2
-alignment = 1
-
-[node name="Title" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBomb/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 11
-text = "💣 Explosivos"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipGrid/SlotBomb/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.6, 0.55, 1)
-theme_override_font_sizes/font_size = 10
-text = "(Vazio)"
-horizontal_alignment = 1
-
-[node name="EquipInfoPlaque" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox"]
+[node name="EquipMainHBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_plaque")
+theme_override_constants/separation = 14
 
-[node name="PlaqueMargin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipInfoPlaque"]
+[node name="PreviewCard" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="PreviewMargin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_bottom = 10
 
-[node name="PlaqueVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipInfoPlaque/PlaqueMargin"]
+[node name="PreviewVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin"]
 layout_mode = 2
-theme_override_constants/separation = 4
+alignment = 1
+theme_override_constants/separation = 6
 
-[node name="PlaqueTitle" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipInfoPlaque/PlaqueMargin/PlaqueVBox"]
+[node name="PreviewTitle" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
-theme_override_font_sizes/font_size = 13
-text = "⚙️ Forja & Equipamentos em Breve"
+theme_override_font_sizes/font_size = 12
+text = "🧍 PERSONAGEM"
+horizontal_alignment = 1
 
-[node name="PlaqueDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipInfoPlaque/PlaqueMargin/PlaqueVBox"]
+[node name="CenterChar" type="CenterContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.85, 0.8, 0.75, 1)
-theme_override_font_sizes/font_size = 11
-text = "Em breve você poderá forjar capacetes com holofotes de longo alcance, picaretas diamantadas e dinamites na Forja da Superfície!"
-autowrap_mode = 2
+
+[node name="CharTextureRect" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/CenterChar"]
+texture_filter = 1
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+texture = SubResource("AtlasTexture_char_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharName" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.8, 1)
+theme_override_font_sizes/font_size = 13
+text = "Mineirador"
+horizontal_alignment = 1
+
+[node name="CharDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.8, 0.65, 1)
+theme_override_font_sizes/font_size = 10
+text = "Modo: IDLE"
+horizontal_alignment = 1
+
+[node name="SlotsVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SlotHelmet" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "🪖"
+horizontal_alignment = 1
+
+[node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemName" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Capacete de Mineirador Pobre"
+
+[node name="ItemDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.65, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Proteção rústica contra poeira e pedregulhos."
+
+[node name="SlotPickaxe" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "⛏️"
+horizontal_alignment = 1
+
+[node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemName" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Picareta de Cobre"
+
+[node name="ItemDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.65, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Ferramenta básica para escavação de blocos."
+
+[node name="SlotArmor" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "🦺"
+horizontal_alignment = 1
+
+[node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemName" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Traje do Mineirador Pobre"
+
+[node name="ItemDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.65, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Roupas simples de trabalho com remendos de couro."
+
+[node name="SlotBoots" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "👢"
+horizontal_alignment = 1
+
+[node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemName" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Bota de Lama"
+
+[node name="ItemDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.65, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Botas de borracha impermeáveis para terrenos úmidos."
 
 [node name="EquipFooterHBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
@@ -754,8 +778,329 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.7, 0.8, 0.7, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "🛡️ Menu de Equipamentos | [E] ou [Esc] para Fechar"
+
+[node name="ShopPanel" type="PanelContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(540, 390)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -195.0
+offset_right = 270.0
+offset_bottom = 195.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_outer")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ShopPanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HeaderPanel" type="PanelContainer" parent="ShopPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_header")
+
+[node name="HeaderMargin" type="MarginContainer" parent="ShopPanel/VBoxContainer/HeaderPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ShopPanel/VBoxContainer/HeaderPanel/HeaderMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="ShopPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.96, 0.85, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.02, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "🏪 LOJA DA MINA [L]"
+
+[node name="ShopCoinsLabel" type="Label" parent="ShopPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 14
+text = "🪙 0 Moedas"
+
+[node name="ShopCloseButton" type="Button" parent="ShopPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_btn")
+text = "X"
+
+[node name="ContentMargin" type="MarginContainer" parent="ShopPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="InnerVBox" type="VBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TabHBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ShopTabBuyBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/TabHBox"]
+custom_minimum_size = Vector2(120, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.88, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_inactive")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_active")
+text = "🛒 COMPRAR"
+
+[node name="ShopTabSellBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/TabHBox"]
+custom_minimum_size = Vector2(120, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.88, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_active")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_active")
+text = "💰 VENDER"
+
+[node name="ShopBuyView" type="VBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+
+[node name="BuyCard" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopBuyView"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopBuyView/BuyCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopBuyView/BuyCard/Margin"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="SoonTitle" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopBuyView/BuyCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "⏳ EM BREVE"
+horizontal_alignment = 1
+
+[node name="SoonDesc" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopBuyView/BuyCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.75, 1)
+theme_override_font_sizes/font_size = 13
+text = "Novas picaretas reforçadas, capacetes iluminados e bombas explosivas estarão disponíveis para compra em breve!"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ShopSellView" type="VBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="SellHeaderLabel" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 12
+text = "VENDA SEUS RECURSOS POR MOEDAS DE OURO:"
+
+[node name="CoalRow" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+texture = SubResource("AtlasTexture_coal_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLbl" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Carvão Mineral (5 🪙)"
+
+[node name="SellCoalCount" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 11
+text = "Possui: 0"
+
+[node name="SellCoalOneBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
+custom_minimum_size = Vector2(90, 26)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Vender 1"
+
+[node name="SellCoalAllBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
+custom_minimum_size = Vector2(90, 26)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
+text = "Vender Tudo"
+
+[node name="IronRow" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+texture = SubResource("AtlasTexture_iron_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLbl" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Minério de Ferro (15 🪙)"
+
+[node name="SellIronCount" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 11
+text = "Possui: 0"
+
+[node name="SellIronOneBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
+custom_minimum_size = Vector2(90, 26)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Vender 1"
+
+[node name="SellIronAllBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
+custom_minimum_size = Vector2(90, 26)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
+text = "Vender Tudo"
+
+[node name="GoldRow" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+texture = SubResource("AtlasTexture_gold_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLbl" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Minério de Ouro (50 🪙)"
+
+[node name="SellGoldCount" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 11
+text = "Possui: 0"
+
+[node name="SellGoldOneBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
+custom_minimum_size = Vector2(90, 26)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Vender 1"
+
+[node name="SellGoldAllBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
+custom_minimum_size = Vector2(90, 26)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
+text = "Vender Tudo"
+
+[node name="SellAllMineralsBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.95, 0.6, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
+text = "💰 Vender Todos os Minérios (Carvão, Ferro e Ouro)"
+
+[node name="ShopFooterHBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+
+[node name="ShopFooterLabel" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopFooterHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 0.8, 0.7, 1)
+theme_override_font_sizes/font_size = 11
+text = "🏪 Loja da Mina | [L] ou [Esc] para Fechar"
 
 [node name="PausePanel" type="PanelContainer" parent="."]
 process_mode = 3

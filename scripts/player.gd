@@ -48,6 +48,7 @@ func _ready() -> void:
 		global_position = sm.player_saved_pos
 	else:
 		global_position = Vector2(640, 96)
+	safe_margin = 0.15
 	var sprite = $Sprite2D
 	if sprite:
 		sprite.scale = sprite_scale
@@ -126,26 +127,31 @@ func _physics_process(delta: float) -> void:
 
 	if down_dash_timer > 0:
 		down_dash_timer -= delta
-		velocity.y = 380.0
 		if is_on_floor():
 			down_dash_timer = 0.0
+			velocity.y = 0.0
+		else:
+			velocity.y = 300.0
 	elif on_ladder:
 		if is_mining:
-			velocity.y = 0
+			velocity.y = 0.0
 		elif Input.is_action_pressed("ui_up"):
-			velocity.y = -100
-		elif Input.is_action_pressed("ui_down") and not is_on_floor():
-			velocity.y = 100
-		elif not is_on_floor():
-			velocity.y = 0
-		else:
-			# On floor on ladder
+			velocity.y = -100.0
+		elif Input.is_action_pressed("ui_down"):
 			if not is_on_floor():
-				velocity.y += gravity * delta
+				velocity.y = 100.0
+			else:
+				velocity.y = 0.0
+		elif is_on_floor():
+			velocity.y = 0.0
+		else:
+			velocity.y = 0.0
 	else:
 		# Add the gravity.
 		if not is_on_floor():
 			velocity.y += gravity * delta
+		elif velocity.y > 0.0:
+			velocity.y = 0.0
 	
 		# Handle Jump.
 		if Input.is_action_just_pressed("ui_up") and is_on_floor():
@@ -171,11 +177,14 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0, speed)
 
-	# Clamp velocity so external impulses never catapult the character into walls
+	# Clamp velocity so external impulses never catapult or bury the character
 	velocity.x = clamp(velocity.x, -speed, speed)
-	velocity.y = clamp(velocity.y, -400.0, 500.0)
+	velocity.y = clamp(velocity.y, -360.0, 320.0)
 
 	move_and_slide()
+
+	# Active depenetration: if character overlaps any solid blocks, step upward to top surface
+	_depenetrate_from_blocks()
 
 	# Push fallen ores/debris gently
 	var push_force = 18.0
@@ -362,6 +371,7 @@ func try_mine() -> void:
 	query.collide_with_bodies = true
 	query.collide_with_areas = true
 	query.hit_from_inside = true
+	query.exclude = [get_rid()]
 	query.collision_mask = 37 # 1 (Blocks), 4 (Drops), 32 (Planks)
 	
 	var target_collider = null
@@ -375,6 +385,7 @@ func try_mine() -> void:
 			global_position + last_direction * 24.0,
 			global_position + last_direction * 36.0,
 			global_position + Vector2(0, 16.0), # Feet / ground
+			global_position + Vector2(0, 24.0),
 			global_position # Overlapping player body
 		]
 		for pt in check_points:
@@ -383,7 +394,8 @@ func try_mine() -> void:
 			point_query.collision_mask = 37
 			point_query.collide_with_bodies = true
 			point_query.collide_with_areas = true
-			var hits = space_state.intersect_point(point_query, 4)
+			point_query.exclude = [get_rid()]
+			var hits = space_state.intersect_point(point_query, 8)
 			for hit in hits:
 				var c = hit.get("collider")
 				if c and (c.has_method("hit") or c.has_method("collect")):
@@ -397,3 +409,33 @@ func try_mine() -> void:
 			target_collider.hit()
 		elif target_collider.has_method("collect"):
 			target_collider.collect()
+
+func _is_overlapping_solid(pos: Vector2) -> bool:
+	if not is_inside_tree() or not get_world_2d():
+		return false
+	var space = get_world_2d().direct_space_state
+	if not space:
+		return false
+	var shape_node = get_node_or_null("CollisionShape2D")
+	if not shape_node or not shape_node.shape:
+		return false
+	var query = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape_node.shape
+	query.transform = Transform2D(0.0, pos)
+	query.collision_mask = 1 # Solid world blocks (concrete, rocks, bedrock)
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	query.exclude = [get_rid()]
+	var hits = space.intersect_shape(query, 1)
+	return hits.size() > 0
+
+func _depenetrate_from_blocks() -> void:
+	# If character overlaps any solid blocks, step upward to top surface
+	if _is_overlapping_solid(global_position):
+		for step in range(1, 49):
+			var dy = float(step)
+			var test_pos = Vector2(global_position.x, global_position.y - dy)
+			if not _is_overlapping_solid(test_pos):
+				global_position.y = test_pos.y
+				velocity.y = 0.0
+				return
