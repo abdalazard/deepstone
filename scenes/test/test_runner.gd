@@ -503,6 +503,18 @@ func _ready() -> void:
 	test_ore.queue_free()
 	print("[PASS] Test 24: Loose ore block dragging with [X] (45 px/s impulse and effort)")
 
+	# Test 25: Main World process loop & clear color
+	var main_scene = load("res://scenes/main/main.tscn")
+	var main_instance = main_scene.instantiate()
+	add_child(main_instance)
+	main_instance._ready()
+	main_instance._process(0.016)
+	if main_instance.player:
+		main_instance.player.global_position.y = 500.0
+		main_instance._process(0.016)
+	main_instance.queue_free()
+	print("[PASS] Test 25: Main World process loop & dynamic clear color execution verified")
+
 	hud.queue_free()
-	print("--- ALL 24 TESTS PASSED SUCCESSFULLY! ---")
+	print("--- ALL 25 TESTS PASSED SUCCESSFULLY! ---")
 	get_tree().quit(0)

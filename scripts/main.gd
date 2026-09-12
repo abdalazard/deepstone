@@ -48,7 +48,7 @@ func _process(delta: float) -> void:
 			dir_light.visible = (py < 350.0)
 
 		var current_color = RenderingServer.get_default_clear_color()
-		if current_color.distance_to(target_color) > 0.02:
+		if not current_color.is_equal_approx(target_color):
 			RenderingServer.set_default_clear_color(current_color.lerp(target_color, 4.0 * delta))
 
 func restore_placed_items() -> void:
