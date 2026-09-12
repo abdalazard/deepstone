@@ -1,14 +1,14 @@
 extends RigidBody2D
 
-enum ResourceType { STONE, COPPER }
-@export var type: ResourceType = ResourceType.STONE
+enum ResourceType { IRON, GOLD }
+@export var type: ResourceType = ResourceType.IRON
 
 func _ready() -> void:
 	var sprite = $Sprite2D
-	if type == ResourceType.STONE:
-		sprite.frame = 24 # Row 5 Col 1 (stone/coal lump)
+	if type == ResourceType.IRON:
+		sprite.frame = 24 # Row 5 Col 1
 	else:
-		sprite.frame = 26 # Row 5 Col 3 (copper ingot)
+		sprite.frame = 27 # Row 5 Col 4 (Gold color ingot in Kenney)
 		
 	# Pop out effect
 	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
@@ -41,7 +41,7 @@ func _ready() -> void:
 
 func _auto_fly_to_player() -> void:
 	var player = get_tree().current_scene.get_node_or_null("Player")
-	if not player: return
+	if not player or not Inventory.can_add(type): return
 	
 	set_deferred("freeze", true)
 	if has_node("CollisionShape2D"):
@@ -52,6 +52,7 @@ func _auto_fly_to_player() -> void:
 	tween.finished.connect(collect)
 
 func collect() -> void:
+	if not Inventory.can_add(type): return
 	Inventory.add_resource(type, 1)
 	
 	# Create light flash effect

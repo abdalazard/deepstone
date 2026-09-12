@@ -7,7 +7,7 @@ size = Vector2(32, 2000)
 
 [node name="Elevator" type="Area2D"]
 collision_layer = 0
-collision_mask = 2
+collision_mask = 6
 script = ExtResource("1_script")
 
 [node name="PlatformCollision" type="CollisionShape2D" parent="."]

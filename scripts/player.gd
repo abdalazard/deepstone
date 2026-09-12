@@ -78,6 +78,15 @@ func toggle_inventory() -> void:
 		hud.toggle()
 
 func try_mine() -> void:
+	# First check if we can interact with a chest
+	if has_node("PickupArea"):
+		for body in $PickupArea.get_overlapping_bodies():
+			if body.has_method("is_chest") and not body.is_closed:
+				if Inventory.current_load > 0:
+					var dropped = Inventory.remove_all()
+					body.deposit(dropped)
+					return # Stop here, we just deposited
+
 	var space_state = get_world_2d().direct_space_state
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true

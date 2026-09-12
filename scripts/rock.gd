@@ -100,7 +100,7 @@ func spawn_particles() -> void:
 	particles.scale_amount_max = 4.0
 	
 	var p_color = Color(0.4, 0.4, 0.45, 1)
-	if is_copper: p_color = Color(0.8, 0.45, 0.2, 1)
+	if is_copper: p_color = Color(0.9, 0.8, 0.2, 1) # Gold color
 	if is_dirt: p_color = Color(0.5, 0.35, 0.2, 1)
 	particles.color = p_color
 	

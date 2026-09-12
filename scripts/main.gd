@@ -2,27 +2,34 @@ extends Node2D
 
 const ROCK_SCENE = preload("res://scenes/cave/rock.tscn")
 const DIRT_SCENE = preload("res://scenes/cave/dirt.tscn")
+const TORCH_SCENE = preload("res://scenes/environment/torch.tscn")
 
 func _ready() -> void:
 	generate_world()
 
 func generate_world() -> void:
-	var start_x = 0
-	var start_y = 120
-	var cols = 30
-	var rows = 50
-	
-	for col in range(cols):
-		for row in range(rows):
-			var block
-			var rand = randf()
+	# 30 columns x 50 rows of dirt/rocks
+	for x in range(30):
+		for y in range(50):
+			var tile_pos = Vector2(x * 16 + 8, y * 16 + 128)
 			
-			if rand < 0.8:
-				block = DIRT_SCENE.instantiate()
+			# Don't place blocks in the elevator shaft (column 15)
+			if x == 15:
+				continue
+				
+			var instance
+			if randf() > 0.7:
+				instance = ROCK_SCENE.instantiate()
+				if randf() > 0.8:
+					instance.is_copper = true # It's GOLD now
 			else:
-				block = ROCK_SCENE.instantiate()
-				if rand > 0.95:
-					block.is_copper = true
-					
-			block.global_position = Vector2(start_x + col * 16 + 8, start_y + row * 16 + 8)
-			$Cave.add_child(block)
+				instance = DIRT_SCENE.instantiate()
+				
+			instance.position = tile_pos
+			add_child(instance)
+			
+			# 5% chance to spawn a Torch/Sign in the dirt for ambient lighting
+			if randf() < 0.05 and x != 15:
+				var torch = TORCH_SCENE.instantiate()
+				torch.position = tile_pos
+				add_child(torch)

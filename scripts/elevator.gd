@@ -7,7 +7,11 @@ func _ready() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
 		body.on_ladder = true
+	elif body.has_method("is_chest"):
+		body.in_ladder = true
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.name == "Player":
 		body.on_ladder = false
+	elif body.has_method("is_chest"):
+		body.in_ladder = false

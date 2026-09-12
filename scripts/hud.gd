@@ -1,7 +1,8 @@
 extends CanvasLayer
 
-@onready var stone_label = $MarginContainer/VBoxContainer/StoneLabel
-@onready var copper_label = $MarginContainer/VBoxContainer/CopperLabel
+@onready var load_label = $MarginContainer/VBoxContainer/LoadLabel
+@onready var iron_label = $MarginContainer/VBoxContainer/IronLabel
+@onready var gold_label = $MarginContainer/VBoxContainer/GoldLabel
 @onready var container = $MarginContainer/VBoxContainer
 
 func _ready() -> void:
@@ -13,5 +14,6 @@ func toggle() -> void:
 	container.visible = !container.visible
 
 func _on_resources_changed() -> void:
-	stone_label.text = "Pedra: " + str(Inventory.stone)
-	copper_label.text = "Cobre: " + str(Inventory.copper)
+	load_label.text = "Carga: " + str(Inventory.current_load) + "/" + str(Inventory.MAX_CAPACITY)
+	iron_label.text = "Ferro: " + str(Inventory.iron)
+	gold_label.text = "Ouro: " + str(Inventory.gold)
