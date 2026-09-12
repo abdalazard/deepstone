@@ -29,37 +29,35 @@ func _ready() -> void:
 	pickup_area.add_child(collision)
 	
 	add_child(pickup_area)
-	pickup_area.body_entered.connect(_on_body_entered)
 
-func _on_body_entered(body: Node2D) -> void:
-	if body.name == "Player":
-		Inventory.add_resource(type, 1)
-		
-		# Create light flash effect
-		var flash = PointLight2D.new()
-		flash.color = Color(1.0, 0.8, 0.2, 1.0) # Golden flash
-		flash.energy = 2.0
-		
-		var grad = Gradient.new()
-		grad.colors = PackedColorArray([Color(1,1,1,1), Color(0,0,0,1)])
-		var tex = GradientTexture2D.new()
-		tex.gradient = grad
-		tex.fill = GradientTexture2D.FILL_RADIAL
-		tex.fill_from = Vector2(0.5, 0.5)
-		tex.fill_to = Vector2(0.8, 0.2)
-		tex.width = 64
-		tex.height = 64
-		flash.texture = tex
-		
-		flash.global_position = global_position
-		get_tree().current_scene.add_child(flash)
-		
-		var tween = get_tree().create_tween()
-		tween.tween_property(flash, "scale", Vector2(3.0, 3.0), 0.2)
-		tween.parallel().tween_property(flash, "energy", 0.0, 0.2)
-		tween.finished.connect(flash.queue_free)
-		
-		queue_free()
+func collect() -> void:
+	Inventory.add_resource(type, 1)
+	
+	# Create light flash effect
+	var flash = PointLight2D.new()
+	flash.color = Color(1.0, 0.8, 0.2, 1.0) # Golden flash
+	flash.energy = 2.0
+	
+	var grad = Gradient.new()
+	grad.colors = PackedColorArray([Color(1,1,1,1), Color(0,0,0,1)])
+	var tex = GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(0.8, 0.2)
+	tex.width = 64
+	tex.height = 64
+	flash.texture = tex
+	
+	flash.global_position = global_position
+	get_tree().current_scene.add_child(flash)
+	
+	var tween = get_tree().create_tween()
+	tween.tween_property(flash, "scale", Vector2(3.0, 3.0), 0.2)
+	tween.parallel().tween_property(flash, "energy", 0.0, 0.2)
+	tween.finished.connect(flash.queue_free)
+	
+	queue_free()
 
 func is_resource() -> bool:
 	return true

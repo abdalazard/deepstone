@@ -44,7 +44,8 @@ theme_override_font_sizes/font_size = 18
 text = "COMANDOS:
 Z - Cavar / Bater no Elevador
 X (Segurar) - Arrastar Pedras Pesadas
-C - Abrir/Fechar Inventário
+C - Coletar Items Próximos
+I - Abrir/Fechar Inventário
 Seta Cima (W) - Pular
 Setas Lado (A/D) - Andar"
 horizontal_alignment = 1

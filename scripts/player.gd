@@ -51,7 +51,16 @@ func _physics_process(delta: float) -> void:
 		try_mine()
 		
 	if Input.is_action_just_pressed("action_collect"):
+		try_collect()
+		
+	if Input.is_action_just_pressed("action_inventory"):
 		toggle_inventory()
+
+func try_collect() -> void:
+	if has_node("PickupArea"):
+		for body in $PickupArea.get_overlapping_bodies():
+			if body.has_method("collect"):
+				body.collect()
 
 func toggle_inventory() -> void:
 	var hud = get_tree().current_scene.get_node_or_null("HUD")
