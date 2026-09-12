@@ -653,6 +653,31 @@ func can_add_item(type, amount: int = 1) -> bool:
 		return (get_current_load() + amount) <= get_max_capacity()
 	return true
 
+func add_resource(type, amount: int = 1) -> bool:
+	if type is int:
+		match type:
+			0: return add_item("iron", amount)
+			1: return add_item("gold", amount)
+			2: return add_item("coal", amount)
+			3: return add_item("plank", amount)
+			4: return add_item("lamp", amount)
+			5: return add_item("wood", amount)
+			6: return add_item("ladder", amount)
+			7: return add_item("stone", amount)
+			8: return add_item("dirt", amount)
+			9: return add_item("broken_pickaxe", amount)
+			10: return add_item("forge", amount)
+			_: return false
+	elif type is String:
+		return add_item(type, amount)
+	return false
+
+func add_wood(amount: int = 1) -> void:
+	add_item("wood", amount)
+
+func add_starter_lamp(amount: int = 1) -> void:
+	add_item("lamp", amount)
+
 func add_item(type: String, amount: int = 1) -> bool:
 	if type in ["iron", "gold", "coal"]:
 		if is_full():
