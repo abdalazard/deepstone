@@ -1,4 +1,4 @@
-extends RigidBody2D
+extends StaticBody2D
 
 const MAX_CAPACITY: int = 50
 var stored_load: int = 0
