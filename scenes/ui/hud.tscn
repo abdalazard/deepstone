@@ -1,6 +1,56 @@
-[gd_scene load_steps=2 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=8 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chest_outer"]
+bg_color = Color(0.22, 0.13, 0.07, 0.98)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.58, 0.36, 0.18, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.75)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chest_header"]
+bg_color = Color(0.16, 0.09, 0.04, 1)
+border_width_bottom = 3
+border_color = Color(0.88, 0.72, 0.28, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_chest_icon"]
+atlas = ExtResource("2_extras")
+region = Rect2(160, 32, 16, 16)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn"]
+bg_color = Color(0.35, 0.12, 0.1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.7, 0.3, 0.2, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_plaque"]
+bg_color = Color(0.13, 0.08, 0.04, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.42, 0.27, 0.15, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -24,47 +74,125 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -100.0
-offset_right = 150.0
-offset_bottom = 100.0
+offset_left = -230.0
+offset_top = -170.0
+offset_right = 230.0
+offset_bottom = 170.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_outer")
 
-[node name="ColorRect" type="ColorRect" parent="InventoryPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="InventoryPanel"]
 layout_mode = 2
-color = Color(0.1, 0.1, 0.15, 0.9)
+theme_override_constants/separation = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="InventoryPanel"]
+[node name="HeaderPanel" type="PanelContainer" parent="InventoryPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_header")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="InventoryPanel/MarginContainer"]
+[node name="HeaderMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/HeaderPanel"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 4
 
-[node name="Title" type="Label" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "--- INVENTÁRIO ---"
-horizontal_alignment = 1
+theme_override_constants/separation = 8
 
-[node name="LoadLabel" type="Label" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+[node name="ChestIcon" type="TextureRect" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+size_flags_vertical = 4
+texture_filter = 1
+texture = SubResource("AtlasTexture_chest_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleLabel" type="Label" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 18
-text = "Carga: 0/10"
+text = "BAÚ DE EQUIPAMENTOS"
+vertical_alignment = 1
 
-[node name="IronLabel" type="Label" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+[node name="CloseButton" type="Button" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+custom_minimum_size = Vector2(26, 26)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 18
-text = "Ferro: 0"
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 0.9, 0.9, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_btn")
+text = "X"
 
-[node name="GoldLabel" type="Label" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+[node name="ContentMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.8, 0.2, 1)
-theme_override_font_sizes/font_size = 18
-text = "Ouro: 0"
+size_flags_vertical = 3
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="InnerVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ChestGrid" type="GridContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 4
+
+[node name="InfoPlaque" type="PanelContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_plaque")
+
+[node name="PlaqueMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="PlaqueVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ItemTitle" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 13
+text = "Selecione um item..."
+
+[node name="ItemDesc" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "Passe o cursor ou clique em um slot para ver detalhes."
+
+[node name="FooterHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+
+[node name="CapacityLabel" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 12
+text = "Carga: 0/40 minérios"
+
+[node name="CloseHint" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "[I] Fechar"

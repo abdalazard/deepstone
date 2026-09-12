@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/start_screen.tscn" id="6_start"]
 [ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="7_chest"]
+[ext_resource type="PackedScene" path="res://scenes/environment/forge.tscn" id="8_forge"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
 size = Vector2(16, 3000)
@@ -52,6 +53,9 @@ shape = SubResource("RectangleShape2D_wall_v")
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="WorldBoundary"]
 position = Vector2(968, 1000)
 shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="Forge" parent="." instance=ExtResource("8_forge")]
+position = Vector2(432, 96)
 
 [node name="Chest" parent="." instance=ExtResource("7_chest")]
 position = Vector2(496, 96)

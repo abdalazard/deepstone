@@ -68,8 +68,8 @@ func generate_world() -> void:
 			var tile_pos = Vector2(x * 32 + 16, y * 32 + 128)
 			var instance: Node2D
 			
-			# Surface chest platform at y=0
-			if y == 0 and x in [14, 15, 16]:
+			# Surface platform for forge and chest at y=0
+			if y == 0 and x in [13, 14, 15, 16, 17]:
 				instance = CONCRETE_SCENE.instantiate()
 			elif unbreakable_blocks.has(Vector2i(x, y)):
 				instance = UNBREAKABLE_SCENE.instantiate()
