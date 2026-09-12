@@ -32,7 +32,7 @@ shape = SubResource("RectangleShape2D_player")
 scale = Vector2(0.22, 0.22)
 texture = ExtResource("2_player_tex")
 hframes = 4
-vframes = 3
+vframes = 4
 
 [node name="PickupArea" type="Area2D" parent="."]
 collision_layer = 0

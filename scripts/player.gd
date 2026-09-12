@@ -22,7 +22,12 @@ func _process(delta: float) -> void:
 		if mine_timer <= 0:
 			is_mining = false
 	
-	if is_mining:
+	if on_ladder:
+		if velocity.y != 0:
+			anim_state = "climb"
+		else:
+			anim_state = "climb_idle"
+	elif is_mining:
 		anim_state = "dig"
 	elif not is_on_floor() or velocity.x != 0:
 		anim_state = "walk"
@@ -30,8 +35,10 @@ func _process(delta: float) -> void:
 		anim_state = "idle"
 		
 	# Update frames
-	anim_timer += delta
-	var fps = 8.0 if anim_state == "walk" or anim_state == "dig" else 4.0
+	if anim_state != "climb_idle":
+		anim_timer += delta
+	
+	var fps = 8.0 if anim_state in ["walk", "dig", "climb"] else 4.0
 	if anim_timer > 1.0 / fps:
 		anim_timer = 0.0
 		anim_frame = (anim_frame + 1) % 4
@@ -39,10 +46,11 @@ func _process(delta: float) -> void:
 	var base_frame = 0
 	if anim_state == "dig": base_frame = 4
 	elif anim_state == "walk": base_frame = 8
+	elif anim_state == "climb" or anim_state == "climb_idle": base_frame = 12
 	
 	$Sprite2D.frame = base_frame + anim_frame
 	
-	if last_direction.x != 0:
+	if anim_state not in ["climb", "climb_idle"] and last_direction.x != 0:
 		$Sprite2D.flip_h = last_direction.x < 0
 
 func _physics_process(delta: float) -> void:
