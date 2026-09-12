@@ -4,11 +4,11 @@ enum ResourceType { STONE, COPPER }
 @export var type: ResourceType = ResourceType.STONE
 
 func _ready() -> void:
-	var poly = $Polygon2D
+	var sprite = $Sprite2D
 	if type == ResourceType.STONE:
-		poly.color = Color(0.5, 0.5, 0.55, 1.0)
+		sprite.frame = 24 # Row 5 Col 1 (stone/coal lump)
 	else:
-		poly.color = Color(0.9, 0.5, 0.2, 1.0)
+		sprite.frame = 26 # Row 5 Col 3 (copper ingot)
 		
 	body_entered.connect(_on_body_entered)
 	

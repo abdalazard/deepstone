@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://bdropsceneuidxxx"]
+[gd_scene load_steps=4 format=3 uid="uid://bdropsceneuidxxx"]
 
 [ext_resource type="Script" path="res://scripts/resource_drop.gd" id="1_drop"]
+[ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="2_ores"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_drop"]
 size = Vector2(12, 12)
@@ -11,5 +12,7 @@ script = ExtResource("1_drop")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_drop")
 
-[node name="Polygon2D" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-4, -4, 4, -4, 4, 4, -4, 4)
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_ores")
+hframes = 6
+vframes = 6

@@ -6,7 +6,7 @@ extends StaticBody2D
 var max_hp: int = 3
 var hp: int = 3
 
-@onready var polygon_2d: Polygon2D = $Polygon2D
+@onready var sprite_2d: Sprite2D = $Sprite2D
 const DROP_SCENE = preload("res://scenes/items/resource_drop.tscn")
 var cracks: Node2D
 
@@ -14,13 +14,13 @@ func _ready() -> void:
 	if is_copper:
 		max_hp = 4
 		hp = 4
-		if polygon_2d:
-			polygon_2d.color = Color(0.8, 0.45, 0.2, 1)
+		if sprite_2d:
+			sprite_2d.frame = 2 # Row 1 Col 3 (Copper ore)
 	else:
 		max_hp = 3
 		hp = 3
-		if polygon_2d:
-			polygon_2d.color = Color(0.4, 0.4, 0.45, 1)
+		if sprite_2d:
+			sprite_2d.frame = 1 # Row 1 Col 2 (Stone/Iron ore)
 			
 	# Setup node to draw cracks over the rock
 	cracks = Node2D.new()
@@ -35,21 +35,20 @@ func hit() -> void:
 	hp -= 1
 	cracks.queue_redraw()
 	
-	if polygon_2d:
-		var original_color = Color(0.8, 0.45, 0.2, 1) if is_copper else Color(0.4, 0.4, 0.45, 1)
-		polygon_2d.color = Color(1, 1, 1, 1) # Flash white
+	if sprite_2d:
+		sprite_2d.modulate = Color(1, 0.3, 0.3, 1) # Red damage flash
 		var tween = create_tween()
-		tween.tween_property(polygon_2d, "color", original_color, 0.15)
+		tween.tween_property(sprite_2d, "modulate", Color(1, 1, 1, 1), 0.15)
 		
 		# Displacement and Scale shake
 		var original_pos = Vector2.ZERO
 		var offset = Vector2(randf_range(-3, 3), randf_range(-3, 3))
-		polygon_2d.position = original_pos + offset
-		cracks.position = polygon_2d.position
+		sprite_2d.position = original_pos + offset
+		cracks.position = sprite_2d.position
 		
 		var tween_pos = create_tween()
 		tween_pos.set_parallel(true)
-		tween_pos.tween_property(polygon_2d, "position", original_pos, 0.1)
+		tween_pos.tween_property(sprite_2d, "position", original_pos, 0.1)
 		tween_pos.tween_property(cracks, "position", original_pos, 0.1)
 		
 		scale = Vector2(1.1, 1.1)
@@ -99,7 +98,7 @@ func spawn_particles() -> void:
 func _on_cracks_draw() -> void:
 	if hp >= max_hp: return
 	var ratio = float(hp) / float(max_hp)
-	var crack_color = Color(0.1, 0.1, 0.1, 0.7)
+	var crack_color = Color(0.1, 0.1, 0.1, 0.9)
 	
 	if ratio <= 0.67:
 		cracks.draw_line(Vector2(-6, -6), Vector2(-1, 0), crack_color, 1.5)
