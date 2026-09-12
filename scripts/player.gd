@@ -93,6 +93,9 @@ func _process(delta: float) -> void:
 		sprite.flip_h = (facing_x < 0)
 
 func _physics_process(delta: float) -> void:
+	# Pass through planks (layer 6) freely when climbing on ladder
+	set_collision_mask_value(6, not on_ladder)
+
 	# Double-tap down dash on ladder
 	if Input.is_action_just_pressed("ui_down") and on_ladder:
 		var now = Time.get_ticks_msec() / 1000.0
@@ -140,13 +143,8 @@ func _physics_process(delta: float) -> void:
 	elif Input.is_action_pressed("ui_right"):
 		aim_dir.x = 1
 		facing_x = 1.0
-	
-	if aim_dir != Vector2.ZERO:
-		last_direction = aim_dir.normalized()
-	elif velocity.x != 0:
-		last_direction = Vector2(sign(velocity.x), 0)
 
-	# Handle movement
+	# Movement
 	var direction := Input.get_axis("ui_left", "ui_right")
 	if direction != 0:
 		facing_x = sign(direction)
@@ -159,24 +157,11 @@ func _physics_process(delta: float) -> void:
 	velocity.y = clamp(velocity.y, -400.0, 500.0)
 
 	move_and_slide()
-	
-	# Anti-stuck depenetration safety
-	if test_move(global_transform, Vector2.ZERO):
-		var escape_offsets = [
-			Vector2(0, -4), Vector2(0, -8), Vector2(0, -16),
-			Vector2(-4, 0), Vector2(4, 0), Vector2(-8, 0), Vector2(8, 0),
-			Vector2(-16, 0), Vector2(16, 0), Vector2(0, -24)
-		]
-		for off in escape_offsets:
-			if not test_move(global_transform.translated(off), Vector2.ZERO):
-				global_position += off
-				velocity = Vector2.ZERO
-				break
-	
-	# Push only resource RigidBodies when holding Drag key
-	var push_force = 40.0
-	if Input.is_action_pressed("action_drag"):
-		for i in get_slide_collision_count():
+
+	# Push fallen ores/debris gently
+	var push_force = 18.0
+	for i in get_slide_collision_count():
+		if i < get_slide_collision_count():
 			var c = get_slide_collision(i)
 			var collider = c.get_collider()
 			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
@@ -184,21 +169,33 @@ func _physics_process(delta: float) -> void:
 	
 	# Only slots 1, 2, 3, 4 (Pickaxe, Lamp, Escada, Tábua) can be selected for button Z
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
-	if Input.is_action_just_pressed("slot_2"): set_slot(1)
+	if Input.is_action_just_pressed("slot_2"):
+		if Inventory.coal < 3 or Inventory.iron < 2:
+			Inventory.notify("Poste indisponível! (Requer 3 Carvões + 2 Ferros)", "lamp")
+			set_slot(2) # Pula para o próximo (Escada)
+		else:
+			set_slot(1)
 	if Input.is_action_just_pressed("slot_3"): set_slot(2)
 	if Input.is_action_just_pressed("slot_4"): set_slot(3)
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
-		# Cycle strictly between 0, 1, 2, 3 (Pickaxe, Lamp, Escada, Tábua)
-		set_slot((Inventory.active_slot + 1) % 4)
+		# Cycle strictly between tools, skipping lamp if insufficient resources
+		var next_slot = (Inventory.active_slot + 1) % 4
+		if next_slot == 1 and (Inventory.coal < 3 or Inventory.iron < 2):
+			next_slot = 2
+		set_slot(next_slot)
 	
 	if Input.is_action_just_pressed("action_mine"):
 		if _try_chest_interaction():
 			pass # Interaction succeeded
 		elif Inventory.active_slot == 0:
 			try_mine()
-		elif Inventory.active_slot == 1 and Inventory.signs > 0:
-			place_torch()
+		elif Inventory.active_slot == 1:
+			if Inventory.coal >= 3 and Inventory.iron >= 2:
+				place_torch()
+			else:
+				Inventory.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
+				set_slot(2)
 		elif Inventory.active_slot == 2:
 			place_rope()
 		elif Inventory.active_slot == 3 and Inventory.planks > 0:
@@ -210,13 +207,27 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("action_inventory"):
 		toggle_inventory()
 
+	if Input.is_action_just_pressed("action_equip_menu"):
+		toggle_equipment()
+
+func toggle_equipment() -> void:
+	var hud = get_tree().current_scene.get_node_or_null("HUD") if (is_inside_tree() and get_tree() and get_tree().current_scene) else null
+	if hud and hud.has_method("toggle_equipment"):
+		hud.toggle_equipment()
+
 func set_slot(slot: int) -> void:
+	if slot == 1 and (Inventory.coal < 3 or Inventory.iron < 2):
+		slot = 2
 	if slot in [0, 1, 2, 3]:
 		Inventory.active_slot = slot
 		Inventory.inventory_changed.emit()
 
 func place_torch() -> void:
-	Inventory.signs -= 1
+	if Inventory.coal < 3 or Inventory.iron < 2:
+		Inventory.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
+		return
+	Inventory.coal -= 3
+	Inventory.iron -= 2
 	Inventory.inventory_changed.emit()
 	
 	var torch_scene = load("res://scenes/environment/torch.tscn")
@@ -250,7 +261,11 @@ func place_plank() -> void:
 	if not plank_scene: return
 	var plank = plank_scene.instantiate()
 	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
-	var place_y = round((global_position.y + 12.0) / 32.0) * 32.0
+	# Align top of plank exactly with top of blocks at grid_y * 32.0 + 112.0
+	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
+	if Input.is_action_pressed("ui_down"): grid_y += 1
+	elif Input.is_action_pressed("ui_up"): grid_y -= 1
+	var place_y = grid_y * 32.0 + 117.0
 	plank.position = Vector2(place_x, place_y)
 	plank.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(plank)
@@ -309,7 +324,7 @@ func try_mine() -> void:
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true
 	query.collide_with_areas = true
-	query.collision_mask = 5 # Block and Placed items
+	query.collision_mask = 37 # 1 (Blocks), 4 (Drops), 32 (Planks)
 	
 	is_mining = true
 	mine_timer = 0.5

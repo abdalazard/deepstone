@@ -13,10 +13,24 @@ func hit() -> void:
 func collect() -> void:
 	break_plank()
 
+var inventory_override: Node = null
+
+func _get_inv() -> Node:
+	if inventory_override:
+		return inventory_override
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		return get_tree().root.get_node("Inventory")
+	var loop = Engine.get_main_loop()
+	if loop and "root" in loop and loop.root and loop.root.has_node("Inventory"):
+		return loop.root.get_node("Inventory")
+	return null
+
 func break_plank() -> void:
-	Inventory.planks = min(Inventory.planks + 1, 99)
-	Inventory.inventory_changed.emit()
-	Inventory.notify("+1 Tábua", "plank")
+	var inv = _get_inv()
+	if inv:
+		inv.planks = min(inv.planks + 1, 99)
+		inv.inventory_changed.emit()
+		inv.notify("+1 Tábua", "plank")
 	
 	# Spawn particles
 	var particles = CPUParticles2D.new()
@@ -41,7 +55,7 @@ func break_plank() -> void:
 	particles.add_child(timer)
 	timer.start()
 	
-	if has_node("/root/SaveManager"):
-		SaveManager.request_save()
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
+		get_tree().root.get_node("SaveManager").request_save()
 		
 	queue_free()

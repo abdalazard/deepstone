@@ -10,14 +10,35 @@ func _ready() -> void:
 	var sprite = get_node_or_null("Sprite2D")
 	if sprite:
 		if type == ResourceType.IRON:
-			sprite.frame = 24 # Row 5 Col 1
+			var atlas = AtlasTexture.new()
+			atlas.atlas = load("res://assets/Caves and Mines/ores.png")
+			atlas.region = Rect2(32, 128, 16, 16)
+			sprite.texture = atlas
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.2, 1.2)
 			sprite.modulate = Color(1, 1, 1, 1)
 		elif type == ResourceType.GOLD:
-			sprite.frame = 27 # Row 5 Col 4 (Gold ingot)
+			var atlas = AtlasTexture.new()
+			atlas.atlas = load("res://assets/Caves and Mines/ores.png")
+			atlas.region = Rect2(128, 128, 16, 16)
+			sprite.texture = atlas
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.2, 1.2)
 			sprite.modulate = Color(1, 1, 1, 1)
 		elif type == ResourceType.COAL:
-			sprite.frame = 24
-			sprite.modulate = Color(0.2, 0.2, 0.22, 1.0) # Charcoal lump
+			var atlas = AtlasTexture.new()
+			atlas.atlas = load("res://assets/Caves and Mines/ores.png")
+			atlas.region = Rect2(0, 128, 16, 16)
+			sprite.texture = atlas
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.2, 1.2)
+			sprite.modulate = Color(1, 1, 1, 1)
 		elif type == ResourceType.PLANK:
 			sprite.texture = load("res://assets/sprites/plank.png")
 			sprite.hframes = 1

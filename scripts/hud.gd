@@ -1,25 +1,29 @@
 extends CanvasLayer
 
-@onready var hotbar = $TopContainer/TopVBox/HotbarVisual
-@onready var capacity_badge_label = $TopContainer/TopVBox/CapacityBadgeContainer/CapacityBadge/CapacityMargin/CapacityLabel
-@onready var inventory_panel = $InventoryPanel
-@onready var close_button = $InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer/CloseButton
-@onready var chest_grid = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/ChestGrid
-@onready var item_title = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ItemTitle
-@onready var item_desc = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ItemDesc
-@onready var equip_button = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox/EquipButton
-@onready var drop_button = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox/DropButton
-@onready var capacity_label = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox/CapacityLabel
-@onready var shop_button = $TopRightContainer/TopRightHBox/ShopButton
-@onready var pause_button = $TopRightContainer/TopRightHBox/PauseButton
-@onready var toast_list = $ToastContainer/ToastList
+@onready var hotbar = find_child("HotbarVisual", true, false)
+@onready var capacity_badge_label = find_child("CapacityLabel", true, false)
+@onready var inventory_panel = find_child("InventoryPanel", true, false)
+@onready var close_button = find_child("CloseButton", true, false)
+@onready var chest_grid = find_child("ChestGrid", true, false)
+@onready var item_title = find_child("ItemTitle", true, false)
+@onready var item_desc = find_child("ItemDesc", true, false)
+@onready var equip_button = find_child("EquipButton", true, false)
+@onready var drop_button = find_child("DropButton", true, false)
+@onready var capacity_label = find_child("CapacityLabel", true, false)
+@onready var shop_button = find_child("ShopButton", true, false)
+@onready var pause_button = find_child("PauseButton", true, false)
+@onready var toast_list = find_child("ToastList", true, false)
+
+# Equipment Menu nodes
+@onready var equipment_panel = find_child("EquipmentPanel", true, false)
+@onready var equip_close_btn = find_child("EquipCloseButton", true, false)
 
 # Pause Menu nodes
-@onready var pause_panel = $PausePanel
-@onready var resume_btn = $PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox/ResumeBtn
-@onready var save_btn = $PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox/SaveBtn
-@onready var restart_btn = $PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox/RestartBtn
-@onready var exit_btn = $PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox/ExitBtn
+@onready var pause_panel = find_child("PausePanel", true, false)
+@onready var resume_btn = find_child("ResumeBtn", true, false)
+@onready var save_btn = find_child("SaveBtn", true, false)
+@onready var restart_btn = find_child("RestartBtn", true, false)
+@onready var exit_btn = find_child("ExitBtn", true, false)
 
 var slots: Array = []
 var chest_slots: Array = []
@@ -47,7 +51,7 @@ var chest_items_def = [
 	{
 		"key": "lamp",
 		"name": "Mini Poste de Luz",
-		"desc": "Lampião portátil que ilumina a caverna e faz os minérios brilharem no escuro. Pressione [2].",
+		"desc": "Lampião portátil que ilumina a caverna e faz os minérios brilharem no escuro. Custa 3 Carvões + 2 Ferros. Pressione [2].",
 		"icon_type": "atlas",
 		"atlas": "lamp",
 		"region": Rect2(0, 0, 16, 16),
@@ -78,30 +82,30 @@ var chest_items_def = [
 	{
 		"key": "iron",
 		"name": "Minério de Ferro",
-		"desc": "Metal versátil e resistente obtido nas profundezas. Armazene no baú para melhorias futuras.",
+		"desc": "Metal versátil e resistente obtido nas profundezas. Usado na construção de postes e melhorias futuras.",
 		"icon_type": "atlas",
 		"atlas": "ores",
-		"region": Rect2(0, 32, 16, 16),
+		"region": Rect2(32, 128, 16, 16),
 		"shortcut": "",
 		"is_tool": false
 	},
 	{
 		"key": "gold",
 		"name": "Minério de Ouro",
-		"desc": "Metal nobre e reluzente de alto valor comercial. Guarde seus ouros para comprar itens na Loja.",
+		"desc": "Metal nobre e reluzente de alto valor comercial e grande raridade. Guarde seus ouros para comprar itens na Loja.",
 		"icon_type": "atlas",
 		"atlas": "ores",
-		"region": Rect2(48, 32, 16, 16),
+		"region": Rect2(128, 128, 16, 16),
 		"shortcut": "",
 		"is_tool": false
 	},
 	{
 		"key": "coal",
 		"name": "Carvão Mineral",
-		"desc": "Combustível fóssil primordial abundante. Usado na forja e para queimar em lamparinas.",
+		"desc": "Combustível fóssil primordial abundante. Usado na forja e consumido na instalação de postes de luz.",
 		"icon_type": "atlas",
 		"atlas": "ores",
-		"region": Rect2(0, 0, 16, 16),
+		"region": Rect2(0, 128, 16, 16),
 		"shortcut": "",
 		"is_tool": false
 	}
@@ -124,50 +128,54 @@ func _ready() -> void:
 	
 	var inv = _get_inv()
 	if inv:
-		inv.inventory_changed.connect(update_ui)
-		inv.notification_triggered.connect(show_toast)
+		if not inv.inventory_changed.is_connected(update_ui):
+			inv.inventory_changed.connect(update_ui)
+		if not inv.notification_triggered.is_connected(show_toast):
+			inv.notification_triggered.connect(show_toast)
 	
 	setup_hotbar()
 	setup_chest_grid()
 	
-	if close_button:
+	if close_button and not close_button.pressed.is_connected(close_inventory):
 		close_button.pressed.connect(close_inventory)
-	if equip_button:
+	if equip_close_btn and not equip_close_btn.pressed.is_connected(close_equipment):
+		equip_close_btn.pressed.connect(close_equipment)
+	if equip_button and not equip_button.pressed.is_connected(_on_equip_pressed):
 		equip_button.pressed.connect(_on_equip_pressed)
-	if drop_button:
+	if drop_button and not drop_button.pressed.is_connected(_on_drop_pressed):
 		drop_button.pressed.connect(_on_drop_pressed)
-	if shop_button:
+	if shop_button and not shop_button.pressed.is_connected(_on_shop_pressed):
 		shop_button.pressed.connect(_on_shop_pressed)
-	if pause_button:
+	if pause_button and not pause_button.pressed.is_connected(toggle_pause):
 		pause_button.pressed.connect(toggle_pause)
 		
-	# Connect Pause buttons
-	if resume_btn:
+	if resume_btn and not resume_btn.pressed.is_connected(close_pause):
 		resume_btn.pressed.connect(close_pause)
-	if save_btn:
+	if save_btn and not save_btn.pressed.is_connected(_on_save_pressed):
 		save_btn.pressed.connect(_on_save_pressed)
-	if restart_btn:
+	if restart_btn and not restart_btn.pressed.is_connected(_on_restart_pressed):
 		restart_btn.pressed.connect(_on_restart_pressed)
-	if exit_btn:
+	if exit_btn and not exit_btn.pressed.is_connected(_on_exit_pressed):
 		exit_btn.pressed.connect(_on_exit_pressed)
 		
-	update_ui()
-	_update_capacity_badge()
 	select_slot(0)
+	update_ui()
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Toggle Pause Menu with [P]
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.physical_keycode == KEY_P:
-			toggle_pause()
+		# Toggle Equipment Menu with [E]
+		if event.physical_keycode == KEY_E:
+			toggle_equipment()
 			get_viewport().set_input_as_handled()
 			return
-		elif event.physical_keycode == KEY_ESCAPE:
-			if pause_panel.visible:
-				close_pause()
+
+		# Toggle Pause Menu with [P] or [Esc]
+		if event.physical_keycode == KEY_P or event.physical_keycode == KEY_ESCAPE:
+			if is_instance_valid(equipment_panel) and equipment_panel.visible:
+				close_equipment()
 				get_viewport().set_input_as_handled()
 				return
-			elif inventory_panel.visible:
+			elif is_instance_valid(inventory_panel) and inventory_panel.visible:
 				close_inventory()
 				get_viewport().set_input_as_handled()
 				return
@@ -177,7 +185,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 				
 		# Hotkeys inside Pause Menu
-		if pause_panel.visible:
+		if is_instance_valid(pause_panel) and pause_panel.visible:
 			if event.physical_keycode == KEY_S:
 				_on_save_pressed()
 				get_viewport().set_input_as_handled()
@@ -192,18 +200,18 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 	
 	# Open Shop with [L]
-	if not pause_panel.visible and event.is_action_pressed("shop_menu"):
+	if (not pause_panel or not pause_panel.visible) and event.is_action_pressed("shop_menu"):
 		_on_shop_pressed()
 		get_viewport().set_input_as_handled()
 		return
 		
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_L and not pause_panel.visible:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_L and (not pause_panel or not pause_panel.visible):
 		_on_shop_pressed()
 		get_viewport().set_input_as_handled()
 		return
 
 	# Inventory Keyboard Navigation
-	if inventory_panel.visible and not pause_panel.visible:
+	if is_instance_valid(inventory_panel) and inventory_panel.visible and (not pause_panel or not pause_panel.visible):
 		if event.is_action_pressed("ui_right"):
 			_nav_grid(1, 0)
 			get_viewport().set_input_as_handled()
@@ -223,6 +231,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_drop_pressed()
 			get_viewport().set_input_as_handled()
 
+func toggle_equipment() -> void:
+	if is_instance_valid(equipment_panel) and equipment_panel.visible:
+		close_equipment()
+	else:
+		open_equipment()
+
+func open_equipment() -> void:
+	if is_instance_valid(inventory_panel) and inventory_panel.visible:
+		close_inventory()
+	if is_instance_valid(pause_panel) and pause_panel.visible:
+		close_pause()
+	if is_instance_valid(equipment_panel):
+		equipment_panel.visible = true
+
+func close_equipment() -> void:
+	if is_instance_valid(equipment_panel):
+		equipment_panel.visible = false
+
 func toggle_pause() -> void:
 	if is_instance_valid(pause_panel) and pause_panel.visible:
 		close_pause()
@@ -232,11 +258,13 @@ func toggle_pause() -> void:
 func open_pause() -> void:
 	if is_instance_valid(inventory_panel) and inventory_panel.visible:
 		close_inventory()
+	if is_instance_valid(equipment_panel) and equipment_panel.visible:
+		close_equipment()
 	if is_instance_valid(pause_panel):
 		pause_panel.visible = true
 	if is_inside_tree() and get_tree():
 		get_tree().paused = true
-	if is_instance_valid(resume_btn):
+	if is_inside_tree() and is_instance_valid(resume_btn):
 		resume_btn.grab_focus()
 
 func close_pause() -> void:
@@ -252,12 +280,12 @@ func _on_save_pressed() -> void:
 		show_toast("Progresso Salvo!", "save")
 
 func _on_restart_pressed() -> void:
-	if get_tree():
+	if is_inside_tree() and get_tree():
 		get_tree().paused = false
 		get_tree().reload_current_scene()
 
 func _on_exit_pressed() -> void:
-	if get_tree():
+	if is_inside_tree() and get_tree():
 		get_tree().paused = false
 		if OS.has_feature("pc") and not OS.has_feature("web"):
 			get_tree().quit()
@@ -279,12 +307,14 @@ func _nav_grid(dx: int, dy: int) -> void:
 
 func _on_shop_pressed() -> void:
 	show_toast("Loja em breve! Guarde seus ouros para novas ferramentas e melhorias.", "gold")
-	var tween = create_tween()
-	tween.tween_property(shop_button, "scale", Vector2(1.15, 1.15), 0.08)
-	tween.tween_property(shop_button, "scale", Vector2.ONE, 0.08)
+	if shop_button:
+		var tween = create_tween()
+		tween.tween_property(shop_button, "scale", Vector2(1.15, 1.15), 0.08)
+		tween.tween_property(shop_button, "scale", Vector2.ONE, 0.08)
 
 func setup_hotbar() -> void:
 	slots.clear()
+	if not hotbar: return
 	for child in hotbar.get_children():
 		child.queue_free()
 		
@@ -294,9 +324,9 @@ func setup_hotbar() -> void:
 		{"key": "lamp", "num": "2", "type": "tool", "atlas": "lamp", "region": Rect2(0, 0, 16, 16)},
 		{"key": "ladder", "num": "3", "type": "tool", "direct": "rope"},
 		{"key": "plank", "num": "4", "type": "tool", "direct": "plank"},
-		{"key": "iron", "num": "Fe", "type": "res", "atlas": "ores", "region": Rect2(0, 32, 16, 16)},
-		{"key": "gold", "num": "Au", "type": "res", "atlas": "ores", "region": Rect2(48, 32, 16, 16)},
-		{"key": "coal", "num": "C", "type": "res", "atlas": "ores", "region": Rect2(0, 0, 16, 16)}
+		{"key": "iron", "num": "Fe", "type": "res", "atlas": "ores", "region": Rect2(32, 128, 16, 16)},
+		{"key": "gold", "num": "Au", "type": "res", "atlas": "ores", "region": Rect2(128, 128, 16, 16)},
+		{"key": "coal", "num": "C", "type": "res", "atlas": "ores", "region": Rect2(0, 128, 16, 16)}
 	]
 	
 	for i in range(defs.size()):
@@ -307,6 +337,7 @@ func setup_hotbar() -> void:
 
 func setup_chest_grid() -> void:
 	chest_slots.clear()
+	if not chest_grid: return
 	for child in chest_grid.get_children():
 		child.queue_free()
 		
@@ -442,26 +473,25 @@ func _on_slot_gui_input(event: InputEvent, idx: int) -> void:
 				select_slot(idx)
 				drag_start_idx = idx
 			else:
-				if drag_start_idx == idx:
-					var mouse_pos = get_viewport().get_mouse_position()
-					if not inventory_panel.get_global_rect().has_point(mouse_pos):
+				if drag_start_idx != -1 and drag_start_idx == idx:
+					var mpos = event.global_position
+					if inventory_panel and not inventory_panel.get_global_rect().has_point(mpos):
 						_drop_item_at_idx(idx)
 				drag_start_idx = -1
 
 func select_slot(idx: int) -> void:
-	if idx < 0 or idx >= chest_items_def.size(): return
 	selected_index = idx
 	
 	for i in range(chest_slots.size()):
 		var card = chest_slots[i]
-		var style = card.get_theme_stylebox("panel").duplicate()
+		var style = card.get_theme_stylebox("panel")
 		if i == selected_index:
-			style.border_color = Color(1.0, 0.88, 0.35, 1.0)
+			style.border_color = Color(1.0, 0.85, 0.3, 1.0)
 			style.border_width_left = 3
 			style.border_width_top = 3
 			style.border_width_right = 3
 			style.border_width_bottom = 3
-			style.bg_color = Color(0.25, 0.16, 0.08, 0.98)
+			style.bg_color = Color(0.24, 0.14, 0.07, 0.98)
 		else:
 			style.border_color = Color(0.45, 0.3, 0.16, 1)
 			style.border_width_left = 2
@@ -469,23 +499,29 @@ func select_slot(idx: int) -> void:
 			style.border_width_right = 2
 			style.border_width_bottom = 2
 			style.bg_color = Color(0.14, 0.08, 0.04, 0.95)
-		card.add_theme_stylebox_override("panel", style)
-		
-	var def = chest_items_def[selected_index]
-	item_title.text = def.name + (" [Atalho: " + def.shortcut + "]" if def.shortcut != "" else "")
-	item_desc.text = def.desc
-	
-	equip_button.visible = def.is_tool
-	drop_button.visible = not def.is_tool or def.key in ["lamp", "plank"]
+			
+	if selected_index >= 0 and selected_index < chest_items_def.size():
+		var def = chest_items_def[selected_index]
+		if item_title: item_title.text = def.name
+		if item_desc: item_desc.text = def.desc
+		if equip_button:
+			equip_button.visible = def.is_tool
+			equip_button.text = "Equipar [%s]" % def.shortcut
+		if drop_button:
+			drop_button.visible = not def.is_tool or (def.key == "plank" or def.key == "lamp")
 
 func _on_equip_pressed() -> void:
+	if selected_index < 0 or selected_index >= chest_items_def.size(): return
 	var def = chest_items_def[selected_index]
 	var inv = _get_inv()
 	if def.is_tool and inv:
+		if def.key == "lamp" and (inv.coal < 3 or inv.iron < 2):
+			show_toast("Poste indisponível! (Requer 3 Carvões + 2 Ferros)", "lamp")
+			return
 		inv.active_slot = def.tool_slot
 		inv.inventory_changed.emit()
-		show_toast("Equipado: " + def.name, def.key)
 		close_inventory()
+		show_toast("%s equipada!" % def.name, def.key)
 
 func _on_drop_pressed() -> void:
 	_drop_item_at_idx(selected_index)
@@ -506,7 +542,7 @@ func _get_item_count(key: String) -> int:
 	if not inv: return 0
 	match key:
 		"pickaxe": return 1
-		"lamp": return inv.signs
+		"lamp": return min(inv.coal / 3, inv.iron / 2)
 		"ladder": return 99
 		"plank": return inv.planks
 		"iron": return inv.iron
@@ -517,6 +553,9 @@ func _get_item_count(key: String) -> int:
 func update_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
+	
+	var can_craft_lamp = (inv.coal >= 3 and inv.iron >= 2)
+	var craftable_lamps = min(inv.coal / 3, inv.iron / 2)
 	
 	# Update 7 Hotbar items
 	for i in range(slots.size()):
@@ -543,18 +582,28 @@ func update_ui() -> void:
 			
 		if def.key == "pickaxe":
 			count_lbl.text = "[1]"
+			slot.modulate = Color(1, 1, 1, 1.0)
 		elif def.key == "lamp":
-			count_lbl.text = "%d" % inv.signs
+			count_lbl.text = "%d" % craftable_lamps
+			if can_craft_lamp:
+				slot.modulate = Color(1, 1, 1, 1.0)
+			else:
+				slot.modulate = Color(1, 1, 1, 0.4) # Semi-opaco indicando indisponibilidade
 		elif def.key == "ladder":
 			count_lbl.text = "∞"
+			slot.modulate = Color(1, 1, 1, 1.0)
 		elif def.key == "plank":
 			count_lbl.text = "%d" % inv.planks
+			slot.modulate = Color(1, 1, 1, 1.0)
 		elif def.key == "iron":
 			count_lbl.text = "%d" % inv.iron
+			slot.modulate = Color(1, 1, 1, 1.0)
 		elif def.key == "gold":
 			count_lbl.text = "%d" % inv.gold
+			slot.modulate = Color(1, 1, 1, 1.0)
 		elif def.key == "coal":
 			count_lbl.text = "%d" % inv.coal
+			slot.modulate = Color(1, 1, 1, 1.0)
 			
 	# Update chest slot cards
 	for i in range(chest_slots.size()):
@@ -567,6 +616,8 @@ func update_ui() -> void:
 				lbl.text = "Infinito"
 			elif def.key == "pickaxe":
 				lbl.text = "Nível 1"
+			elif def.key == "lamp":
+				lbl.text = "%d un. (3C+2Fe)" % craftable_lamps
 			else:
 				lbl.text = "%d un." % c
 				
@@ -579,33 +630,37 @@ func _update_capacity_badge() -> void:
 	
 	var used = inv.get_total_used()
 	var max_cap = inv.MAX_CAPACITY
-	var free = inv.get_total_available()
+	var avail = inv.get_total_available()
 	
-	if inv.is_full():
-		capacity_badge_label.text = "🎒 Mochila: %d / %d (CHEIO! 0 Livres)" % [used, max_cap]
-		capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.32, 0.28, 1.0))
-	elif used >= max_cap * 0.75:
-		capacity_badge_label.text = "🎒 Carga: %d / %d  |  Livre: %d" % [used, max_cap, free]
-		capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.35, 1.0))
+	capacity_badge_label.text = "🎒 Carga: %d / %d  |  Livre: %d" % [used, max_cap, avail]
+	
+	var ratio = float(used) / float(max_cap)
+	if ratio >= 1.0:
+		capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35, 1.0))
+	elif ratio >= 0.75:
+		capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3, 1.0))
 	else:
-		capacity_badge_label.text = "🎒 Carga: %d / %d  |  Livre: %d" % [used, max_cap, free]
-		capacity_badge_label.add_theme_color_override("font_color", Color(0.85, 0.95, 0.82, 1.0))
+		capacity_badge_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.85, 1.0))
 
 func toggle() -> void:
-	if pause_panel.visible: return
-	if inventory_panel.visible:
+	if is_instance_valid(inventory_panel) and inventory_panel.visible:
 		close_inventory()
 	else:
 		open_inventory()
 
 func open_inventory() -> void:
-	if pause_panel.visible: return
-	inventory_panel.visible = true
-	update_ui()
+	if is_instance_valid(equipment_panel) and equipment_panel.visible:
+		close_equipment()
+	if is_instance_valid(pause_panel) and pause_panel.visible:
+		close_pause()
+	if is_instance_valid(inventory_panel):
+		inventory_panel.visible = true
 	select_slot(selected_index)
+	update_ui()
 
 func close_inventory() -> void:
-	inventory_panel.visible = false
+	if is_instance_valid(inventory_panel):
+		inventory_panel.visible = false
 
 func show_toast(text: String, icon_type: String = "") -> void:
 	if not toast_list: return
@@ -645,17 +700,17 @@ func show_toast(text: String, icon_type: String = "") -> void:
 		if icon_type == "iron":
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
-			atlas.region = Rect2(0, 32, 16, 16)
+			atlas.region = Rect2(32, 128, 16, 16)
 			icon.texture = atlas
 		elif icon_type == "gold":
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
-			atlas.region = Rect2(48, 32, 16, 16)
+			atlas.region = Rect2(128, 128, 16, 16)
 			icon.texture = atlas
 		elif icon_type == "coal":
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
-			atlas.region = Rect2(0, 0, 16, 16)
+			atlas.region = Rect2(0, 128, 16, 16)
 			icon.texture = atlas
 		elif icon_type == "plank":
 			icon.texture = plank_tex
@@ -702,15 +757,16 @@ func show_toast(text: String, icon_type: String = "") -> void:
 	tween.tween_property(toast, "modulate:a", 1.0, 0.15)
 	tween.tween_property(toast, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
-	var timer = toast.get_tree().create_timer(2.2)
-	timer.timeout.connect(func():
-		if is_instance_valid(toast):
-			var out_tween = toast.create_tween()
-			out_tween.set_parallel(true)
-			out_tween.tween_property(toast, "modulate:a", 0.0, 0.25)
-			out_tween.tween_property(toast, "position:x", toast.position.x - 25.0, 0.25)
-			out_tween.finished.connect(func():
-				if is_instance_valid(toast):
-					toast.queue_free()
-			)
-	)
+	var timer = toast.get_tree().create_timer(2.2) if (toast.is_inside_tree() and toast.get_tree()) else null
+	if timer:
+		timer.timeout.connect(func():
+			if is_instance_valid(toast):
+				var out_tween = toast.create_tween()
+				out_tween.set_parallel(true)
+				out_tween.tween_property(toast, "modulate:a", 0.0, 0.25)
+				out_tween.tween_property(toast, "position:x", toast.position.x - 25.0, 0.25)
+				out_tween.finished.connect(func():
+					if is_instance_valid(toast):
+						toast.queue_free()
+				)
+		)

@@ -188,18 +188,22 @@ func generate_world() -> void:
 				var iron_thresh: float
 				var coal_thresh: float
 				
-				if current_biome == 0: # Terra
-					gold_thresh = 0.96 # ~4%
-					iron_thresh = 0.78 # ~18%
-					coal_thresh = 0.38 # ~40%
-				elif current_biome == 1: # Gelo
-					gold_thresh = 0.94 # ~6%
-					iron_thresh = 0.74 # ~20%
-					coal_thresh = 0.34 # ~40%
-				else: # Lava
-					gold_thresh = 0.91 # ~9%
-					iron_thresh = 0.68 # ~23%
-					coal_thresh = 0.30 # ~38%
+				if y <= 10:
+					gold_thresh = 1.5 # Sem ouro perto da superfície (y <= 10)
+					iron_thresh = 0.82 # ~18% ferro
+					coal_thresh = 0.38 # ~44% carvão
+				elif current_biome == 0: # Terra profunda (y: 11 a 35)
+					gold_thresh = 0.99 # ~1.0% ouro (raro e recompensador!)
+					iron_thresh = 0.77 # ~22% ferro
+					coal_thresh = 0.35 # ~42% carvão
+				elif current_biome == 1: # Gelo (y: 36 a 75)
+					gold_thresh = 0.975 # ~2.5% ouro
+					iron_thresh = 0.725 # ~25% ferro
+					coal_thresh = 0.325 # ~40% carvão
+				else: # Lava (y: 76 a 120)
+					gold_thresh = 0.96 # ~4.0% ouro
+					iron_thresh = 0.68 # ~28% ferro
+					coal_thresh = 0.32 # ~36% carvão
 				
 				if ore_roll > gold_thresh:
 					var rock = ROCK_SCENE.instantiate()

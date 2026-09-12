@@ -36,10 +36,10 @@ func apply_biome(b: int) -> void:
 			base_modulate = sprite_2d.modulate
 		return
 	
-	var base_hp = 3
+	var base_hp = 3 # Iron default
 	if is_dirt: base_hp = 1
-	elif is_coal: base_hp = 2
-	elif is_copper: base_hp = 4
+	elif is_coal: base_hp = 2 # Coal (easy)
+	elif is_copper: base_hp = 6 # Gold (demora mais tempo)
 	
 	if biome == 1: # Gelo (+1 HP)
 		max_hp = base_hp + 1
@@ -82,8 +82,8 @@ func _ready() -> void:
 		if sprite_2d:
 			sprite_2d.frame = 0 # Frame 0: Coal specks
 	elif is_copper:
-		max_hp = 4
-		hp = 4
+		max_hp = 6
+		hp = 6
 		if sprite_2d:
 			sprite_2d.frame = 8 # Frame 8: Gold specks
 	else:

@@ -35,16 +35,35 @@ func _exit_tree() -> void:
 		if is_instance_valid(ore) and ore.has_method("set_illuminated"):
 			ore.set_illuminated(false, self)
 
+var inventory_override: Node = null
+
+func _get_inv() -> Node:
+	if inventory_override:
+		return inventory_override
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		return get_tree().root.get_node("Inventory")
+	var loop = Engine.get_main_loop()
+	if loop and "root" in loop and loop.root and loop.root.has_node("Inventory"):
+		return loop.root.get_node("Inventory")
+	return null
+
 func hit() -> void:
 	for ore in illuminated_ores:
 		if is_instance_valid(ore) and ore.has_method("set_illuminated"):
 			ore.set_illuminated(false, self)
 	illuminated_ores.clear()
 	
-	Inventory.signs += 1
-	Inventory.inventory_changed.emit()
+	var inv = _get_inv()
+	if inv:
+		inv.coal = min(inv.coal + 1, inv.MAX_CAPACITY)
+		inv.iron = min(inv.iron + 1, inv.MAX_CAPACITY)
+		inv.inventory_changed.emit()
+		inv.notify("+1 Carvão, +1 Ferro (Poste Desmontado)", "lamp")
 	
-	target_player = get_tree().current_scene.get_node_or_null("Player")
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
+		get_tree().root.get_node("SaveManager").request_save()
+	
+	target_player = get_tree().current_scene.get_node_or_null("Player") if (is_inside_tree() and get_tree() and get_tree().current_scene) else null
 	if not target_player:
 		queue_free()
 
