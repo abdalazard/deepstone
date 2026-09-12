@@ -9,6 +9,7 @@ extends CanvasLayer
 var slots: Array = []
 var extras_tex = preload("res://assets/Caves and Mines/extras.png")
 var ores_tex = preload("res://assets/Caves and Mines/ores.png")
+var rope_tex = preload("res://assets/sprites/rope_tile.png")
 
 func _ready() -> void:
 	_build_hotbar()
@@ -29,29 +30,34 @@ func _build_hotbar() -> void:
 		var icon = TextureRect.new()
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		
-		var atlas = AtlasTexture.new()
 		if i == 0:
+			var atlas = AtlasTexture.new()
 			atlas.atlas = extras_tex
 			atlas.region = Rect2(0, 0, 16, 16) # Pickaxe
+			icon.texture = atlas
 		elif i == 1:
+			var atlas = AtlasTexture.new()
 			atlas.atlas = extras_tex
-			atlas.region = Rect2(128, 0, 16, 16) # Sign
+			atlas.region = Rect2(128, 0, 16, 16) # Sign / Placa
+			icon.texture = atlas
 		elif i == 2:
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(0, 64, 16, 16) # Ladder
+			icon.texture = rope_tex # Corda (not Escada)
 		elif i == 3:
+			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
 			atlas.region = Rect2(0, 0, 16, 16) # Iron
+			icon.texture = atlas
 		elif i == 4:
+			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
 			atlas.region = Rect2(64, 0, 16, 16) # Gold
+			icon.texture = atlas
 			
-		icon.texture = atlas
-		
-		# Number Label
+		# Number Label: only 1, 2, 3 for tools usable with button Z
 		var num_lbl = Label.new()
-		num_lbl.text = str(i + 1)
+		num_lbl.text = str(i + 1) if i < 3 else ""
 		num_lbl.add_theme_font_size_override("font_size", 14)
 		num_lbl.add_theme_color_override("font_color", Color(1,1,1))
 		num_lbl.add_theme_color_override("font_outline_color", Color(0,0,0))
@@ -111,9 +117,9 @@ func _on_resources_changed() -> void:
 	slots[3].qty.text = str(Inventory.iron)
 	slots[4].qty.text = str(Inventory.gold)
 	
-	# Reset Selection Colors
+	# Reset Selection Colors - only slots 0, 1, 2 (tools 1, 2, 3 for button Z) can be active
 	for i in range(slots.size()):
-		if i == Inventory.active_slot:
+		if i < 3 and i == Inventory.active_slot:
 			slots[i].bg.color = Color(0.8, 0.8, 0.2, 0.9) # Highlight yellow
 		else:
 			slots[i].bg.color = Color(0.2, 0.2, 0.2, 0.8) # Default dark

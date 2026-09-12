@@ -11,6 +11,13 @@ var hp: int = 3
 const DROP_SCENE = preload("res://scenes/items/resource_drop.tscn")
 var cracks: Node2D
 
+var light_sources: Array = []
+var is_shining: bool = false
+var shine_timer: float = 0.0
+var sparkle_overlay: Node2D
+var sparkle_alpha: float = 0.0
+var sparkle_points: Array[Vector2] = []
+
 func _ready() -> void:
 	if is_dirt:
 		max_hp = 1
@@ -36,6 +43,18 @@ func _ready() -> void:
 	add_child(cracks)
 	cracks.draw.connect(_on_cracks_draw)
 	
+	if not is_dirt:
+		sparkle_overlay = Node2D.new()
+		sparkle_overlay.name = "Sparkles"
+		sparkle_overlay.z_index = 2
+		add_child(sparkle_overlay)
+		sparkle_overlay.draw.connect(_on_sparkle_draw)
+		sparkle_points = [
+			Vector2(randf_range(-8, 8), randf_range(-8, 8)),
+			Vector2(randf_range(-8, 8), randf_range(-8, 8))
+		]
+		shine_timer = randf_range(0.2, 1.2)
+	
 	lock_rotation = true
 	mass = 100.0 # Heavy so player doesn't push it easily
 	
@@ -44,7 +63,7 @@ func _ready() -> void:
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 
 func is_ore() -> bool:
-	return is_copper
+	return !is_dirt
 
 func hit() -> void:
 	if hp <= 0: return
@@ -130,3 +149,50 @@ func _on_cracks_draw() -> void:
 		cracks.draw_line(Vector2(6, -4), Vector2(1, 1), crack_color, 1.5)
 		cracks.draw_line(Vector2(1, 1), Vector2(4, 5), crack_color, 1.5)
 		cracks.draw_line(Vector2(-1, 0), Vector2(2, -2), crack_color, 1.5)
+
+func _process(delta: float) -> void:
+	if is_shining and not is_dirt and hp > 0:
+		shine_timer -= delta
+		if shine_timer <= 0.0:
+			shine_timer = randf_range(1.0, 1.8)
+			_trigger_sparkle()
+
+func _trigger_sparkle() -> void:
+	if not sprite_2d: return
+	var flash_color = Color(1.8, 1.6, 0.9, 1.0) if is_copper else Color(1.4, 1.5, 1.7, 1.0)
+	var tween = create_tween()
+	tween.tween_property(sprite_2d, "modulate", flash_color, 0.15)
+	tween.tween_property(sprite_2d, "modulate", Color(1, 1, 1, 1), 0.25)
+	
+	if sparkle_overlay:
+		sparkle_alpha = 1.0
+		sparkle_overlay.queue_redraw()
+		var s_tween = create_tween()
+		s_tween.tween_property(self, "sparkle_alpha", 0.0, 0.35)
+		s_tween.tween_callback(sparkle_overlay.queue_redraw)
+
+func _on_sparkle_draw() -> void:
+	if sparkle_alpha <= 0.01: return
+	var col = Color(1.0, 0.9, 0.3, sparkle_alpha) if is_copper else Color(0.9, 0.95, 1.0, sparkle_alpha)
+	for pt in sparkle_points:
+		sparkle_overlay.draw_line(pt - Vector2(3, 0), pt + Vector2(3, 0), col, 1.5)
+		sparkle_overlay.draw_line(pt - Vector2(0, 3), pt + Vector2(0, 3), col, 1.5)
+		sparkle_overlay.draw_rect(Rect2(pt - Vector2(1, 1), Vector2(2, 2)), Color(1, 1, 1, sparkle_alpha))
+
+func set_illuminated(active: bool, source: Node2D) -> void:
+	if active:
+		if not light_sources.has(source):
+			light_sources.append(source)
+	else:
+		light_sources.erase(source)
+		
+	var should_shine = (!light_sources.is_empty()) and (!is_dirt)
+	if should_shine != is_shining:
+		is_shining = should_shine
+		if not is_shining:
+			sparkle_alpha = 0.0
+			if sparkle_overlay: sparkle_overlay.queue_redraw()
+			if sprite_2d and hp > 0:
+				sprite_2d.modulate = Color(1, 1, 1, 1)
+		else:
+			_trigger_sparkle()

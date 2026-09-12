@@ -4,10 +4,10 @@
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_box"]
-size = Vector2(14, 14)
+size = Vector2(28, 24)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_interact"]
-radius = 24.0
+radius = 40.0
 
 [node name="Chest" type="StaticBody2D"]
 collision_layer = 4
@@ -15,10 +15,12 @@ collision_mask = 1
 script = ExtResource("1_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 1)
+position = Vector2(0, 4)
 shape = SubResource("RectangleShape2D_box")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(2, 2)
 texture = ExtResource("2_tex")
 hframes = 11
 vframes = 11
@@ -26,10 +28,10 @@ frame = 32
 
 [node name="PromptLabel" type="Label" parent="."]
 visible = false
-offset_left = -45.0
-offset_top = -30.0
-offset_right = 45.0
-offset_bottom = -10.0
+offset_left = -60.0
+offset_top = -42.0
+offset_right = 60.0
+offset_bottom = -20.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 12
@@ -41,6 +43,7 @@ collision_layer = 0
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerDetect"]
+position = Vector2(0, 4)
 shape = SubResource("RectangleShape2D_box")
 
 [node name="InteractArea" type="Area2D" parent="."]

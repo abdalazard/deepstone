@@ -1,8 +1,46 @@
 extends Area2D
 
 var target_player: Node2D = null
+var velocity_y: float = 0.0
+var is_falling: bool = false
+var illuminated_ores: Array = []
+
+@onready var light_area = $LightArea
+
+func _ready() -> void:
+	if light_area:
+		light_area.body_entered.connect(_on_light_area_body_entered)
+		light_area.body_exited.connect(_on_light_area_body_exited)
+		# Defer checking initial overlapping bodies so tree is fully populated
+		call_deferred("_check_initial_overlaps")
+
+func _check_initial_overlaps() -> void:
+	if light_area:
+		for body in light_area.get_overlapping_bodies():
+			_on_light_area_body_entered(body)
+
+func _on_light_area_body_entered(body: Node2D) -> void:
+	if body.has_method("set_illuminated"):
+		body.set_illuminated(true, self)
+		if not illuminated_ores.has(body):
+			illuminated_ores.append(body)
+
+func _on_light_area_body_exited(body: Node2D) -> void:
+	if body.has_method("set_illuminated"):
+		body.set_illuminated(false, self)
+		illuminated_ores.erase(body)
+
+func _exit_tree() -> void:
+	for ore in illuminated_ores:
+		if is_instance_valid(ore) and ore.has_method("set_illuminated"):
+			ore.set_illuminated(false, self)
 
 func hit() -> void:
+	for ore in illuminated_ores:
+		if is_instance_valid(ore) and ore.has_method("set_illuminated"):
+			ore.set_illuminated(false, self)
+	illuminated_ores.clear()
+	
 	Inventory.signs += 1
 	Inventory.inventory_changed.emit()
 	
@@ -13,6 +51,44 @@ func hit() -> void:
 func _process(delta: float) -> void:
 	if target_player:
 		var sprite = $Sprite2D
-		sprite.global_position = sprite.global_position.lerp(target_player.global_position, 10.0 * delta)
-		if sprite.global_position.distance_to(target_player.global_position) < 8.0:
-			queue_free()
+		if sprite:
+			sprite.global_position = sprite.global_position.lerp(target_player.global_position, 10.0 * delta)
+			if sprite.global_position.distance_to(target_player.global_position) < 8.0:
+				queue_free()
+
+func _physics_process(delta: float) -> void:
+	if target_player:
+		return
+		
+	var space_state = get_world_2d().direct_space_state
+	# Cast downward to detect supporting block
+	var from_pos = global_position + Vector2(0, 10)
+	var to_pos = global_position + Vector2(0, 18)
+	var query = PhysicsRayQueryParameters2D.create(from_pos, to_pos)
+	query.collision_mask = 1 # Terrain blocks
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	
+	var hit_down = space_state.intersect_ray(query)
+	if not hit_down:
+		# Block underneath is gone, fall down with gravity!
+		is_falling = true
+		velocity_y += 700.0 * delta
+		var step = velocity_y * delta
+		
+		# Check if we land on anything during this step
+		var fall_query = PhysicsRayQueryParameters2D.create(from_pos, from_pos + Vector2(0, step + 8))
+		fall_query.collision_mask = 1
+		fall_query.collide_with_bodies = true
+		var hit_fall = space_state.intersect_ray(fall_query)
+		if hit_fall:
+			global_position.y = hit_fall.position.y - 16.0
+			velocity_y = 0.0
+			is_falling = false
+		else:
+			global_position.y += step
+	else:
+		if is_falling:
+			global_position.y = hit_down.position.y - 16.0
+			velocity_y = 0.0
+			is_falling = false

@@ -126,14 +126,13 @@ func _physics_process(delta: float) -> void:
 			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
 				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
+	# Only slots 1, 2, 3 (Pickaxe, Sign, Rope) can be selected for button Z
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
 	if Input.is_action_just_pressed("slot_2"): set_slot(1)
 	if Input.is_action_just_pressed("slot_3"): set_slot(2)
-	if Input.is_action_just_pressed("slot_4"): set_slot(3)
-	if Input.is_action_just_pressed("slot_5"): set_slot(4)
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
-		# Cycle between 0, 1, 2 (Pickaxe, Sign, Rope)
+		# Cycle strictly between 0, 1, 2 (Pickaxe, Sign, Rope)
 		set_slot((Inventory.active_slot + 1) % 3)
 	
 	if Input.is_action_just_pressed("action_mine"):
@@ -153,8 +152,9 @@ func _physics_process(delta: float) -> void:
 		toggle_inventory()
 
 func set_slot(slot: int) -> void:
-	Inventory.active_slot = slot
-	Inventory.inventory_changed.emit()
+	if slot in [0, 1, 2]:
+		Inventory.active_slot = slot
+		Inventory.inventory_changed.emit()
 
 func place_torch() -> void:
 	Inventory.signs -= 1
