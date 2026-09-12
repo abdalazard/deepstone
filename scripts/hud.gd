@@ -161,75 +161,79 @@ func _ready() -> void:
 	select_slot(0)
 	update_ui()
 
+func _consume_input() -> void:
+	if is_inside_tree() and get_viewport():
+		get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		# Toggle Equipment Menu with [E]
 		if event.physical_keycode == KEY_E:
 			toggle_equipment()
-			get_viewport().set_input_as_handled()
+			_consume_input()
 			return
 
 		# Toggle Pause Menu with [P] or [Esc]
 		if event.physical_keycode == KEY_P or event.physical_keycode == KEY_ESCAPE:
 			if is_instance_valid(equipment_panel) and equipment_panel.visible:
 				close_equipment()
-				get_viewport().set_input_as_handled()
+				_consume_input()
 				return
 			elif is_instance_valid(inventory_panel) and inventory_panel.visible:
 				close_inventory()
-				get_viewport().set_input_as_handled()
+				_consume_input()
 				return
 			else:
 				toggle_pause()
-				get_viewport().set_input_as_handled()
+				_consume_input()
 				return
 				
 		# Hotkeys inside Pause Menu
 		if is_instance_valid(pause_panel) and pause_panel.visible:
 			if event.physical_keycode == KEY_S:
+				_consume_input()
 				_on_save_pressed()
-				get_viewport().set_input_as_handled()
 				return
 			elif event.physical_keycode == KEY_R:
+				_consume_input()
 				_on_restart_pressed()
-				get_viewport().set_input_as_handled()
 				return
 			elif event.physical_keycode == KEY_Q:
+				_consume_input()
 				_on_exit_pressed()
-				get_viewport().set_input_as_handled()
 				return
 	
 	# Open Shop with [L]
 	if (not pause_panel or not pause_panel.visible) and event.is_action_pressed("shop_menu"):
 		_on_shop_pressed()
-		get_viewport().set_input_as_handled()
+		_consume_input()
 		return
 		
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_L and (not pause_panel or not pause_panel.visible):
 		_on_shop_pressed()
-		get_viewport().set_input_as_handled()
+		_consume_input()
 		return
 
 	# Inventory Keyboard Navigation
 	if is_instance_valid(inventory_panel) and inventory_panel.visible and (not pause_panel or not pause_panel.visible):
 		if event.is_action_pressed("ui_right"):
 			_nav_grid(1, 0)
-			get_viewport().set_input_as_handled()
+			_consume_input()
 		elif event.is_action_pressed("ui_left"):
 			_nav_grid(-1, 0)
-			get_viewport().set_input_as_handled()
+			_consume_input()
 		elif event.is_action_pressed("ui_down"):
 			_nav_grid(0, 1)
-			get_viewport().set_input_as_handled()
+			_consume_input()
 		elif event.is_action_pressed("ui_up"):
 			_nav_grid(0, -1)
-			get_viewport().set_input_as_handled()
+			_consume_input()
 		elif event.is_action_pressed("action_mine") or event.is_action_pressed("ui_accept"):
 			_on_equip_pressed()
-			get_viewport().set_input_as_handled()
+			_consume_input()
 		elif event.is_action_pressed("action_drag") or (event is InputEventKey and event.pressed and event.physical_keycode == KEY_X):
 			_on_drop_pressed()
-			get_viewport().set_input_as_handled()
+			_consume_input()
 
 func toggle_equipment() -> void:
 	if is_instance_valid(equipment_panel) and equipment_panel.visible:
@@ -274,8 +278,8 @@ func close_pause() -> void:
 		get_tree().paused = false
 
 func _on_save_pressed() -> void:
-	if has_node("/root/SaveManager"):
-		get_node("/root/SaveManager").save_game(true)
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
+		get_tree().root.get_node("SaveManager").save_game(true)
 	else:
 		show_toast("Progresso Salvo!", "save")
 
