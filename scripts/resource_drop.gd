@@ -1,6 +1,6 @@
 extends RigidBody2D
 
-enum ResourceType { IRON, GOLD, COAL, PLANK, LAMP }
+enum ResourceType { IRON, GOLD, COAL, PLANK, LAMP, WOOD, LADDER }
 @export var type: ResourceType = ResourceType.IRON
 var is_player_drop: bool = false
 var pickup_delay: float = 0.0
@@ -51,6 +51,18 @@ func _ready() -> void:
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.2, 1.2)
+		elif type == ResourceType.WOOD:
+			sprite.texture = load("res://assets/sprites/wood_log.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.2, 1.2)
+		elif type == ResourceType.LADDER:
+			sprite.texture = load("res://assets/sprites/rope_tile.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.0, 1.0)
 		
 	# Pop out effect
 	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
@@ -109,7 +121,11 @@ func _can_be_collected() -> bool:
 	elif type == ResourceType.PLANK:
 		return inv.planks < 99
 	elif type == ResourceType.LAMP:
-		return inv.signs < 99
+		return true
+	elif type == ResourceType.WOOD:
+		return true
+	elif type == ResourceType.LADDER:
+		return true
 	return false
 
 func _auto_fly_to_player() -> void:
@@ -161,6 +177,18 @@ func collect() -> void:
 			inv.signs = min(inv.signs + 1, 99)
 		inv.notify("+1 Lanterna", "lamp")
 		inv.inventory_changed.emit()
+	elif type == ResourceType.WOOD:
+		if inv.has_method("add_wood"):
+			inv.add_wood(1)
+		elif "wood_logs" in inv:
+			inv.wood_logs += 1
+			inv.notify("+1 Tronco de Madeira", "wood")
+			inv.inventory_changed.emit()
+	elif type == ResourceType.LADDER:
+		if "ladders" in inv:
+			inv.ladders += 1
+			inv.notify("+1 Escada", "ladder")
+			inv.inventory_changed.emit()
 	
 	# Create light flash effect
 	var flash = PointLight2D.new()

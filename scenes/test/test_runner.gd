@@ -193,22 +193,18 @@ func _ready() -> void:
 
 	# Test 11: Lamp slot opacity in HUD when lacking resources
 	inv.starter_lamps = 0
-	inv.coal = 1
-	inv.iron = 1
 	hud.update_ui()
 	var lamp_slot = hud.slots[1]
 	assert(lamp_slot.modulate.a < 0.5, "Lamp slot should be semi-transparent when lacking resources")
 	
-	inv.starter_lamps = 0
-	inv.coal = 6
-	inv.iron = 4
+	inv.starter_lamps = 2
 	hud.update_ui()
 	assert(lamp_slot.modulate.a == 1.0, "Lamp slot should be fully opaque when resources are available")
 	var lamp_count = lamp_slot.find_child("CountLabel", true, false)
 	assert(lamp_count.text == "2", "Craftable lamps count should be 2")
 	print("[PASS] Test 11: Lamp hotbar opacity & craftable counter")
 
-	# Test 12: Starter Lamp free usage & craft consumption
+	# Test 12: Starter Lamp free usage & Forge craft consumption
 	inv.starter_lamps = 1
 	inv.coal = 0
 	inv.iron = 0
@@ -222,13 +218,16 @@ func _ready() -> void:
 
 	inv.coal = 3
 	inv.iron = 2
-	assert(inv.can_place_lamp() == true, "Should be able to craft lamp with 3 coal + 2 iron")
-	assert(inv.get_available_lamps() == 1, "Available lamps should be 1")
-	var consumed_crafted = inv.consume_lamp()
-	assert(consumed_crafted == true, "Consuming crafted lamp should succeed")
+	assert(inv.can_craft_lamp() == true, "Should be able to craft lamp at Forge with 3 coal + 2 iron")
+	var forged = inv.craft_lamp()
+	assert(forged == true, "Crafting lamp at Forge should succeed")
+	assert(inv.starter_lamps == 1, "Should have 1 lamp after forging")
 	assert(inv.coal == 0 and inv.iron == 0, "Coal and Iron should be deducted")
+	assert(inv.can_place_lamp() == true, "Should now be able to place lamp")
+	var consumed_forged = inv.consume_lamp()
+	assert(consumed_forged == true, "Consuming forged lamp should succeed")
 	assert(inv.can_place_lamp() == false, "Should have 0 lamps now")
-	print("[PASS] Test 12: Starter Lamp free placement and recipe consumption (3 Coal + 2 Iron)")
+	print("[PASS] Test 12: Starter Lamp free placement and Forge recipe consumption (3 Coal + 2 Iron)")
 
 	# Test 13: Player Sprite Facing Logic (Never locked by last attack)
 	var player_scene = load("res://scenes/player/player.tscn")
@@ -507,7 +506,6 @@ func _ready() -> void:
 	var main_scene = load("res://scenes/main/main.tscn")
 	var main_instance = main_scene.instantiate()
 	add_child(main_instance)
-	main_instance._ready()
 	main_instance._process(0.016)
 	if main_instance.player:
 		main_instance.player.global_position.y = 500.0
@@ -515,6 +513,155 @@ func _ready() -> void:
 	main_instance.queue_free()
 	print("[PASS] Test 25: Main World process loop & dynamic clear color execution verified")
 
+	# Test 26: Surface Tree chopping and 10 wood logs
+	var tree_scene = load("res://scenes/environment/tree.tscn")
+	assert(tree_scene != null, "Tree scene must exist")
+	var tree_node = tree_scene.instantiate()
+	add_child(tree_node)
+	tree_node._ready()
+	assert(tree_node.hp == 3, "Tree should start with 3 HP")
+	inv.wood_logs = 0
+	tree_node.hit()
+	assert(tree_node.hp == 2, "Tree should have 2 HP after 1 hit")
+	tree_node.hit()
+	assert(tree_node.hp == 1, "Tree should have 1 HP after 2 hits")
+	tree_node.hit()
+	assert(tree_node.hp <= 0, "Tree should be felled after 3 hits")
+	assert(inv.wood_logs == 10, "Felling tree must give exactly 10 wood logs")
+	tree_node.queue_free()
+	print("[PASS] Test 26: Surface Tree chopping and 10 wood logs economy")
+
+	# Test 27: Forge Crafting (1 Wood Log -> 5 Ladders / 5 Planks)
+	inv.wood_logs = 2
+	inv.ladders = 0
+	inv.planks = 0
+	assert(inv.can_craft_ladders() == true, "Should be able to craft ladders with wood")
+	assert(inv.can_craft_planks() == true, "Should be able to craft planks with wood")
+	
+	var crafted_lad = inv.craft_ladders()
+	assert(crafted_lad == true, "Crafting ladders should succeed")
+	assert(inv.wood_logs == 1, "1 wood log should be consumed")
+	assert(inv.ladders == 5, "5 ladders should be added")
+	
+	var crafted_plk = inv.craft_planks()
+	assert(crafted_plk == true, "Crafting planks should succeed")
+	assert(inv.wood_logs == 0, "Second wood log should be consumed")
+	assert(inv.planks == 5, "5 planks should be added")
+	
+	assert(inv.can_craft_ladders() == false, "Cannot craft ladders without wood logs")
+	assert(inv.can_craft_planks() == false, "Cannot craft planks without wood logs")
+	print("[PASS] Test 27: Forge Crafting (1 Wood Log -> 5 Ladders / 5 Planks)")
+
+	# Test 28: Ladder and Plank consumption during placement
+	inv.ladders = 1
+	inv.planks = 1
+	var test_player_placing = player_scene.instantiate()
+	add_child(test_player_placing)
+	test_player_placing._ready()
+	
+	# Place ladder
+	test_player_placing.place_rope()
+	assert(inv.ladders == 0, "Placing ladder should consume 1 ladder")
+	test_player_placing.place_rope()
+	assert(inv.ladders == 0, "Placing ladder with 0 count should be blocked")
+	
+	# Place plank
+	test_player_placing.place_plank()
+	assert(inv.planks == 0, "Placing plank should consume 1 plank")
+	test_player_placing.place_plank()
+	assert(inv.planks == 0, "Placing plank with 0 count should be blocked")
+	test_player_placing.queue_free()
+	print("[PASS] Test 28: Ladder and Plank consumption during placement")
+
+	# Test 29: Plank supports Lamp Post (collision_mask = 1 | 32)
+	var test_torch = torch_scene.instantiate()
+	add_child(test_torch)
+	test_torch._ready()
+	var test_plank = plank_scene.instantiate()
+	test_plank.position = Vector2(500, 200)
+	add_child(test_plank)
+	test_torch.position = Vector2(500, 184) # Resting on top of plank
+	test_torch._physics_process(0.016)
+	assert(test_torch.is_falling == false, "Torch should remain supported on plank without falling")
+	test_torch.queue_free()
+	test_plank.queue_free()
+	print("[PASS] Test 29: Plank supports Lamp Post without falling")
+
+	# Test 30: Stone Block scene & attributes
+	var stone_scene = load("res://scenes/cave/stone.tscn")
+	assert(stone_scene != null, "Stone scene must exist")
+	var stone_node = stone_scene.instantiate()
+	add_child(stone_node)
+	stone_node._ready()
+	assert(stone_node.is_stone == true, "Stone block must have is_stone = true")
+	assert(stone_node.max_hp == 2, "Stone block base HP should be 2")
+	assert(stone_node.is_ore() == false, "Stone block is filler terrain, not an ore")
+	stone_node.apply_biome(1)
+	assert(stone_node.max_hp == 3, "Stone block in ice biome should have 3 HP")
+	stone_node.queue_free()
+	print("[PASS] Test 30: Stone Block scene, 2 HP, and terrain properties")
+
+	# Test 31: Dynamic filtering in Shop (Vender) & Chest (Baú)
+	inv.coal = 5
+	inv.iron = 0
+	inv.gold = 0
+	hud.update_shop_ui()
+	var coal_row = hud.find_child("CoalRow", true, false)
+	var iron_row = hud.find_child("IronRow", true, false)
+	var gold_row = hud.find_child("GoldRow", true, false)
+	assert(coal_row.visible == true, "Coal row should be visible when coal > 0")
+	assert(iron_row.visible == false, "Iron row should be hidden when iron == 0")
+	assert(gold_row.visible == false, "Gold row should be hidden when gold == 0")
+	
+	# Chest dynamic rows
+	var dummy_chest = chest_scene.instantiate()
+	add_child(dummy_chest)
+	dummy_chest.stored_coal = 0
+	dummy_chest.stored_iron = 3
+	dummy_chest.stored_gold = 0
+	hud.current_chest_node = dummy_chest
+	hud.update_chest_ui()
+	assert(hud.chest_coal_lbl.visible == false, "Chest coal label should be hidden when stored == 0")
+	assert(hud.chest_iron_lbl.visible == true, "Chest iron label should be visible when stored > 0")
+	assert(hud.chest_gold_lbl.visible == false, "Chest gold label should be hidden when stored == 0")
+	dummy_chest.queue_free()
+	print("[PASS] Test 31: Dynamic filtering in Shop and Chest (zero items hidden)")
+
+	# Test 32: Top-left Coin HUD display (visible only when coins > 0) & Toast coins
+	inv.coins = 0
+	hud.update_ui()
+	assert(hud.coins_badge_container.visible == false, "Coins HUD display should be hidden when coins == 0")
+	inv.coins = 50
+	hud.update_ui()
+	assert(hud.coins_badge_container.visible == true, "Coins HUD display should be visible when coins > 0")
+	assert(hud.coins_hud_label.text == "50", "Coins HUD label should display 50")
+	hud.show_toast("+50 Moedas de Ouro", "coin_gold")
+	hud.show_toast("+10 Moedas de Prata", "coin_silver")
+	hud.show_toast("+5 Moedas de Cobre", "coin_copper")
+	print("[PASS] Test 32: Coin HUD display (only visible when coins > 0) & Coin toast icons")
+
+	# Test 33: Resetar Mina completely clears everything
+	inv.coal = 10
+	inv.iron = 10
+	inv.gold = 10
+	inv.coins = 100
+	inv.wood_logs = 15
+	inv.ladders = 10
+	inv.planks = 10
+	inv.starter_lamps = 3
+	save.mark_block_mined(Vector2i(5, 5))
+	save.save_game(false)
+	
+	save.clear_save()
+	assert(inv.coal == 0 and inv.iron == 0 and inv.gold == 0, "Minerals must be reset to 0")
+	assert(inv.coins == 0, "Coins must be reset to 0")
+	assert(inv.wood_logs == 0, "Wood logs must be reset to 0")
+	assert(inv.ladders == 0, "Ladders must be reset to 0")
+	assert(inv.planks == 0, "Planks must be reset to 0")
+	assert(inv.starter_lamps == 1, "Starter lamps must reset to 1 free lamp")
+	assert(save.is_block_mined(Vector2i(5, 5)) == false, "Mined blocks must be completely wiped")
+	print("[PASS] Test 33: Resetar Mina completely resets saves, excavations, and inventory")
+
 	hud.queue_free()
-	print("--- ALL 25 TESTS PASSED SUCCESSFULLY! ---")
+	print("--- ALL 33 TESTS PASSED SUCCESSFULLY! ---")
 	get_tree().quit(0)

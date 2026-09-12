@@ -12,6 +12,7 @@ func _ready() -> void:
 	if prompt_label:
 		prompt_label.modulate.a = 0.0
 		prompt_label.visible = false
+		prompt_label.text = "[X] Usar Forja"
 	if interact_area:
 		interact_area.body_entered.connect(_on_body_entered)
 		interact_area.body_exited.connect(_on_body_exited)
@@ -23,8 +24,11 @@ func _process(delta: float) -> void:
 		fire_light.energy = base_energy + sin(flicker_timer) * 0.12 + randf_range(-0.04, 0.04)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player_in_range and event.is_action_pressed("action_mine"):
-		_show_feedback()
+	if player_in_range and (event.is_action_pressed("action_drag") or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_X)):
+		var hud = _get_hud()
+		if hud and hud.has_method("toggle_forge"):
+			hud.toggle_forge(self)
+			if get_viewport(): get_viewport().set_input_as_handled()
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
@@ -41,15 +45,11 @@ func _on_body_exited(body: Node2D) -> void:
 			var tween = create_tween()
 			tween.tween_property(prompt_label, "modulate:a", 0.0, 0.2)
 			tween.tween_callback(prompt_label.hide)
+		var hud = _get_hud()
+		if hud and hud.has_method("close_forge"):
+			hud.close_forge()
 
-func _show_feedback() -> void:
-	if prompt_label:
-		prompt_label.text = "Forja (EM BREVE)"
-		var tween = create_tween()
-		tween.tween_property(prompt_label, "modulate", Color(1.5, 1.2, 0.3, 1.0), 0.1)
-		tween.tween_property(prompt_label, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.3)
-		tween.tween_interval(1.2)
-		tween.tween_callback(func():
-			if is_instance_valid(prompt_label):
-				prompt_label.text = "[Z] Forja (Em Breve)"
-		)
+func _get_hud() -> Node:
+	if is_inside_tree() and get_tree() and get_tree().current_scene:
+		return get_tree().current_scene.get_node_or_null("HUD")
+	return null

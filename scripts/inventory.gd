@@ -8,10 +8,12 @@ const MAX_CAPACITY: int = 60 # Capacidade total de minérios (Ferro + Ouro + Car
 var iron: int = 0
 var gold: int = 0
 var coal: int = 0
-var coins: int = 0 # Moedas de ouro obtidas na loja
+var coins: int = 0 # Moedas obtidas na loja
 var signs: int = 10 # Mini-poste / lamp
-var starter_lamps: int = 1 # 1 lanterna inicial grátis
-var planks: int = 15 # Tábuas de madeira
+var starter_lamps: int = 1 # 1 lanterna inicial grátis (forja exclusiva para novas)
+var wood_logs: int = 0 # Troncos de madeira obtidos de árvores
+var ladders: int = 0 # Escadas de madeira forjadas (1 tronco -> 5 escadas)
+var planks: int = 0 # Tábuas de madeira forjadas (1 tronco -> 5 tábuas)
 var active_slot: int = 0 # 0=Pickaxe, 1=Lamp, 2=Escada, 3=Tábua
 
 const COAL_PRICE: int = 5
@@ -21,6 +23,7 @@ const GOLD_PRICE: int = 50
 func add_coins(amount: int) -> void:
 	coins += amount
 	inventory_changed.emit()
+	notify("+%d Moedas de Ouro!" % amount, "coin_gold")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 
@@ -39,7 +42,7 @@ func sell_resource(key: String, amount: int = 1) -> int:
 	if earned > 0:
 		coins += earned
 		inventory_changed.emit()
-		notify("+%d Moedas de Ouro!" % earned, "gold")
+		notify("+%d Moedas de Ouro!" % earned, "coin_gold")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 	return earned
@@ -61,10 +64,10 @@ func sell_all_minerals() -> int:
 	return total_earned
 
 func get_available_lamps() -> int:
-	return starter_lamps + min(coal / 3, iron / 2)
+	return starter_lamps
 
 func can_place_lamp() -> bool:
-	return get_available_lamps() > 0
+	return starter_lamps > 0
 
 func consume_lamp() -> bool:
 	if starter_lamps > 0:
@@ -73,14 +76,69 @@ func consume_lamp() -> bool:
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
-	elif coal >= 3 and iron >= 2:
+	return false
+
+func can_craft_lamp() -> bool:
+	return coal >= 3 and iron >= 2
+
+func craft_lamp() -> bool:
+	if can_craft_lamp():
 		coal -= 3
 		iron -= 2
+		starter_lamps += 1
 		inventory_changed.emit()
+		notify("+1 Poste de Luz Forjado!", "lamp")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
 	return false
+
+func can_craft_ladders() -> bool:
+	return wood_logs >= 1
+
+func craft_ladders() -> bool:
+	if can_craft_ladders():
+		wood_logs -= 1
+		ladders += 5
+		inventory_changed.emit()
+		notify("+5 Escadas Forjadas!", "ladder")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
+func can_craft_planks() -> bool:
+	return wood_logs >= 1
+
+func craft_planks() -> bool:
+	if can_craft_planks():
+		wood_logs -= 1
+		planks += 5
+		inventory_changed.emit()
+		notify("+5 Tábuas Forjadas!", "plank")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
+func add_wood(amount: int = 10) -> void:
+	wood_logs += amount
+	inventory_changed.emit()
+	notify("+%d Troncos de Madeira!" % amount, "wood")
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
+
+func reset_inventory() -> void:
+	iron = 0
+	gold = 0
+	coal = 0
+	coins = 0
+	wood_logs = 0
+	ladders = 0
+	planks = 0
+	starter_lamps = 1
+	active_slot = 0
+	inventory_changed.emit()
 
 func add_starter_lamp(amount: int = 1) -> void:
 	starter_lamps += amount
@@ -186,11 +244,14 @@ func drop_item(item_key: String, amount: int = 1) -> int:
 			signs -= amount
 			drop.type = 4 # LAMP
 			dropped_amount = amount
-		elif coal >= 3 * amount and iron >= 2 * amount:
-			coal -= 3 * amount
-			iron -= 2 * amount
-			drop.type = 4 # LAMP
-			dropped_amount = amount
+	elif (item_key == "wood" or item_key == "wood_logs") and wood_logs >= amount:
+		wood_logs -= amount
+		drop.type = 5 # WOOD
+		dropped_amount = amount
+	elif (item_key == "ladder" or item_key == "ladders") and ladders >= amount:
+		ladders -= amount
+		drop.type = 6 # LADDER
+		dropped_amount = amount
 		
 	if dropped_amount > 0:
 		drop.is_player_drop = true

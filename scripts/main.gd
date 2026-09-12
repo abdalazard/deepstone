@@ -10,6 +10,8 @@ const ROPE_SCENE = preload("res://scenes/environment/rope_segment.tscn")
 const SIGNPOST_SCENE = preload("res://scenes/environment/signpost.tscn")
 const UNBREAKABLE_SCENE = preload("res://scenes/cave/unbreakable_rock.tscn")
 const PLANK_SCENE = preload("res://scenes/environment/plank.tscn")
+const STONE_SCENE = preload("res://scenes/cave/stone.tscn")
+const TREE_SCENE = preload("res://scenes/environment/tree.tscn")
 
 @onready var player = $Player
 
@@ -228,9 +230,14 @@ func generate_world() -> void:
 					rock.biome = current_biome
 					instance = rock
 				else:
-					var dirt = DIRT_SCENE.instantiate()
-					dirt.biome = current_biome
-					instance = dirt
+					if randf() < 0.5:
+						var dirt = DIRT_SCENE.instantiate()
+						dirt.biome = current_biome
+						instance = dirt
+					else:
+						var stone = STONE_SCENE.instantiate()
+						stone.biome = current_biome
+						instance = stone
 			
 			instance.position = tile_pos
 			if instance.has_method("apply_biome"):
@@ -240,3 +247,10 @@ func generate_world() -> void:
 			elif "grid_pos" in instance:
 				instance.grid_pos = grid_coord
 			add_child(instance)
+
+	# Spawn cuttable surface trees (above grass line at Y = 112)
+	var tree_positions = [64, 160, 256, 352, 720, 816, 896]
+	for tx in tree_positions:
+		var tree = TREE_SCENE.instantiate()
+		tree.position = Vector2(tx, 112)
+		add_child(tree)

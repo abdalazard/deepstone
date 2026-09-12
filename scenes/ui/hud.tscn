@@ -1,9 +1,55 @@
-[gd_scene load_steps=29 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=38 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
 [ext_resource type="Texture2D" path="res://assets/sprites/Idle.png" id="3_idle"]
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="4_ores"]
+[ext_resource type="Texture2D" path="res://assets/sprites/coin_gold.png" id="5_coin_gold"]
+[ext_resource type="Texture2D" path="res://assets/sprites/equip_helmet.png" id="6_helmet"]
+[ext_resource type="Texture2D" path="res://assets/sprites/equip_pickaxe.png" id="7_pickaxe"]
+[ext_resource type="Texture2D" path="res://assets/sprites/equip_armor.png" id="8_armor"]
+[ext_resource type="Texture2D" path="res://assets/sprites/equip_boots.png" id="9_boots"]
+[ext_resource type="Texture2D" path="res://assets/sprites/wood_log.png" id="10_wood_log"]
+[ext_resource type="Texture2D" path="res://assets/sprites/lamp_post.png" id="11_lamp_post"]
+[ext_resource type="Texture2D" path="res://assets/sprites/rope_tile.png" id="12_rope"]
+[ext_resource type="Texture2D" path="res://assets/sprites/plank.png" id="13_plank"]
+
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coins_badge"]
+bg_color = Color(0.18, 0.12, 0.04, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9, 0.75, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reset_btn"]
+bg_color = Color(0.45, 0.12, 0.12, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.25, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reset_btn_hover"]
+bg_color = Color(0.65, 0.18, 0.18, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1.0, 0.4, 0.4, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chest_outer"]
 bg_color = Color(0.22, 0.13, 0.07, 0.98)
@@ -249,6 +295,42 @@ alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
+
+[node name="CoinsBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
+visible = false
+layout_mode = 2
+alignment = 1
+
+[node name="CoinsBadge" type="PanelContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_coins_badge")
+
+[node name="CoinsMargin" type="MarginContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="CoinsHBox" type="HBoxContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge/CoinsMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="CoinIcon" type="TextureRect" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge/CoinsMargin/CoinsHBox"]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+texture = ExtResource("5_coin_gold")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CoinsLabel" type="Label" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge/CoinsMargin/CoinsHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "0"
 
 [node name="CapacityBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
 layout_mode = 2
@@ -566,7 +648,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 14
 
 [node name="PreviewCard" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox"]
-custom_minimum_size = Vector2(170, 0)
+custom_minimum_size = Vector2(190, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
 
@@ -595,7 +677,7 @@ size_flags_vertical = 3
 
 [node name="CharTextureRect" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/CenterChar"]
 texture_filter = 1
-custom_minimum_size = Vector2(96, 96)
+custom_minimum_size = Vector2(130, 130)
 layout_mode = 2
 texture = SubResource("AtlasTexture_char_idle")
 expand_mode = 1
@@ -635,12 +717,12 @@ theme_override_constants/margin_bottom = 6
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox"]
-custom_minimum_size = Vector2(28, 0)
+[node name="SlotIcon" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "🪖"
-horizontal_alignment = 1
+texture = ExtResource("6_helmet")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotHelmet/Margin/HBox"]
 layout_mode = 2
@@ -673,12 +755,12 @@ theme_override_constants/margin_bottom = 6
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox"]
-custom_minimum_size = Vector2(28, 0)
+[node name="SlotIcon" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "⛏️"
-horizontal_alignment = 1
+texture = ExtResource("7_pickaxe")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotPickaxe/Margin/HBox"]
 layout_mode = 2
@@ -711,12 +793,12 @@ theme_override_constants/margin_bottom = 6
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox"]
-custom_minimum_size = Vector2(28, 0)
+[node name="SlotIcon" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "🦺"
-horizontal_alignment = 1
+texture = ExtResource("8_armor")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotArmor/Margin/HBox"]
 layout_mode = 2
@@ -749,12 +831,12 @@ theme_override_constants/margin_bottom = 6
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SlotIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox"]
-custom_minimum_size = Vector2(28, 0)
+[node name="SlotIcon" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "👢"
-horizontal_alignment = 1
+texture = ExtResource("9_boots")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotBoots/Margin/HBox"]
 layout_mode = 2
@@ -1362,7 +1444,17 @@ theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
-text = "🔄  Reiniciar Nível ([R])"
+text = "🔄  Reiniciar Superfície ([R])"
+
+[node name="ResetMineBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_reset_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_reset_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxFlat_reset_btn_hover")
+text = "⚠️  Resetar Mina (Zerar Tudo)"
 
 [node name="ExitBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
 custom_minimum_size = Vector2(0, 38)
@@ -1373,3 +1465,252 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
 text = "🚪  Sair do Jogo ([Q])"
+
+[node name="ForgePanel" type="PanelContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(560, 390)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -195.0
+offset_right = 280.0
+offset_bottom = 195.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_outer")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ForgePanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HeaderPanel" type="PanelContainer" parent="ForgePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_header")
+
+[node name="HeaderMargin" type="MarginContainer" parent="ForgePanel/VBoxContainer/HeaderPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ForgePanel/VBoxContainer/HeaderPanel/HeaderMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ForgeIcon" type="TextureRect" parent="ForgePanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("11_lamp_post")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleLabel" type="Label" parent="ForgePanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.96, 0.85, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.02, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "FORJA DA SUPERFÍCIE [X]"
+
+[node name="ForgeCloseBtn" type="Button" parent="ForgePanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_btn")
+text = "X"
+
+[node name="ContentMargin" type="MarginContainer" parent="ForgePanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="InnerVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MaterialsPanel" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_plaque")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/MaterialsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 6
+
+[node name="MaterialsLabel" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/MaterialsPanel/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "Materiais: 0 Troncos | 0 Carvões | 0 Ferros"
+horizontal_alignment = 1
+
+[node name="RecipesVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="LampRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("11_lamp_post")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Poste de Luz (Lampião Portátil)"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 3 Carvões + 2 Ferros -> 1 Poste"
+
+[node name="CraftLampBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar 1 Poste"
+
+[node name="LadderRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("12_rope")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Escadas de Madeira"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 1 Tronco de Madeira -> 5 Escadas"
+
+[node name="CraftLadderBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar 5 Escadas"
+
+[node name="PlankRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("13_plank")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Tábuas de Madeira"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 1 Tronco de Madeira -> 5 Tábuas"
+
+[node name="CraftPlankBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar 5 Tábuas"
+
+[node name="FooterHBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="ForgeCloseFooterBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
+custom_minimum_size = Vector2(90, 32)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
+text = "Fechar"

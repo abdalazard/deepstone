@@ -13,6 +13,7 @@ var stored_load: int:
 @onready var player_detect = $InteractArea
 
 func _ready() -> void:
+	add_to_group("chest")
 	if has_node("/root/SaveManager") and SaveManager.has_loaded_save:
 		stored_coal = SaveManager.chest_saved_coal
 		stored_iron = SaveManager.chest_saved_iron

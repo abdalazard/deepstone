@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://bstoneuidxxxx"]
+
+[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" path="res://assets/sprites/stone_block.png" id="2_stone_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_stone"]
+size = Vector2(32, 32)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_stone"]
+polygon = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+
+[node name="Stone" type="RigidBody2D"]
+script = ExtResource("1_rock")
+is_stone = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_stone")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(2, 2)
+texture = ExtResource("2_stone_tex")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("OccluderPolygon2D_stone")

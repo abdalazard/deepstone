@@ -9,8 +9,10 @@ var illuminated_ores: Array = []
 
 func _ready() -> void:
 	if light_area:
-		light_area.body_entered.connect(_on_light_area_body_entered)
-		light_area.body_exited.connect(_on_light_area_body_exited)
+		if not light_area.body_entered.is_connected(_on_light_area_body_entered):
+			light_area.body_entered.connect(_on_light_area_body_entered)
+		if not light_area.body_exited.is_connected(_on_light_area_body_exited):
+			light_area.body_exited.connect(_on_light_area_body_exited)
 		# Defer checking initial overlapping bodies so tree is fully populated
 		call_deferred("_check_initial_overlaps")
 
@@ -105,7 +107,7 @@ func _physics_process(delta: float) -> void:
 	var from_pos = global_position + Vector2(0, 10)
 	var to_pos = global_position + Vector2(0, 18)
 	var query = PhysicsRayQueryParameters2D.create(from_pos, to_pos)
-	query.collision_mask = 1 # Terrain blocks
+	query.collision_mask = 1 | 32 # Terrain blocks (1) + Planks (32)
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
 	
@@ -118,7 +120,7 @@ func _physics_process(delta: float) -> void:
 		
 		# Check if we land on anything during this step
 		var fall_query = PhysicsRayQueryParameters2D.create(from_pos, from_pos + Vector2(0, step + 8))
-		fall_query.collision_mask = 1
+		fall_query.collision_mask = 1 | 32 # Terrain blocks (1) + Planks (32)
 		fall_query.collide_with_bodies = true
 		var hit_fall = space_state.intersect_ray(fall_query)
 		if hit_fall:

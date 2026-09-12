@@ -68,9 +68,18 @@ func clear_save() -> void:
 		if "coins" in inv: inv.coins = 0
 		if "starter_lamps" in inv: inv.starter_lamps = 1
 		inv.signs = 10
-		inv.planks = 15
+		inv.planks = 0
+		if "wood_logs" in inv: inv.wood_logs = 0
+		if "ladders" in inv: inv.ladders = 0
 		inv.active_slot = 0
 		inv.inventory_changed.emit()
+
+func reset_mine_completely() -> void:
+	clear_save()
+	var tree = get_tree() if is_inside_tree() else null
+	if tree:
+		tree.paused = false
+		tree.reload_current_scene()
 
 func mark_block_mined(grid_pos: Vector2i) -> void:
 	var key = "%d,%d" % [grid_pos.x, grid_pos.y]
@@ -98,7 +107,15 @@ func save_game(show_notify: bool = false) -> void:
 	var tree = get_tree() if is_inside_tree() else null
 	var current = tree.current_scene if tree else null
 	var player = current.get_node_or_null("Player") if current else null
-	var chest = current.get_node_or_null("Chest") if current else null
+	var chest = null
+	if tree:
+		var chests = tree.get_nodes_in_group("chest")
+		if not chests.is_empty():
+			chest = chests[0]
+	if not chest and current:
+		var candidate = current.get_node_or_null("Chest")
+		if candidate and "stored_coal" in candidate:
+			chest = candidate
 	var inv = _get_inventory()
 	
 	var p_pos = player_saved_pos if player_saved_pos != Vector2.ZERO else Vector2(640, 96)
@@ -111,11 +128,12 @@ func save_game(show_notify: bool = false) -> void:
 		"active_slot": inv.active_slot if inv else 0
 	}
 	
+	var has_chest = is_instance_valid(chest) and ("stored_coal" in chest)
 	var chest_data = {
-		"stored_coal": chest.stored_coal if is_instance_valid(chest) else chest_saved_coal,
-		"stored_iron": chest.stored_iron if is_instance_valid(chest) else chest_saved_iron,
-		"stored_gold": chest.stored_gold if is_instance_valid(chest) else chest_saved_gold,
-		"stored_load": chest.stored_load if is_instance_valid(chest) else (chest_saved_coal + chest_saved_iron + chest_saved_gold),
+		"stored_coal": chest.stored_coal if has_chest else chest_saved_coal,
+		"stored_iron": chest.stored_iron if has_chest else chest_saved_iron,
+		"stored_gold": chest.stored_gold if has_chest else chest_saved_gold,
+		"stored_load": chest.stored_load if has_chest else (chest_saved_coal + chest_saved_iron + chest_saved_gold),
 		"is_closed": false
 	}
 	
@@ -155,7 +173,9 @@ func save_game(show_notify: bool = false) -> void:
 			"coins": inv.coins if (inv and "coins" in inv) else 0,
 			"signs": inv.signs if inv else 10,
 			"starter_lamps": inv.starter_lamps if (inv and "starter_lamps" in inv) else 1,
-			"planks": inv.planks if inv else 15
+			"planks": inv.planks if inv else 0,
+			"wood_logs": inv.wood_logs if (inv and "wood_logs" in inv) else 0,
+			"ladders": inv.ladders if (inv and "ladders" in inv) else 0
 		},
 		"chest": chest_data,
 		"placed_torches": torches_list,
@@ -220,7 +240,11 @@ func load_game() -> bool:
 		inv.signs = inv_data.get("signs", 10)
 		if "starter_lamps" in inv:
 			inv.starter_lamps = inv_data.get("starter_lamps", 1)
-		inv.planks = inv_data.get("planks", 15)
+		inv.planks = inv_data.get("planks", 0)
+		if "wood_logs" in inv:
+			inv.wood_logs = inv_data.get("wood_logs", 0)
+		if "ladders" in inv:
+			inv.ladders = inv_data.get("ladders", 0)
 	
 	var p_data = data.get("player", {})
 	if p_data.has("x") and p_data.has("y"):

@@ -215,7 +215,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
 	if Input.is_action_just_pressed("slot_2"):
 		if inv and not inv.can_place_lamp():
-			inv.notify("Poste indisponível! (Requer 3 Carvões + 2 Ferros)", "lamp")
+			inv.notify("Sem postes disponíveis! Crie na Forja com carvão e ferro.", "lamp")
 			set_slot(2) # Pula para o próximo (Escada)
 		else:
 			set_slot(1)
@@ -238,12 +238,18 @@ func _physics_process(delta: float) -> void:
 			if inv and inv.can_place_lamp():
 				place_torch()
 			else:
-				if inv: inv.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
+				if inv: inv.notify("Sem postes disponíveis! Crie na Forja com carvão e ferro.", "lamp")
 				set_slot(2)
 		elif cur_slot == 2:
-			place_rope()
-		elif cur_slot == 3 and inv and inv.planks > 0:
-			place_plank()
+			if inv and inv.ladders > 0:
+				place_rope()
+			else:
+				if inv: inv.notify("Sem escadas! Crie na Forja usando madeira.", "ladder")
+		elif cur_slot == 3:
+			if inv and inv.planks > 0:
+				place_plank()
+			else:
+				if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
 			
 	if Input.is_action_just_pressed("action_collect"):
 		try_collect()
@@ -262,7 +268,7 @@ func set_slot(slot: int) -> void:
 func place_torch() -> void:
 	var inv = _get_inv()
 	if not inv or not inv.can_place_lamp():
-		if inv: inv.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
+		if inv: inv.notify("Sem postes disponíveis! Crie na Forja.", "lamp")
 		return
 	inv.consume_lamp()
 	
@@ -278,7 +284,13 @@ func place_torch() -> void:
 		sm.request_save()
 
 func place_rope() -> void:
-	# Rope / Ladder is infinite
+	var inv = _get_inv()
+	if not inv or inv.ladders <= 0:
+		if inv: inv.notify("Sem escadas! Crie na Forja usando madeira.", "ladder")
+		return
+	inv.ladders -= 1
+	inv.inventory_changed.emit()
+	
 	var rope_scene = load("res://scenes/environment/rope_segment.tscn")
 	if not rope_scene: return
 	var rope = rope_scene.instantiate()
@@ -293,9 +305,11 @@ func place_rope() -> void:
 
 func place_plank() -> void:
 	var inv = _get_inv()
-	if inv:
-		inv.planks -= 1
-		inv.inventory_changed.emit()
+	if not inv or inv.planks <= 0:
+		if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
+		return
+	inv.planks -= 1
+	inv.inventory_changed.emit()
 	
 	var plank_scene = load("res://scenes/environment/plank.tscn")
 	if not plank_scene: return

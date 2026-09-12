@@ -4,6 +4,7 @@ extends RigidBody2D
 @export var is_copper: bool = false
 @export var is_coal: bool = false
 @export var is_dirt: bool = false
+@export var is_stone: bool = false
 @export var is_unbreakable: bool = false
 @export var biome: int = 0 # 0=Terra (0-35), 1=Gelo (36-75), 2=Lava (76-120)
 
@@ -38,6 +39,7 @@ func apply_biome(b: int) -> void:
 	
 	var base_hp = 3 # Iron default
 	if is_dirt: base_hp = 1
+	elif is_stone: base_hp = 2 # Stone (Pedra)
 	elif is_coal: base_hp = 2 # Coal (easy)
 	elif is_copper: base_hp = 6 # Gold (demora mais tempo)
 	
@@ -46,18 +48,21 @@ func apply_biome(b: int) -> void:
 		hp = max_hp
 		if sprite_2d:
 			if is_dirt: sprite_2d.modulate = Color(0.42, 0.65, 0.88, 1.0)
+			elif is_stone: sprite_2d.modulate = Color(0.65, 0.85, 1.1, 1.0)
 			else: sprite_2d.modulate = Color(0.72, 0.88, 1.1, 1.0)
 	elif biome == 2: # Lava (+2 HP)
 		max_hp = base_hp + 2
 		hp = max_hp
 		if sprite_2d:
 			if is_dirt: sprite_2d.modulate = Color(0.45, 0.22, 0.16, 1.0)
+			elif is_stone: sprite_2d.modulate = Color(1.15, 0.5, 0.35, 1.0)
 			else: sprite_2d.modulate = Color(1.15, 0.55, 0.35, 1.0)
 	else: # Terra
 		max_hp = base_hp
 		hp = max_hp
 		if sprite_2d:
 			if is_dirt: sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0)
+			elif is_stone: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
 			else: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
 			
 	if sprite_2d:
@@ -76,6 +81,9 @@ func _ready() -> void:
 		if sprite_2d and sprite_2d.hframes == 11:
 			sprite_2d.frame = 2 # Dirt block
 			sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0) # Brown tint for dirt
+	elif is_stone:
+		max_hp = 2
+		hp = 2
 	elif is_coal:
 		max_hp = 2
 		hp = 2
@@ -102,7 +110,7 @@ func _ready() -> void:
 		add_child(cracks)
 		cracks.draw.connect(_on_cracks_draw)
 	
-	if not is_dirt and not is_unbreakable:
+	if not is_dirt and not is_stone and not is_unbreakable:
 		sparkle_overlay = Node2D.new()
 		sparkle_overlay.name = "Sparkles"
 		sparkle_overlay.z_index = 2
@@ -173,7 +181,7 @@ func _physics_process(delta: float) -> void:
 			_wake_block_above()
 
 func is_ore() -> bool:
-	return !is_dirt and !is_unbreakable
+	return !is_dirt and !is_unbreakable and !is_stone
 
 func hit() -> void:
 	if is_unbreakable:
@@ -221,7 +229,7 @@ func destroy() -> void:
 	spawn_particles()
 	_wake_block_above()
 	
-	if not is_dirt:
+	if not is_dirt and not is_stone:
 		var drop = DROP_SCENE.instantiate()
 		if is_coal:
 			drop.type = 2 # COAL
@@ -273,6 +281,10 @@ func spawn_particles() -> void:
 		if biome == 1: p_color = Color(0.45, 0.65, 0.85, 1)
 		elif biome == 2: p_color = Color(0.55, 0.28, 0.2, 1)
 		else: p_color = Color(0.5, 0.35, 0.2, 1)
+	elif is_stone:
+		if biome == 1: p_color = Color(0.65, 0.85, 1.0, 1)
+		elif biome == 2: p_color = Color(0.85, 0.45, 0.3, 1)
+		else: p_color = Color(0.6, 0.6, 0.65, 1)
 	else:
 		if biome == 1: p_color = Color(0.65, 0.85, 1.0, 1)
 		elif biome == 2: p_color = Color(1.0, 0.5, 0.25, 1)
