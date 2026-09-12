@@ -645,6 +645,14 @@ func get_current_load() -> int:
 func is_full() -> bool:
 	return get_current_load() >= get_max_capacity()
 
+func can_add(type = null, amount: int = 1) -> bool:
+	return (get_current_load() + amount) <= get_max_capacity()
+
+func can_add_item(type, amount: int = 1) -> bool:
+	if type in ["iron", "gold", "coal", 0, 1, 2]:
+		return (get_current_load() + amount) <= get_max_capacity()
+	return true
+
 func add_item(type: String, amount: int = 1) -> bool:
 	if type in ["iron", "gold", "coal"]:
 		if is_full():
