@@ -1,5 +1,5 @@
 class_name Rock
-extends StaticBody2D
+extends CharacterBody2D
 
 @export var is_copper: bool = false
 @export var is_dirt: bool = false
@@ -35,6 +35,17 @@ func _ready() -> void:
 	cracks.z_index = 1
 	add_child(cracks)
 	cracks.draw.connect(_on_cracks_draw)
+	
+	if is_dirt:
+		set_physics_process(false) # Terra não cai
+
+func _physics_process(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y += 980.0 * delta
+	else:
+		velocity.y = 0
+		
+	move_and_slide()
 
 func hit() -> void:
 	if hp <= 0: return

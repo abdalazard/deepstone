@@ -1,4 +1,4 @@
-extends Area2D
+extends RigidBody2D
 
 enum ResourceType { STONE, COPPER }
 @export var type: ResourceType = ResourceType.STONE
@@ -10,7 +10,10 @@ func _ready() -> void:
 	else:
 		sprite.frame = 26 # Row 5 Col 3 (copper ingot)
 		
-	body_entered.connect(_on_body_entered)
+	$PickupArea.body_entered.connect(_on_body_entered)
+	
+	# Pop out effect
+	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
 	
 	scale = Vector2.ZERO
 	var tween = create_tween()
