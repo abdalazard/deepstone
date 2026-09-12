@@ -28,9 +28,24 @@ var tex_jump = preload("res://assets/sprites/Jump.png")
 var tex_mine = preload("res://assets/sprites/Minering.png")
 var tex_climb = preload("res://assets/sprites/Rope.png")
 
+var inventory_override: Node = null
+
+func _get_inv() -> Node:
+	if inventory_override:
+		return inventory_override
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		return get_tree().root.get_node("Inventory")
+	return null
+
+func _get_save() -> Node:
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
+		return get_tree().root.get_node("SaveManager")
+	return null
+
 func _ready() -> void:
-	if has_node("/root/SaveManager") and SaveManager.has_loaded_save and SaveManager.player_saved_pos != Vector2.ZERO:
-		global_position = SaveManager.player_saved_pos
+	var sm = _get_save()
+	if sm and sm.has_loaded_save and sm.player_saved_pos != Vector2.ZERO:
+		global_position = sm.player_saved_pos
 	else:
 		global_position = Vector2(640, 96)
 	var sprite = $Sprite2D
@@ -90,7 +105,7 @@ func _process(delta: float) -> void:
 	
 	sprite.frame = anim_frame
 	
-	if last_direction.x != 0:
+	if is_mining and last_direction.x != 0:
 		sprite.flip_h = (last_direction.x < 0)
 	elif facing_x != 0:
 		sprite.flip_h = (facing_x < 0)
@@ -105,7 +120,8 @@ func _physics_process(delta: float) -> void:
 		if (now - last_down_press_time) <= DOUBLE_TAP_MAX_DELAY and not is_on_floor():
 			down_dash_timer = 0.35
 			velocity.y = 380.0
-			Inventory.notify("Descida Rápida!", "dash")
+			var inv = _get_inv()
+			if inv: inv.notify("Descida Rápida!", "dash")
 		last_down_press_time = now
 
 	if down_dash_timer > 0:
@@ -170,11 +186,12 @@ func _physics_process(delta: float) -> void:
 			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
 				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
+	var inv = _get_inv()
 	# Only slots 1, 2, 3, 4 (Pickaxe, Lamp, Escada, Tábua) can be selected for button Z
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
 	if Input.is_action_just_pressed("slot_2"):
-		if Inventory.coal < 3 or Inventory.iron < 2:
-			Inventory.notify("Poste indisponível! (Requer 3 Carvões + 2 Ferros)", "lamp")
+		if inv and not inv.can_place_lamp():
+			inv.notify("Poste indisponível! (Requer 3 Carvões + 2 Ferros)", "lamp")
 			set_slot(2) # Pula para o próximo (Escada)
 		else:
 			set_slot(1)
@@ -183,25 +200,27 @@ func _physics_process(delta: float) -> void:
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
 		# Cycle strictly between tools, skipping lamp if insufficient resources
-		var next_slot = (Inventory.active_slot + 1) % 4
-		if next_slot == 1 and (Inventory.coal < 3 or Inventory.iron < 2):
+		var cur_slot = inv.active_slot if inv else 0
+		var next_slot = (cur_slot + 1) % 4
+		if next_slot == 1 and inv and not inv.can_place_lamp():
 			next_slot = 2
 		set_slot(next_slot)
 	
 	if Input.is_action_just_pressed("action_mine"):
+		var cur_slot = inv.active_slot if inv else 0
 		if _try_chest_interaction():
 			pass # Interaction succeeded
-		elif Inventory.active_slot == 0:
+		elif cur_slot == 0:
 			try_mine()
-		elif Inventory.active_slot == 1:
-			if Inventory.coal >= 3 and Inventory.iron >= 2:
+		elif cur_slot == 1:
+			if inv and inv.can_place_lamp():
 				place_torch()
 			else:
-				Inventory.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
+				if inv: inv.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
 				set_slot(2)
-		elif Inventory.active_slot == 2:
+		elif cur_slot == 2:
 			place_rope()
-		elif Inventory.active_slot == 3 and Inventory.planks > 0:
+		elif cur_slot == 3 and inv and inv.planks > 0:
 			place_plank()
 			
 	if Input.is_action_just_pressed("action_collect"):
@@ -219,19 +238,19 @@ func toggle_equipment() -> void:
 		hud.toggle_equipment()
 
 func set_slot(slot: int) -> void:
-	if slot == 1 and (Inventory.coal < 3 or Inventory.iron < 2):
+	var inv = _get_inv()
+	if slot == 1 and inv and not inv.can_place_lamp():
 		slot = 2
-	if slot in [0, 1, 2, 3]:
-		Inventory.active_slot = slot
-		Inventory.inventory_changed.emit()
+	if slot in [0, 1, 2, 3] and inv:
+		inv.active_slot = slot
+		inv.inventory_changed.emit()
 
 func place_torch() -> void:
-	if Inventory.coal < 3 or Inventory.iron < 2:
-		Inventory.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
+	var inv = _get_inv()
+	if not inv or not inv.can_place_lamp():
+		if inv: inv.notify("Recursos insuficientes! (Requer 3 Carvões + 2 Ferros)", "lamp")
 		return
-	Inventory.coal -= 3
-	Inventory.iron -= 2
-	Inventory.inventory_changed.emit()
+	inv.consume_lamp()
 	
 	var torch_scene = load("res://scenes/environment/torch.tscn")
 	var torch = torch_scene.instantiate()
@@ -240,8 +259,9 @@ func place_torch() -> void:
 	torch.position = Vector2(snapped_x, snapped_y)
 	torch.add_to_group("placed_torches")
 	get_tree().current_scene.add_child(torch)
-	if has_node("/root/SaveManager"):
-		SaveManager.request_save()
+	var sm = _get_save()
+	if sm:
+		sm.request_save()
 
 func place_rope() -> void:
 	# Rope / Ladder is infinite
@@ -253,12 +273,15 @@ func place_rope() -> void:
 	rope.position = Vector2(snapped_x, snapped_y)
 	rope.add_to_group("placed_ropes")
 	get_tree().current_scene.add_child(rope)
-	if has_node("/root/SaveManager"):
-		SaveManager.request_save()
+	var sm = _get_save()
+	if sm:
+		sm.request_save()
 
 func place_plank() -> void:
-	Inventory.planks -= 1
-	Inventory.inventory_changed.emit()
+	var inv = _get_inv()
+	if inv:
+		inv.planks -= 1
+		inv.inventory_changed.emit()
 	
 	var plank_scene = load("res://scenes/environment/plank.tscn")
 	if not plank_scene: return
@@ -272,8 +295,9 @@ func place_plank() -> void:
 	plank.position = Vector2(place_x, place_y)
 	plank.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(plank)
-	if has_node("/root/SaveManager"):
-		SaveManager.request_save()
+	var sm = _get_save()
+	if sm:
+		sm.request_save()
 
 func try_collect() -> void:
 	if has_node("PickupArea"):
@@ -290,8 +314,9 @@ func _try_chest_interaction() -> bool:
 	if has_node("PickupArea"):
 		for body in $PickupArea.get_overlapping_bodies():
 			if body.has_method("is_chest"):
-				if not body.is_closed and (Inventory.iron > 0 or Inventory.gold > 0 or Inventory.coal > 0):
-					var dropped = Inventory.remove_all()
+				var inv = _get_inv()
+				if not body.is_closed and inv and (inv.iron > 0 or inv.gold > 0 or inv.coal > 0):
+					var dropped = inv.remove_all()
 					body.deposit(dropped)
 				elif body.is_closed:
 					body.extract()
@@ -323,19 +348,52 @@ func try_mine() -> void:
 	else:
 		last_direction = Vector2(facing_x, 0)
 		
-	var space_state = get_world_2d().direct_space_state
-	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
-	query.collide_with_bodies = true
-	query.collide_with_areas = true
-	query.collision_mask = 37 # 1 (Blocks), 4 (Drops), 32 (Planks)
-	
 	is_mining = true
 	mine_timer = 0.5
 	
+	var world_2d = get_world_2d()
+	if not world_2d and is_inside_tree() and get_viewport():
+		world_2d = get_viewport().find_world_2d()
+	if not world_2d or not world_2d.direct_space_state:
+		return
+	var space_state = world_2d.direct_space_state
+	
+	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
+	query.hit_from_inside = true
+	query.collision_mask = 37 # 1 (Blocks), 4 (Drops), 32 (Planks)
+	
+	var target_collider = null
 	var result = space_state.intersect_ray(query)
 	if result and result.has("collider"):
-		var collider = result.collider
-		if collider and collider.has_method("hit"):
-			collider.hit()
-		elif collider and collider.has_method("collect"):
-			collider.collect()
+		target_collider = result.collider
+		
+	# If raycast didn't find a minable/collectible target, check point queries along aim direction and at player position
+	if not target_collider or (not target_collider.has_method("hit") and not target_collider.has_method("collect")):
+		var check_points = [
+			global_position + last_direction * 24.0,
+			global_position + last_direction * 36.0,
+			global_position + Vector2(0, 16.0), # Feet / ground
+			global_position # Overlapping player body
+		]
+		for pt in check_points:
+			var point_query = PhysicsPointQueryParameters2D.new()
+			point_query.position = pt
+			point_query.collision_mask = 37
+			point_query.collide_with_bodies = true
+			point_query.collide_with_areas = true
+			var hits = space_state.intersect_point(point_query, 4)
+			for hit in hits:
+				var c = hit.get("collider")
+				if c and (c.has_method("hit") or c.has_method("collect")):
+					target_collider = c
+					break
+			if target_collider:
+				break
+				
+	if target_collider:
+		if target_collider.has_method("hit"):
+			target_collider.hit()
+		elif target_collider.has_method("collect"):
+			target_collider.collect()

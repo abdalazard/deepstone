@@ -9,8 +9,37 @@ var iron: int = 0
 var gold: int = 0
 var coal: int = 0
 var signs: int = 10 # Mini-poste / lamp
+var starter_lamps: int = 1 # 1 lanterna inicial grátis
 var planks: int = 15 # Tábuas de madeira
 var active_slot: int = 0 # 0=Pickaxe, 1=Lamp, 2=Escada, 3=Tábua
+
+func get_available_lamps() -> int:
+	return starter_lamps + min(coal / 3, iron / 2)
+
+func can_place_lamp() -> bool:
+	return get_available_lamps() > 0
+
+func consume_lamp() -> bool:
+	if starter_lamps > 0:
+		starter_lamps -= 1
+		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	elif coal >= 3 and iron >= 2:
+		coal -= 3
+		iron -= 2
+		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
+func add_starter_lamp(amount: int = 1) -> void:
+	starter_lamps += amount
+	inventory_changed.emit()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
 
 func notify(text: String, icon_type: String = "") -> void:
 	notification_triggered.emit(text, icon_type)
@@ -101,10 +130,20 @@ func drop_item(item_key: String, amount: int = 1) -> int:
 		planks -= amount
 		drop.type = 3 # PLANK
 		dropped_amount = amount
-	elif (item_key == "lamp" or item_key == "signs") and signs >= amount:
-		signs -= amount
-		drop.type = 4 # LAMP
-		dropped_amount = amount
+	elif (item_key == "lamp" or item_key == "signs"):
+		if starter_lamps >= amount:
+			starter_lamps -= amount
+			drop.type = 4 # LAMP
+			dropped_amount = amount
+		elif signs >= amount:
+			signs -= amount
+			drop.type = 4 # LAMP
+			dropped_amount = amount
+		elif coal >= 3 * amount and iron >= 2 * amount:
+			coal -= 3 * amount
+			iron -= 2 * amount
+			drop.type = 4 # LAMP
+			dropped_amount = amount
 		
 	if dropped_amount > 0:
 		drop.is_player_drop = true

@@ -54,6 +54,9 @@ func clear_save() -> void:
 	player_saved_pos = Vector2.ZERO
 	chest_saved_load = 0
 	chest_saved_closed = false
+	var inv = _get_inventory()
+	if inv and "starter_lamps" in inv:
+		inv.starter_lamps = 1
 
 func mark_block_mined(grid_pos: Vector2i) -> void:
 	var key = "%d,%d" % [grid_pos.x, grid_pos.y]
@@ -133,6 +136,7 @@ func save_game(show_notify: bool = false) -> void:
 			"gold": inv.gold if inv else 0,
 			"coal": inv.coal if inv else 0,
 			"signs": inv.signs if inv else 10,
+			"starter_lamps": inv.starter_lamps if (inv and "starter_lamps" in inv) else 1,
 			"planks": inv.planks if inv else 15
 		},
 		"chest": chest_data,
@@ -182,6 +186,8 @@ func load_game() -> bool:
 		inv.gold = inv_data.get("gold", 0)
 		inv.coal = inv_data.get("coal", 0)
 		inv.signs = inv_data.get("signs", 10)
+		if "starter_lamps" in inv:
+			inv.starter_lamps = inv_data.get("starter_lamps", 1)
 		inv.planks = inv_data.get("planks", 15)
 	
 	var p_data = data.get("player", {})

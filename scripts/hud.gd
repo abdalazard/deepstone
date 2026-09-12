@@ -523,7 +523,8 @@ func _on_equip_pressed() -> void:
 	var def = chest_items_def[selected_index]
 	var inv = _get_inv()
 	if def.is_tool and inv:
-		if def.key == "lamp" and (inv.coal < 3 or inv.iron < 2):
+		var lamp_available = inv.can_place_lamp() if inv.has_method("can_place_lamp") else (inv.coal >= 3 and inv.iron >= 2)
+		if def.key == "lamp" and not lamp_available:
 			show_toast("Poste indisponível! (Requer 3 Carvões + 2 Ferros)", "lamp")
 			return
 		inv.active_slot = def.tool_slot
@@ -550,7 +551,7 @@ func _get_item_count(key: String) -> int:
 	if not inv: return 0
 	match key:
 		"pickaxe": return 1
-		"lamp": return min(inv.coal / 3, inv.iron / 2)
+		"lamp": return inv.get_available_lamps() if inv.has_method("get_available_lamps") else min(inv.coal / 3, inv.iron / 2)
 		"ladder": return 99
 		"plank": return inv.planks
 		"iron": return inv.iron
@@ -562,8 +563,8 @@ func update_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
 	
-	var can_craft_lamp = (inv.coal >= 3 and inv.iron >= 2)
-	var craftable_lamps = min(inv.coal / 3, inv.iron / 2)
+	var can_craft_lamp = inv.can_place_lamp() if inv.has_method("can_place_lamp") else (inv.coal >= 3 and inv.iron >= 2)
+	var craftable_lamps = inv.get_available_lamps() if inv.has_method("get_available_lamps") else min(inv.coal / 3, inv.iron / 2)
 	
 	# Update 7 Hotbar items
 	for i in range(slots.size()):
@@ -625,7 +626,10 @@ func update_ui() -> void:
 			elif def.key == "pickaxe":
 				lbl.text = "Nível 1"
 			elif def.key == "lamp":
-				lbl.text = "%d un. (3C+2Fe)" % craftable_lamps
+				if "starter_lamps" in inv and inv.starter_lamps > 0:
+					lbl.text = "%d un. (1 Inicial)" % craftable_lamps if craftable_lamps == 1 else "%d un. (1 Ini + %d)" % [craftable_lamps, craftable_lamps - 1]
+				else:
+					lbl.text = "%d un. (3C+2Fe)" % craftable_lamps
 			else:
 				lbl.text = "%d un." % c
 				

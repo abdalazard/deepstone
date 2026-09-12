@@ -155,8 +155,11 @@ func collect() -> void:
 		inv.notify("+1 Tábua", "plank")
 		inv.inventory_changed.emit()
 	elif type == ResourceType.LAMP:
-		inv.signs = min(inv.signs + 1, 99)
-		inv.notify("+1 Mini Poste", "lamp")
+		if "starter_lamps" in inv:
+			inv.add_starter_lamp(1)
+		else:
+			inv.signs = min(inv.signs + 1, 99)
+		inv.notify("+1 Lanterna", "lamp")
 		inv.inventory_changed.emit()
 	
 	# Create light flash effect
