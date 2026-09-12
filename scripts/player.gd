@@ -5,7 +5,7 @@ extends CharacterBody2D
 
 var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
-const MINE_DISTANCE: float = 24.0
+const MINE_DISTANCE: float = 18.0
 
 func _physics_process(delta: float) -> void:
 	# Add the gravity.
