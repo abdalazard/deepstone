@@ -42,12 +42,12 @@ layout_mode = 2
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "COMANDOS:
-Z - Cavar / Bater no Elevador
+Z - Cavar / Coletar
 X (Segurar) - Arrastar Pedras Pesadas
 C - Coletar Items Próximos
 I - Abrir/Fechar Inventário
-Seta Cima (W) - Pular
-Setas Lado (A/D) - Andar"
+Seta Cima - Pular / Subir Escada
+Setas Lado - Andar"
 horizontal_alignment = 1
 
 [node name="StartInfo" type="Label" parent="ColorRect/VBoxContainer"]

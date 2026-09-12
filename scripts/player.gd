@@ -5,16 +5,26 @@ extends CharacterBody2D
 
 var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
-const MINE_DISTANCE: float = 18.0
+const MINE_DISTANCE: float = 24.0
+
+var on_ladder: bool = false
 
 func _physics_process(delta: float) -> void:
-	# Add the gravity.
-	if not is_on_floor():
-		velocity.y += gravity * delta
-
-	# Handle Jump.
-	if Input.is_action_just_pressed("ui_up") and is_on_floor():
-		velocity.y = jump_velocity
+	if on_ladder:
+		if Input.is_action_pressed("ui_up"):
+			velocity.y = -100
+		elif Input.is_action_pressed("ui_down"):
+			velocity.y = 100
+		else:
+			velocity.y = 0
+	else:
+		# Add the gravity.
+		if not is_on_floor():
+			velocity.y += gravity * delta
+	
+		# Handle Jump.
+		if Input.is_action_just_pressed("ui_up") and is_on_floor():
+			velocity.y = jump_velocity
 
 	# Aiming logic (for mining)
 	var aim_dir = Vector2.ZERO
@@ -71,9 +81,13 @@ func try_mine() -> void:
 	var space_state = get_world_2d().direct_space_state
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true
+	query.hit_from_inside = true
+	query.exclude = [get_rid()]
 	
 	var result = space_state.intersect_ray(query)
 	if result and result.has("collider"):
 		var collider = result.collider
 		if collider and collider.has_method("hit"):
 			collider.hit()
+		elif collider and collider.has_method("collect"):
+			collider.collect()
