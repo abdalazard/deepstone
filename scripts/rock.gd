@@ -2,6 +2,7 @@ class_name Rock
 extends StaticBody2D
 
 @export var is_copper: bool = false
+@export var is_dirt: bool = false
 
 var max_hp: int = 3
 var hp: int = 3
@@ -11,7 +12,13 @@ const DROP_SCENE = preload("res://scenes/items/resource_drop.tscn")
 var cracks: Node2D
 
 func _ready() -> void:
-	if is_copper:
+	if is_dirt:
+		max_hp = 1
+		hp = 1
+		if sprite_2d:
+			sprite_2d.frame = 1 # Generic block
+			sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0) # Brown tint for dirt
+	elif is_copper:
 		max_hp = 4
 		hp = 4
 		if sprite_2d:
@@ -36,9 +43,10 @@ func hit() -> void:
 	cracks.queue_redraw()
 	
 	if sprite_2d:
-		sprite_2d.modulate = Color(1, 0.3, 0.3, 1) # Red damage flash
+		sprite_2d.modulate = sprite_2d.modulate + Color(0.5, 0, 0, 0) # Flash reddish
+		var original_color = Color(0.5, 0.35, 0.2, 1.0) if is_dirt else Color(1, 1, 1, 1)
 		var tween = create_tween()
-		tween.tween_property(sprite_2d, "modulate", Color(1, 1, 1, 1), 0.15)
+		tween.tween_property(sprite_2d, "modulate", original_color, 0.15)
 		
 		# Displacement and Scale shake
 		var original_pos = Vector2.ZERO
@@ -61,10 +69,11 @@ func hit() -> void:
 func destroy() -> void:
 	spawn_particles()
 	
-	var drop = DROP_SCENE.instantiate()
-	drop.type = 1 if is_copper else 0
-	drop.global_position = global_position
-	get_parent().add_child(drop)
+	if not is_dirt:
+		var drop = DROP_SCENE.instantiate()
+		drop.type = 1 if is_copper else 0
+		drop.global_position = global_position
+		get_parent().add_child(drop)
 	
 	queue_free()
 
@@ -82,7 +91,11 @@ func spawn_particles() -> void:
 	particles.initial_velocity_max = 60.0
 	particles.scale_amount_min = 2.0
 	particles.scale_amount_max = 4.0
-	particles.color = Color(0.8, 0.45, 0.2, 1) if is_copper else Color(0.4, 0.4, 0.45, 1)
+	
+	var p_color = Color(0.4, 0.4, 0.45, 1)
+	if is_copper: p_color = Color(0.8, 0.45, 0.2, 1)
+	if is_dirt: p_color = Color(0.5, 0.35, 0.2, 1)
+	particles.color = p_color
 	
 	particles.global_position = global_position
 	get_parent().add_child(particles)

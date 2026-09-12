@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://bdirtuidxxxx"]
+
+[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="2_ores"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dirt"]
+size = Vector2(16, 16)
+
+[node name="Dirt" type="StaticBody2D"]
+script = ExtResource("1_rock")
+is_dirt = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_dirt")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_ores")
+hframes = 6
+vframes = 6
+frame = 1

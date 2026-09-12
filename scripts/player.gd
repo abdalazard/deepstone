@@ -1,17 +1,41 @@
 extends CharacterBody2D
 
 @export var speed: float = 120.0
+@export var jump_velocity: float = -250.0
 
+var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
 const MINE_DISTANCE: float = 24.0
 
-func _physics_process(_delta: float) -> void:
-	var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+func _physics_process(delta: float) -> void:
+	# Add the gravity.
+	if not is_on_floor():
+		velocity.y += gravity * delta
+
+	# Handle Jump.
+	if Input.is_action_just_pressed("ui_up") and is_on_floor():
+		velocity.y = jump_velocity
+
+	# Aiming logic (for mining)
+	var aim_dir = Vector2.ZERO
+	if Input.is_action_pressed("ui_up"): aim_dir.y = -1
+	elif Input.is_action_pressed("ui_down"): aim_dir.y = 1
 	
-	if direction != Vector2.ZERO:
-		last_direction = direction.normalized()
-		
-	velocity = direction * speed
+	if Input.is_action_pressed("ui_left"): aim_dir.x = -1
+	elif Input.is_action_pressed("ui_right"): aim_dir.x = 1
+	
+	if aim_dir != Vector2.ZERO:
+		last_direction = aim_dir.normalized()
+	elif velocity.x != 0:
+		last_direction = Vector2(sign(velocity.x), 0)
+
+	# Handle movement
+	var direction := Input.get_axis("ui_left", "ui_right")
+	if direction:
+		velocity.x = direction * speed
+	else:
+		velocity.x = move_toward(velocity.x, 0, speed)
+
 	move_and_slide()
 	
 	if Input.is_action_just_pressed("ui_accept"):
