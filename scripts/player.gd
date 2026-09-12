@@ -129,6 +129,7 @@ func try_mine() -> void:
 	var space_state = get_world_2d().direct_space_state
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true
+	query.collide_with_areas = true
 	query.hit_from_inside = true
 	query.exclude = [get_rid()]
 	

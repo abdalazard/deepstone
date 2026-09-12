@@ -17,10 +17,9 @@ func _ready() -> void:
 	var tween = create_tween()
 	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.3).set_trans(Tween.TRANS_BOUNCE)
 	
-	# Auto collect for basic ores (Stone, Copper)
-	# Future ores like Gold will skip this to force manual hauling
+	# Auto collect for basic ores (Start almost immediately!)
 	var timer = Timer.new()
-	timer.wait_time = 1.0
+	timer.wait_time = 0.3
 	timer.one_shot = true
 	timer.timeout.connect(_auto_fly_to_player)
 	add_child(timer)
@@ -39,17 +38,22 @@ func _ready() -> void:
 	
 	add_child(pickup_area)
 
+var target_player: Node2D = null
+
 func _auto_fly_to_player() -> void:
-	var player = get_tree().current_scene.get_node_or_null("Player")
-	if not player or not Inventory.can_add(type): return
+	target_player = get_tree().current_scene.get_node_or_null("Player")
+	if not target_player or not Inventory.can_add(type): return
 	
 	set_deferred("freeze", true)
 	if has_node("CollisionShape2D"):
 		get_node("CollisionShape2D").set_deferred("disabled", true)
-		
-	var tween = create_tween()
-	tween.tween_property(self, "global_position", player.global_position, 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BACK)
-	tween.finished.connect(collect)
+
+func _process(delta: float) -> void:
+	if target_player:
+		global_position = global_position.lerp(target_player.global_position, 10.0 * delta)
+		if global_position.distance_to(target_player.global_position) < 8.0:
+			collect()
+			target_player = null
 
 func collect() -> void:
 	if not Inventory.can_add(type): return

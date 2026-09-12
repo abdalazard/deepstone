@@ -2,6 +2,11 @@
 
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="1_tex"]
 
+[ext_resource type="Script" path="res://scripts/torch.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_torch"]
+size = Vector2(16, 16)
+
 [sub_resource type="Gradient" id="Gradient_light"]
 colors = PackedColorArray(1, 1, 0.8, 1, 0, 0, 0, 1)
 
@@ -13,7 +18,13 @@ fill_to = Vector2(0.8, 0.2)
 width = 256
 height = 256
 
-[node name="Torch" type="Node2D"]
+[node name="Torch" type="Area2D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_torch")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_tex")
