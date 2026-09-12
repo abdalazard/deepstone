@@ -1,10 +1,10 @@
 [gd_scene load_steps=4 format=3 uid="uid://bladderseguid"]
 
 [ext_resource type="Script" path="res://scripts/rope.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/rope_tile.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rope"]
-size = Vector2(16, 26)
+size = Vector2(12, 32)
 
 [node name="RopeSegment" type="Area2D"]
 collision_layer = 1
@@ -12,10 +12,7 @@ collision_mask = 6
 script = ExtResource("1_script")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(2, 2)
 texture = ExtResource("2_tex")
-region_enabled = true
-region_rect = Rect2(64, 48, 16, 16)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_rope")

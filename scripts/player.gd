@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 		sprite.texture = current_tex
 		sprite.vframes = 1
 		sprite.hframes = int(current_tex.get_width() / 32.0)
-		sprite.scale = Vector2(1, 1) # Reset scale since new sprites are 32x32
+		sprite.scale = Vector2(1.5, 1.5) # Increased scale per user request
 		anim_frame = 0 # reset frame on state change
 	
 	if anim_timer > 1.0 / fps:
