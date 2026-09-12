@@ -5,11 +5,11 @@ extends CharacterBody2D
 
 var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
-const MINE_DISTANCE: float = 24.0
-
+const MINE_DISTANCE: float = 48.0
 var in_ladder_count: int = 0
 var on_ladder: bool:
 	get: return in_ladder_count > 0
+
 func _physics_process(delta: float) -> void:
 	if on_ladder:
 		if Input.is_action_pressed("ui_up"):
@@ -94,8 +94,8 @@ func place_torch() -> void:
 	
 	var torch_scene = load("res://scenes/environment/torch.tscn")
 	var torch = torch_scene.instantiate()
-	var snapped_x = floor(global_position.x / 16.0) * 16.0 + 8.0
-	var snapped_y = round(global_position.y / 16.0) * 16.0
+	var snapped_x = floor(global_position.x / 32.0) * 32.0 + 16.0
+	var snapped_y = round(global_position.y / 32.0) * 32.0
 	torch.position = Vector2(snapped_x, snapped_y)
 	get_tree().current_scene.add_child(torch)
 
@@ -106,8 +106,8 @@ func place_ladder() -> void:
 	var ladder_scene = load("res://scenes/environment/ladder_segment.tscn")
 	if not ladder_scene: return
 	var ladder = ladder_scene.instantiate()
-	var snapped_x = floor(global_position.x / 16.0) * 16.0 + 8.0
-	var snapped_y = round(global_position.y / 16.0) * 16.0
+	var snapped_x = floor(global_position.x / 32.0) * 32.0 + 16.0
+	var snapped_y = round(global_position.y / 32.0) * 32.0
 	ladder.position = Vector2(snapped_x, snapped_y)
 	get_tree().current_scene.add_child(ladder)
 

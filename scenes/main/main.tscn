@@ -29,19 +29,19 @@ color = Color(0.05, 0.05, 0.08, 1)
 [node name="Cave" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(248, 80)
+position = Vector2(496, 96)
 
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 
-[node name="LeftWall" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(-8, 500)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(-16, 400)
 shape = SubResource("RectangleShape2D_wall_v")
 
-[node name="RightWall" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(488, 500)
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(976, 400)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="Chest" parent="." instance=ExtResource("7_chest")]
-position = Vector2(248, 112)
+position = Vector2(496, 104)
 
 [node name="StartScreen" parent="." instance=ExtResource("6_start")]

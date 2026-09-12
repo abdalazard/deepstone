@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://scripts/torch.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_torch"]
-size = Vector2(16, 16)
+size = Vector2(32, 32)
 
 [sub_resource type="Gradient" id="Gradient_light"]
 colors = PackedColorArray(1, 1, 0.8, 1, 0, 0, 0, 1)
@@ -27,6 +27,7 @@ script = ExtResource("1_script")
 shape = SubResource("RectangleShape2D_torch")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(2, 2)
 texture = ExtResource("1_tex")
 hframes = 11
 vframes = 11

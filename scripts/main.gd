@@ -12,7 +12,7 @@ func generate_world() -> void:
 	# 30 columns x 50 rows of dirt/rocks
 	for x in range(30):
 		for y in range(50):
-			var tile_pos = Vector2(x * 16 + 8, y * 16 + 128)
+			var tile_pos = Vector2(x * 32 + 16, y * 32 + 128)
 				
 			var instance
 			
