@@ -82,7 +82,7 @@ region = Rect2(0, 0, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_char_idle"]
 atlas = ExtResource("3_idle")
-region = Rect2(0, 0, 32, 32)
+region = Rect2(0, 0, 32, 30)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_coal_icon"]
 atlas = ExtResource("4_ores")
@@ -325,17 +325,10 @@ theme_override_constants/margin_top = 10
 
 [node name="TopHBox" type="HBoxContainer" parent="TopContainer"]
 layout_mode = 2
-theme_override_constants/separation = 14
-alignment = 1
-
-[node name="HotbarVisual" type="HBoxContainer" parent="TopContainer/TopHBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
+theme_override_constants/separation = 12
 
 [node name="ProfileBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
 layout_mode = 2
-alignment = 1
 
 [node name="ProfileBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer"]
 layout_mode = 2
@@ -343,35 +336,43 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_profile_badge")
 
 [node name="ProfileMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 4
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_bottom = 2
 
 [node name="ProfileHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="AvatarRect" type="TextureRect" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
-custom_minimum_size = Vector2(20, 20)
+texture_filter = 1
+custom_minimum_size = Vector2(46, 46)
 layout_mode = 2
 texture = SubResource("AtlasTexture_char_idle")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="LevelBadgeLabel" type="Label" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
+[node name="LevelVBox" type="VBoxContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="LevelBadgeLabel" type="Label" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox/LevelVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 14
 text = "Nv. 0"
+
+[node name="HotbarVisual" type="HBoxContainer" parent="TopContainer/TopHBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="CoinsBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
 visible = false
 layout_mode = 2
-alignment = 1
 
 [node name="CoinsBadge" type="PanelContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer"]
 layout_mode = 2
@@ -406,7 +407,6 @@ text = "0"
 
 [node name="CapacityBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
 layout_mode = 2
-alignment = 1
 
 [node name="CapacityBadge" type="PanelContainer" parent="TopContainer/TopHBox/CapacityBadgeContainer"]
 layout_mode = 2

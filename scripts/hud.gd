@@ -244,11 +244,17 @@ func _get_inv() -> Node:
 	return null
 
 func _process(delta: float) -> void:
-	if is_instance_valid(equipment_panel) and equipment_panel.visible:
-		idle_anim_timer += delta
-		if idle_anim_timer >= 0.1: # 10 FPS
-			idle_anim_timer = 0.0
-			idle_anim_frame = (idle_anim_frame + 1) % 16
+	idle_anim_timer += delta
+	if idle_anim_timer >= 0.1: # 10 FPS
+		idle_anim_timer = 0.0
+		idle_anim_frame = (idle_anim_frame + 1) % 16
+		
+		# Animate HUD Top-Left Avatar
+		if is_instance_valid(avatar_rect) and avatar_rect.texture is AtlasTexture:
+			avatar_rect.texture.region = Rect2(idle_anim_frame * 32.0, 0, 32.0, 30.0)
+			
+		# Animate Equipment Menu Character Preview
+		if is_instance_valid(equipment_panel) and equipment_panel.visible:
 			var char_rect = find_child("CharTextureRect", true, false)
 			if char_rect and char_rect.texture is AtlasTexture:
 				char_rect.texture.region = Rect2(idle_anim_frame * 32.0, 0, 32.0, 30.0)
