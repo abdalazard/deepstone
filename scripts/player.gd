@@ -64,6 +64,10 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("slot_4"): set_slot(3)
 	if Input.is_action_just_pressed("slot_5"): set_slot(4)
 	
+	if Input.is_action_just_pressed("action_cycle_slot"):
+		# Cycle between 0, 1, 2 (Pickaxe, Sign, Ladder)
+		set_slot((Inventory.active_slot + 1) % 3)
+	
 	if Input.is_action_just_pressed("action_mine"):
 		if Inventory.active_slot == 0:
 			try_mine()

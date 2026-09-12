@@ -19,7 +19,7 @@ modulate = Color(0.4, 0.4, 0.45, 1)
 texture = ExtResource("1_tex")
 hframes = 11
 vframes = 11
-frame = 1
+frame = 0
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("OccluderPolygon2D_block")

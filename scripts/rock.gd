@@ -16,18 +16,18 @@ func _ready() -> void:
 		max_hp = 1
 		hp = 1
 		if sprite_2d:
-			sprite_2d.frame = 1 # Generic block
+			sprite_2d.frame = 2 # Dirt block
 			sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0) # Brown tint for dirt
 	elif is_copper:
 		max_hp = 4
 		hp = 4
 		if sprite_2d:
-			sprite_2d.frame = 2 # Row 1 Col 3 (Copper ore)
+			sprite_2d.frame = 4 # Row 1 Col 3 (Copper ore)
 	else:
 		max_hp = 3
 		hp = 3
 		if sprite_2d:
-			sprite_2d.frame = 1 # Row 1 Col 2 (Stone/Iron ore)
+			sprite_2d.frame = 0 # Row 1 Col 2 (Stone/Iron ore)
 			
 	# Setup node to draw cracks over the rock
 	cracks = Node2D.new()

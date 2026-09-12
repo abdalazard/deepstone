@@ -20,7 +20,7 @@ shape = SubResource("RectangleShape2D_dirt")
 texture = ExtResource("2_ores")
 hframes = 11
 vframes = 11
-frame = 1
+frame = 2
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("OccluderPolygon2D_dirt")
