@@ -14,19 +14,10 @@ func _ready() -> void:
 var in_ladder: bool = false
 var gravity_scale_default: float = 1.0
 
-func _physics_process(delta: float) -> void:
-	if in_ladder and is_closed:
-		gravity_scale = 0.0
-		linear_velocity.y = move_toward(linear_velocity.y, 0, 10)
-		
-		# Check surface extraction
-		if global_position.y < 120:
-			extract()
-	else:
-		gravity_scale = gravity_scale_default
-
 func deposit(items: Dictionary) -> void:
-	if is_closed: return
+	if is_closed: 
+		extract()
+		return
 	
 	var total_weight = items["iron"] * 1 + items["gold"] * 2
 	stored_load += total_weight
@@ -37,10 +28,6 @@ func deposit(items: Dictionary) -> void:
 func close_chest() -> void:
 	is_closed = true
 	sprite.frame = 30 # Closed chest
-	mass = 50.0 # Make it heavy!
-	
-	# Add a physical collision so it can be pushed by X
-	collision_mask = 3 # Collides with player(2) and world(1)
 	
 	# Light effect when closed
 	var flash = PointLight2D.new()
@@ -67,8 +54,10 @@ func extract() -> void:
 	if is_closed:
 		# Player gains EXP
 		print("Chest extracted! Gained EXP based on load: ", stored_load)
-		# Future: Add EXP to player stats
-		queue_free()
+		# Reset Chest
+		stored_load = 0
+		is_closed = false
+		sprite.frame = 32
 
 func is_chest() -> bool:
 	return true

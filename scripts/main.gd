@@ -27,9 +27,3 @@ func generate_world() -> void:
 				
 			instance.position = tile_pos
 			add_child(instance)
-			
-			# 5% chance to spawn a Torch/Sign in the dirt for ambient lighting
-			if randf() < 0.05 and x != 15:
-				var torch = TORCH_SCENE.instantiate()
-				torch.position = tile_pos
-				add_child(torch)

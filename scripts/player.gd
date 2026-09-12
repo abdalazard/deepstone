@@ -58,13 +58,44 @@ func _physics_process(delta: float) -> void:
 				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
 	if Input.is_action_just_pressed("action_mine"):
-		try_mine()
+		var hud = get_tree().current_scene.get_node_or_null("HUD")
+		if hud and hud.container.visible:
+			Inventory.sign_selected = !Inventory.sign_selected
+			Inventory.inventory_changed.emit()
+		elif Inventory.sign_selected and Inventory.signs > 0:
+			place_torch()
+		else:
+			try_mine()
+			
+	if Input.is_action_just_pressed("action_ladder"):
+		place_ladder()
 		
 	if Input.is_action_just_pressed("action_collect"):
 		try_collect()
 		
 	if Input.is_action_just_pressed("action_inventory"):
 		toggle_inventory()
+
+func place_torch() -> void:
+	Inventory.signs -= 1
+	Inventory.sign_selected = false
+	Inventory.inventory_changed.emit()
+	
+	var torch_scene = load("res://scenes/environment/torch.tscn")
+	var torch = torch_scene.instantiate()
+	var snapped_x = floor(global_position.x / 16.0) * 16.0 + 8.0
+	var snapped_y = floor(global_position.y / 16.0) * 16.0 + 8.0
+	torch.position = Vector2(snapped_x, snapped_y)
+	get_tree().current_scene.add_child(torch)
+
+func place_ladder() -> void:
+	var ladder_scene = load("res://scenes/environment/ladder_segment.tscn")
+	if not ladder_scene: return
+	var ladder = ladder_scene.instantiate()
+	var snapped_x = floor(global_position.x / 16.0) * 16.0 + 8.0
+	var snapped_y = floor(global_position.y / 16.0) * 16.0 + 8.0
+	ladder.position = Vector2(snapped_x, snapped_y)
+	get_tree().current_scene.add_child(ladder)
 
 func try_collect() -> void:
 	if has_node("PickupArea"):

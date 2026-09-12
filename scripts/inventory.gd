@@ -6,6 +6,8 @@ const MAX_CAPACITY: int = 10
 var iron: int = 0
 var gold: int = 0
 var current_load: int = 0
+var signs: int = 10
+var sign_selected: bool = false
 
 func get_weight(type: int) -> int:
 	if type == 0: # IRON
