@@ -1,8 +1,8 @@
 extends CanvasLayer
 
-@onready var stone_label = $VBoxContainer/StoneCount
-@onready var copper_label = $VBoxContainer/CopperCount
-@onready var container = $VBoxContainer
+@onready var stone_label = $MarginContainer/VBoxContainer/StoneLabel
+@onready var copper_label = $MarginContainer/VBoxContainer/CopperLabel
+@onready var container = $MarginContainer/VBoxContainer
 
 func _ready() -> void:
 	Inventory.resources_changed.connect(_on_resources_changed)
