@@ -281,6 +281,30 @@ func _try_chest_interaction() -> bool:
 	return false
 
 func try_mine() -> void:
+	# Determine mining aim: if no directional keys held, mine horizontally in current facing direction
+	var has_dir = false
+	var dir = Vector2.ZERO
+	if Input.is_action_pressed("ui_up"):
+		dir.y = -1
+		has_dir = true
+	elif Input.is_action_pressed("ui_down"):
+		dir.y = 1
+		has_dir = true
+		
+	if Input.is_action_pressed("ui_left"):
+		dir.x = -1
+		facing_x = -1.0
+		has_dir = true
+	elif Input.is_action_pressed("ui_right"):
+		dir.x = 1
+		facing_x = 1.0
+		has_dir = true
+		
+	if has_dir and dir != Vector2.ZERO:
+		last_direction = dir.normalized()
+	else:
+		last_direction = Vector2(facing_x, 0)
+		
 	var space_state = get_world_2d().direct_space_state
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true

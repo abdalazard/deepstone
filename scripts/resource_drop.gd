@@ -4,30 +4,32 @@ enum ResourceType { IRON, GOLD, COAL, PLANK, LAMP }
 @export var type: ResourceType = ResourceType.IRON
 var is_player_drop: bool = false
 var pickup_delay: float = 0.0
+var inventory_override: Node = null
 
 func _ready() -> void:
-	var sprite = $Sprite2D
-	if type == ResourceType.IRON:
-		sprite.frame = 24 # Row 5 Col 1
-		sprite.modulate = Color(1, 1, 1, 1)
-	elif type == ResourceType.GOLD:
-		sprite.frame = 27 # Row 5 Col 4 (Gold ingot)
-		sprite.modulate = Color(1, 1, 1, 1)
-	elif type == ResourceType.COAL:
-		sprite.frame = 24
-		sprite.modulate = Color(0.2, 0.2, 0.22, 1.0) # Charcoal lump
-	elif type == ResourceType.PLANK:
-		sprite.texture = load("res://assets/sprites/plank.png")
-		sprite.hframes = 1
-		sprite.vframes = 1
-		sprite.frame = 0
-		sprite.scale = Vector2(0.8, 0.8)
-	elif type == ResourceType.LAMP:
-		sprite.texture = load("res://assets/sprites/lamp_post.png")
-		sprite.hframes = 4
-		sprite.vframes = 1
-		sprite.frame = 0
-		sprite.scale = Vector2(1.2, 1.2)
+	var sprite = get_node_or_null("Sprite2D")
+	if sprite:
+		if type == ResourceType.IRON:
+			sprite.frame = 24 # Row 5 Col 1
+			sprite.modulate = Color(1, 1, 1, 1)
+		elif type == ResourceType.GOLD:
+			sprite.frame = 27 # Row 5 Col 4 (Gold ingot)
+			sprite.modulate = Color(1, 1, 1, 1)
+		elif type == ResourceType.COAL:
+			sprite.frame = 24
+			sprite.modulate = Color(0.2, 0.2, 0.22, 1.0) # Charcoal lump
+		elif type == ResourceType.PLANK:
+			sprite.texture = load("res://assets/sprites/plank.png")
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(0.8, 0.8)
+		elif type == ResourceType.LAMP:
+			sprite.texture = load("res://assets/sprites/lamp_post.png")
+			sprite.hframes = 4
+			sprite.vframes = 1
+			sprite.frame = 0
+			sprite.scale = Vector2(1.2, 1.2)
 		
 	# Pop out effect
 	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
@@ -63,8 +65,10 @@ func _ready() -> void:
 var target_player: Node2D = null
 
 func _get_inv() -> Node:
-	if Engine.has_singleton("Inventory"):
-		return Engine.get_singleton("Inventory")
+	if inventory_override:
+		return inventory_override
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		return get_tree().root.get_node("Inventory")
 	var loop = Engine.get_main_loop()
 	if loop and "root" in loop and loop.root and loop.root.has_node("Inventory"):
 		return loop.root.get_node("Inventory")
@@ -74,17 +78,27 @@ func _can_be_collected() -> bool:
 	if pickup_delay > 0.0:
 		return false
 	var inv = _get_inv()
-	if not inv: return true
-	if type in [ResourceType.IRON, ResourceType.GOLD, ResourceType.COAL]:
-		return inv.can_add(type)
-	return true
+	if not inv: return false
+	if type == ResourceType.IRON:
+		return inv.can_add(0)
+	elif type == ResourceType.GOLD:
+		return inv.can_add(1)
+	elif type == ResourceType.COAL:
+		return inv.can_add(2)
+	elif type == ResourceType.PLANK:
+		return inv.planks < 99
+	elif type == ResourceType.LAMP:
+		return inv.signs < 99
+	return false
 
 func _auto_fly_to_player() -> void:
+	if not _can_be_collected():
+		return # Inventory full or cannot receive this item! Stay at rest where mined.
 	var tree = get_tree()
 	if not tree: return
 	var parent_node = tree.current_scene if tree.current_scene else tree.root
 	target_player = parent_node.get_node_or_null("Player") if parent_node else null
-	if not target_player or not _can_be_collected(): return
+	if not target_player: return
 	
 	set_deferred("freeze", true)
 	if has_node("CollisionShape2D"):
@@ -94,6 +108,13 @@ func _process(delta: float) -> void:
 	if pickup_delay > 0.0:
 		pickup_delay -= delta
 	if target_player:
+		if not _can_be_collected():
+			# Abort flight if inventory filled up while flying!
+			target_player = null
+			set_deferred("freeze", false)
+			if has_node("CollisionShape2D"):
+				get_node("CollisionShape2D").set_deferred("disabled", false)
+			return
 		global_position = global_position.lerp(target_player.global_position, 10.0 * delta)
 		if global_position.distance_to(target_player.global_position) < 8.0:
 			collect()

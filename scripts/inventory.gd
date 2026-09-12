@@ -4,6 +4,7 @@ signal inventory_changed
 signal notification_triggered(text: String, icon_type: String)
 
 const MAX_STACK: int = 20
+const MAX_CAPACITY: int = 60 # Capacidade total de minérios (Ferro + Ouro + Carvão)
 var iron: int = 0
 var gold: int = 0
 var coal: int = 0
@@ -14,25 +15,40 @@ var active_slot: int = 0 # 0=Pickaxe, 1=Lamp, 2=Escada, 3=Tábua
 func notify(text: String, icon_type: String = "") -> void:
 	notification_triggered.emit(text, icon_type)
 
+func get_total_used() -> int:
+	return iron + gold + coal
+
+func get_total_available() -> int:
+	return max(0, MAX_CAPACITY - get_total_used())
+
+func is_full() -> bool:
+	return get_total_used() >= MAX_CAPACITY
+
 func can_add(type: int) -> bool:
+	if is_full(): return false
 	if type == 0: return iron < MAX_STACK
 	if type == 1: return gold < MAX_STACK
 	if type == 2: return coal < MAX_STACK
 	return false
 
 func add_resource(type: int, amount: int) -> void:
+	var space = get_total_available()
+	if space <= 0:
+		notify("Mochila Cheia! Guarde no Baú", "chest")
+		return
+		
 	if type == 0:
-		var added = min(amount, MAX_STACK - iron)
+		var added = min(amount, min(MAX_STACK - iron, space))
 		iron += added
 		if added > 0:
 			notify("+%d Minério de Ferro" % added, "iron")
 	elif type == 1:
-		var added = min(amount, MAX_STACK - gold)
+		var added = min(amount, min(MAX_STACK - gold, space))
 		gold += added
 		if added > 0:
 			notify("+%d Minério de Ouro" % added, "gold")
 	elif type == 2:
-		var added = min(amount, MAX_STACK - coal)
+		var added = min(amount, min(MAX_STACK - coal, space))
 		coal += added
 		if added > 0:
 			notify("+%d Carvão Mineral" % added, "coal")

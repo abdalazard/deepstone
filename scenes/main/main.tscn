@@ -9,7 +9,10 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/forge.tscn" id="8_forge"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
-size = Vector2(16, 3000)
+size = Vector2(16, 5000)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor_h"]
+size = Vector2(1100, 64)
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
 light_mode = 1
@@ -23,7 +26,7 @@ script = ExtResource("1_main")
 z_index = -8
 material = SubResource("CanvasItemMaterial_unshaded")
 color = Color(0.005, 0.105, 0.21, 1)
-polygon = PackedVector2Array(-300, 112, 1300, 112, 1300, 1850, -300, 1850)
+polygon = PackedVector2Array(-300, 112, 1300, 112, 1300, 4200, -300, 4200)
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
 rotation = 1.5708
@@ -47,12 +50,16 @@ position = Vector2(496, 96)
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(-8, 1000)
+position = Vector2(-8, 2100)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(968, 1000)
+position = Vector2(968, 2100)
 shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="WorldBoundary"]
+position = Vector2(480, 4048)
+shape = SubResource("RectangleShape2D_floor_h")
 
 [node name="Forge" parent="." instance=ExtResource("8_forge")]
 position = Vector2(432, 96)

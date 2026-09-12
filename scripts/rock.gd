@@ -5,11 +5,12 @@ extends RigidBody2D
 @export var is_coal: bool = false
 @export var is_dirt: bool = false
 @export var is_unbreakable: bool = false
+@export var biome: int = 0 # 0=Terra (0-35), 1=Gelo (36-75), 2=Lava (76-120)
 
 var max_hp: int = 3
 var hp: int = 3
 
-@onready var sprite_2d: Sprite2D = $Sprite2D
+@onready var sprite_2d: Sprite2D = get_node_or_null("Sprite2D")
 const DROP_SCENE = preload("res://scenes/items/resource_drop.tscn")
 var cracks: Node2D
 
@@ -20,9 +21,47 @@ var sparkle_overlay: Node2D
 var sparkle_alpha: float = 0.0
 var sparkle_points: Array[Vector2] = []
 var grid_pos: Vector2i = Vector2i(-1, -1)
+var base_modulate: Color = Color(1, 1, 1, 1)
 
 func set_grid_pos(pos: Vector2i) -> void:
 	grid_pos = pos
+
+func apply_biome(b: int) -> void:
+	biome = b
+	if is_unbreakable:
+		if sprite_2d:
+			if biome == 1: sprite_2d.modulate = Color(0.65, 0.85, 1.15, 1.0)
+			elif biome == 2: sprite_2d.modulate = Color(1.2, 0.45, 0.35, 1.0)
+			else: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			base_modulate = sprite_2d.modulate
+		return
+	
+	var base_hp = 3
+	if is_dirt: base_hp = 1
+	elif is_coal: base_hp = 2
+	elif is_copper: base_hp = 4
+	
+	if biome == 1: # Gelo (+1 HP)
+		max_hp = base_hp + 1
+		hp = max_hp
+		if sprite_2d:
+			if is_dirt: sprite_2d.modulate = Color(0.42, 0.65, 0.88, 1.0)
+			else: sprite_2d.modulate = Color(0.72, 0.88, 1.1, 1.0)
+	elif biome == 2: # Lava (+2 HP)
+		max_hp = base_hp + 2
+		hp = max_hp
+		if sprite_2d:
+			if is_dirt: sprite_2d.modulate = Color(0.45, 0.22, 0.16, 1.0)
+			else: sprite_2d.modulate = Color(1.15, 0.55, 0.35, 1.0)
+	else: # Terra
+		max_hp = base_hp
+		hp = max_hp
+		if sprite_2d:
+			if is_dirt: sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0)
+			else: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			
+	if sprite_2d:
+		base_modulate = sprite_2d.modulate
 
 func _ready() -> void:
 	if is_unbreakable:
@@ -52,6 +91,8 @@ func _ready() -> void:
 		hp = 3
 		if sprite_2d:
 			sprite_2d.frame = 2 # Frame 2: Iron specks
+			
+	apply_biome(biome)
 			
 	# Setup node to draw cracks over the rock
 	if not is_unbreakable:
@@ -129,11 +170,8 @@ func hit() -> void:
 	
 	if sprite_2d:
 		sprite_2d.modulate = sprite_2d.modulate + Color(0.5, 0, 0, 0) # Flash reddish
-		var original_color = Color(1, 1, 1, 1)
-		if is_dirt and sprite_2d.hframes == 11:
-			original_color = Color(0.5, 0.35, 0.2, 1.0)
 		var tween = create_tween()
-		tween.tween_property(sprite_2d, "modulate", original_color, 0.15)
+		tween.tween_property(sprite_2d, "modulate", base_modulate, 0.15)
 		
 		# Displacement and Scale shake
 		var original_pos = Vector2.ZERO
@@ -199,10 +237,22 @@ func spawn_particles() -> void:
 	particles.scale_amount_max = 4.0
 	
 	var p_color = Color(0.4, 0.4, 0.45, 1)
-	if is_unbreakable: p_color = Color(0.85, 0.9, 1.0, 1) # Bright metallic sparks
-	elif is_copper: p_color = Color(0.9, 0.8, 0.2, 1) # Gold color
-	elif is_coal: p_color = Color(0.18, 0.18, 0.2, 1) # Charcoal black
-	elif is_dirt: p_color = Color(0.5, 0.35, 0.2, 1)
+	if is_unbreakable:
+		if biome == 1: p_color = Color(0.68, 0.88, 1.0, 1)
+		elif biome == 2: p_color = Color(1.0, 0.42, 0.2, 1)
+		else: p_color = Color(0.85, 0.9, 1.0, 1)
+	elif is_copper:
+		p_color = Color(0.95, 0.82, 0.25, 1) # Gold color
+	elif is_coal:
+		p_color = Color(0.18, 0.18, 0.2, 1) # Charcoal black
+	elif is_dirt:
+		if biome == 1: p_color = Color(0.45, 0.65, 0.85, 1)
+		elif biome == 2: p_color = Color(0.55, 0.28, 0.2, 1)
+		else: p_color = Color(0.5, 0.35, 0.2, 1)
+	else:
+		if biome == 1: p_color = Color(0.65, 0.85, 1.0, 1)
+		elif biome == 2: p_color = Color(1.0, 0.5, 0.25, 1)
+		else: p_color = Color(0.7, 0.7, 0.75, 1)
 	particles.color = p_color
 	
 	particles.global_position = global_position

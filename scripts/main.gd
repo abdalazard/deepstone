@@ -14,7 +14,9 @@ const PLANK_SCENE = preload("res://scenes/environment/plank.tscn")
 @onready var player = $Player
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
-var cave_color: Color = Color(0.005, 0.105, 0.21, 1.0) # #011B35
+var earth_cave_color: Color = Color(0.06, 0.05, 0.04, 1.0) # Camada de Terra (Dark earth)
+var ice_cave_color: Color = Color(0.02, 0.08, 0.16, 1.0) # Camada de Gelo (Abyssal cold blue)
+var lava_cave_color: Color = Color(0.14, 0.03, 0.02, 1.0) # Camada de Lava (Magmatic ember dark)
 
 func _ready() -> void:
 	if has_node("/root/SaveManager"):
@@ -30,8 +32,17 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):
-		# When player enters excavation (Y >= 120), background turns to dark blue
-		var target_color = cave_color if player.global_position.y >= 120.0 else sky_color
+		var target_color: Color
+		var py = player.global_position.y
+		if py < 120.0:
+			target_color = sky_color
+		elif py < 1280.0: # Rows 0 to 35: Terra
+			target_color = earth_cave_color
+		elif py < 2560.0: # Rows 36 to 75: Gelo
+			target_color = ice_cave_color
+		else: # Rows 76+: Lava
+			target_color = lava_cave_color
+			
 		var current_color = RenderingServer.get_default_clear_color()
 		RenderingServer.set_default_clear_color(current_color.lerp(target_color, 4.0 * delta))
 
@@ -58,18 +69,28 @@ func restore_placed_items() -> void:
 
 func generate_world() -> void:
 	const GRID_W = 30
-	const GRID_H = 50
+	const GRID_H = 120 # Escavação expandida até profundidade 120 (~3968 pixels)
 	
-	# Procedural natural subterranean caverns / empty cave pockets (depths 4 to 48)
+	# Cavernas naturais distribuídas por todas as camadas
 	var cave_chambers = []
 	var depth_zones = [
 		Vector2i(4, 5),
 		Vector2i(8, 10),
 		Vector2i(13, 15),
 		Vector2i(18, 20),
-		Vector2i(23, 25),
-		Vector2i(32, 35),
-		Vector2i(42, 45)
+		Vector2i(24, 26),
+		Vector2i(31, 33),
+		# Bioma Gelo (36 a 75)
+		Vector2i(38, 40),
+		Vector2i(45, 47),
+		Vector2i(53, 55),
+		Vector2i(62, 65),
+		Vector2i(70, 72),
+		# Bioma Lava (76 a 118)
+		Vector2i(78, 80),
+		Vector2i(87, 89),
+		Vector2i(96, 99),
+		Vector2i(107, 110)
 	]
 	for zone in depth_zones:
 		var cx = randi_range(3, GRID_W - 4)
@@ -78,14 +99,13 @@ func generate_world() -> void:
 		var ry = randf_range(1.5, 2.8)
 		cave_chambers.append({"center": Vector2(cx, cy), "rx": rx, "ry": ry})
 	
-	# Dictionary of coordinates (Vector2i) reserved for unbreakable labyrinth blocks
+	# Dicionário de blocos inquebráveis do labirinto
 	var unbreakable_blocks = {}
 	
-	# Horizontal barrier shelves at regular depth intervals
-	var shelves = [6, 11, 16, 21, 26, 31, 36, 41, 46]
+	# Prateleiras de transição e barreiras estruturais
+	var shelves = [6, 11, 16, 21, 26, 31, 35, 41, 46, 51, 56, 61, 66, 71, 75, 81, 86, 91, 96, 101, 106, 111, 116]
 	for i in range(shelves.size()):
 		var s = shelves[i]
-		# 2-3 randomized passage gates (2 blocks wide each) on each shelf
 		var g1 = randi_range(2, 8)
 		var g2 = randi_range(11, 18)
 		var g3 = randi_range(21, 27)
@@ -95,7 +115,7 @@ func generate_world() -> void:
 			if not (x in gate_cols):
 				unbreakable_blocks[Vector2i(x, s)] = true
 		
-		# Vertical labyrinth baffles between shelves
+		# Paredes verticais do labirinto entre prateleiras
 		var y_start = 2 if i == 0 else shelves[i - 1] + 1
 		var y_end = s - 1
 		if y_end >= y_start:
@@ -107,25 +127,35 @@ func generate_world() -> void:
 					if y != gap_y:
 						unbreakable_blocks[Vector2i(vx, y)] = true
 	
-	# Scattered natural unbreakable clusters / obstacles (organic maze features)
-	for y in range(2, GRID_H):
+	# Fundo rochoso intransponível (Bedrock floor) no limite inferior (y = 119)
+	for x in range(GRID_W):
+		unbreakable_blocks[Vector2i(x, 119)] = true
+	
+	# Obstáculos naturais pontuais
+	for y in range(2, GRID_H - 1):
 		for x in range(GRID_W):
 			var pos = Vector2i(x, y)
 			if not unbreakable_blocks.has(pos) and randf() < 0.035:
 				unbreakable_blocks[pos] = true
 
-	# Instantiate blocks
+	# Inst instanciação de blocos com biomas
 	for x in range(GRID_W):
 		for y in range(GRID_H):
 			var grid_coord = Vector2i(x, y)
 			
-			# Check if already mined in saved game
+			# Classificação do bioma atual
+			var current_biome = 0 # 0=Terra
+			if y >= 76:
+				current_biome = 2 # Lava
+			elif y >= 36:
+				current_biome = 1 # Gelo
+			
 			if has_node("/root/SaveManager") and SaveManager.is_block_mined(grid_coord):
 				continue
 			
-			# Check if tile falls within a natural empty cavern chamber (no lamps, dark air)
+			# Cavernas naturais escuras
 			var in_natural_cave = false
-			if y >= 3 and x > 0 and x < GRID_W - 1 and not unbreakable_blocks.has(grid_coord):
+			if y >= 3 and y < 119 and x > 0 and x < GRID_W - 1 and not unbreakable_blocks.has(grid_coord):
 				for chamber in cave_chambers:
 					var dx = (x - chamber.center.x) / chamber.rx
 					var dy = (y - chamber.center.y) / chamber.ry
@@ -136,45 +166,66 @@ func generate_world() -> void:
 						break
 			
 			if in_natural_cave:
-				# Natural empty cavern chamber: leave as dark air (enemies spawn here in future)
 				continue
 			
 			var tile_pos = Vector2(x * 32 + 16, y * 32 + 128)
 			var instance: Node2D
 			
-			# Surface (y == 0) is lush lawn, with only column 17 as breakable entrance dirt
+			# Superfície (y == 0) é gramado, com coluna 17 como entrada de terra
 			if y == 0:
 				if x == 17:
 					instance = GRASS_DIRT_SCENE.instantiate()
 				else:
 					instance = GRASS_SCENE.instantiate()
 			elif unbreakable_blocks.has(grid_coord):
-				instance = UNBREAKABLE_SCENE.instantiate()
+				var unbr = UNBREAKABLE_SCENE.instantiate()
+				unbr.biome = current_biome
+				instance = unbr
 			else:
 				var ore_roll = randf()
-				# Abundance hierarchy: Carvão (Coal) > Ferro (Iron) > Ouro (Gold)
-				var gold_thresh = 0.88 if y < 25 else 0.84
-				var iron_thresh = 0.70
-				var coal_thresh = 0.44
+				# Hierarquia estrita: Carvão (muito abundante) > Ferro > Ouro (raro)
+				var gold_thresh: float
+				var iron_thresh: float
+				var coal_thresh: float
+				
+				if current_biome == 0: # Terra
+					gold_thresh = 0.96 # ~4%
+					iron_thresh = 0.78 # ~18%
+					coal_thresh = 0.38 # ~40%
+				elif current_biome == 1: # Gelo
+					gold_thresh = 0.94 # ~6%
+					iron_thresh = 0.74 # ~20%
+					coal_thresh = 0.34 # ~40%
+				else: # Lava
+					gold_thresh = 0.91 # ~9%
+					iron_thresh = 0.68 # ~23%
+					coal_thresh = 0.30 # ~38%
 				
 				if ore_roll > gold_thresh:
 					var rock = ROCK_SCENE.instantiate()
-					rock.is_copper = true # Gold ore (rarest: ~15%)
+					rock.is_copper = true # Ouro
+					rock.biome = current_biome
 					instance = rock
 				elif ore_roll > iron_thresh:
 					var rock = ROCK_SCENE.instantiate()
 					rock.is_copper = false
-					rock.is_coal = false # Iron ore (intermediate: ~33%)
+					rock.is_coal = false # Ferro
+					rock.biome = current_biome
 					instance = rock
 				elif ore_roll > coal_thresh:
 					var rock = ROCK_SCENE.instantiate()
 					rock.is_copper = false
-					rock.is_coal = true # Coal ore (most abundant: ~52%)
+					rock.is_coal = true # Carvão Mineral
+					rock.biome = current_biome
 					instance = rock
 				else:
-					instance = DIRT_SCENE.instantiate()
+					var dirt = DIRT_SCENE.instantiate()
+					dirt.biome = current_biome
+					instance = dirt
 			
 			instance.position = tile_pos
+			if instance.has_method("apply_biome"):
+				instance.apply_biome(current_biome)
 			if instance.has_method("set_grid_pos"):
 				instance.set_grid_pos(grid_coord)
 			elif "grid_pos" in instance:

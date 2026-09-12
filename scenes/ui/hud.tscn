@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=18 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
@@ -104,40 +104,142 @@ corner_radius_bottom_left = 6
 shadow_color = Color(0, 0, 0, 0.6)
 shadow_size = 6
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_capacity_badge"]
+bg_color = Color(0.14, 0.09, 0.05, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.65, 0.48, 0.22, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_modal"]
+bg_color = Color(0.18, 0.11, 0.06, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.85, 0.68, 0.25, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.8)
+shadow_size = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_btn"]
+bg_color = Color(0.25, 0.16, 0.08, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.68, 0.5, 0.22, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_btn_hover"]
+bg_color = Color(0.38, 0.25, 0.12, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.88, 0.45, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 4
+
 [node name="HUD" type="CanvasLayer"]
+process_mode = 3
 script = ExtResource("1_hud")
 
 [node name="TopContainer" type="MarginContainer" parent="."]
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 80.0
+offset_bottom = 110.0
 grow_horizontal = 2
-theme_override_constants/margin_top = 16
+theme_override_constants/margin_top = 12
 
-[node name="HotbarVisual" type="HBoxContainer" parent="TopContainer"]
+[node name="TopVBox" type="VBoxContainer" parent="TopContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="HotbarVisual" type="HBoxContainer" parent="TopContainer/TopVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
+
+[node name="CapacityBadgeContainer" type="HBoxContainer" parent="TopContainer/TopVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="CapacityBadge" type="PanelContainer" parent="TopContainer/TopVBox/CapacityBadgeContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_capacity_badge")
+
+[node name="CapacityMargin" type="MarginContainer" parent="TopContainer/TopVBox/CapacityBadgeContainer/CapacityBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 3
+
+[node name="CapacityLabel" type="Label" parent="TopContainer/TopVBox/CapacityBadgeContainer/CapacityBadge/CapacityMargin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "🎒 Carga: 0 / 60  |  Disponível: 60"
+horizontal_alignment = 1
 
 [node name="TopRightContainer" type="MarginContainer" parent="."]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -140.0
-offset_bottom = 70.0
+offset_left = -210.0
+offset_bottom = 65.0
 grow_horizontal = 0
-theme_override_constants/margin_top = 16
+theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 16
 
-[node name="ShopButton" type="Button" parent="TopRightContainer"]
-custom_minimum_size = Vector2(104, 40)
+[node name="TopRightHBox" type="HBoxContainer" parent="TopRightContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PauseButton" type="Button" parent="TopRightContainer/TopRightHBox"]
+custom_minimum_size = Vector2(85, 36)
 layout_mode = 2
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.7, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
+text = "⏸️ [P]"
+
+[node name="ShopButton" type="Button" parent="TopRightContainer/TopRightHBox"]
+custom_minimum_size = Vector2(95, 36)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
@@ -148,17 +250,14 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_top = -220.0
-offset_right = 340.0
+offset_right = 350.0
 grow_vertical = 0
-mouse_filter = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_bottom = 16
 
 [node name="ToastList" type="VBoxContainer" parent="ToastContainer"]
 layout_mode = 2
-size_flags_vertical = 8
-mouse_filter = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 alignment = 2
 
 [node name="InventoryPanel" type="PanelContainer" parent="."]
@@ -168,9 +267,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -230.0
+offset_left = -210.0
 offset_top = -180.0
-offset_right = 230.0
+offset_right = 210.0
 offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -181,26 +280,22 @@ layout_mode = 2
 theme_override_constants/separation = 0
 
 [node name="HeaderPanel" type="PanelContainer" parent="InventoryPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_chest_header")
 
 [node name="HeaderMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/HeaderPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 4
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_bottom = 8
 
 [node name="HBoxContainer" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin"]
 layout_mode = 2
-theme_override_constants/separation = 8
 
 [node name="ChestIcon" type="TextureRect" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-size_flags_vertical = 4
-texture_filter = 1
 texture = SubResource("AtlasTexture_chest_icon")
 expand_mode = 1
 stretch_mode = 5
@@ -208,19 +303,17 @@ stretch_mode = 5
 [node name="TitleLabel" type="Label" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.96, 0.85, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.05, 0.02, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 18
-text = "BAÚ DE EQUIPAMENTOS"
-vertical_alignment = 1
+theme_override_font_sizes/font_size = 16
+text = "BAÚ DA SUPERFÍCIE & INVENTÁRIO"
 
 [node name="CloseButton" type="Button" parent="InventoryPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
-custom_minimum_size = Vector2(26, 26)
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
-size_flags_vertical = 4
-theme_override_colors/font_color = Color(1, 0.9, 0.9, 1)
-theme_override_constants/outline_size = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("StyleBoxFlat_close_btn")
 text = "X"
@@ -229,13 +322,19 @@ text = "X"
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 8
+theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_bottom = 12
 
 [node name="InnerVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 10
+
+[node name="GridLabel" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.65, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "ITENS DISPONÍVEIS ([Setas] Navegar | [Z/Enter] Equipar | [X] Dropar):"
 
 [node name="ChestGrid" type="GridContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
@@ -244,55 +343,56 @@ theme_override_constants/v_separation = 8
 columns = 4
 
 [node name="InfoPlaque" type="PanelContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
-custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_plaque")
 
 [node name="PlaqueMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 4
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_bottom = 8
 
 [node name="PlaqueVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 4
 
 [node name="ItemTitle" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_font_sizes/font_size = 14
 text = "Selecione um item..."
 
 [node name="ItemDesc" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
-theme_override_font_sizes/font_size = 11
-text = "Navegue com [Setas] ou mouse. Pressione [Z] para Equipar, [X] para Dropar."
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.85, 0.8, 0.75, 1)
+theme_override_font_sizes/font_size = 12
+text = "Clique ou navegue até um item para inspecionar, equipar ou soltar no mapa."
+autowrap_mode = 3
 
 [node name="ActionHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
+alignment = 2
 
 [node name="EquipButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox"]
-custom_minimum_size = Vector2(90, 22)
+custom_minimum_size = Vector2(100, 30)
 layout_mode = 2
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_btn_hover")
 text = "[Z] Equipar"
 
 [node name="DropButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox"]
-custom_minimum_size = Vector2(110, 22)
+custom_minimum_size = Vector2(120, 30)
 layout_mode = 2
 focus_mode = 0
-theme_override_colors/font_color = Color(1, 0.85, 0.8, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_btn_hover")
 text = "[X] Dropar no Chão"
@@ -303,14 +403,111 @@ layout_mode = 2
 [node name="CapacityLabel" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 12
-text = "Carga: 0/60 minérios"
+theme_override_colors/font_color = Color(0.7, 0.6, 0.45, 1)
+theme_override_font_sizes/font_size = 11
+text = "Capacidade por minério: 20 un. | Arraste para o mapa para dropar."
 
-[node name="CloseHint" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
+[node name="PausePanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Backdrop" type="ColorRect" parent="PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.75)
+
+[node name="CenterContainer" type="CenterContainer" parent="PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ModalPanel" type="PanelContainer" parent="PausePanel/CenterContainer"]
+custom_minimum_size = Vector2(340, 320)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 12
-text = "[I] / [Esc] Fechar | [L] Loja"
+theme_override_styles/panel = SubResource("StyleBoxFlat_pause_modal")
+
+[node name="ModalMargin" type="MarginContainer" parent="PausePanel/CenterContainer/ModalPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="ModalVBox" type="VBoxContainer" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PauseTitle" type="Label" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 20
+text = "⏸️ JOGO PAUSADO"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+layout_mode = 2
+
+[node name="ResumeBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_pause_btn_hover")
+text = "▶️ Continuar [P]"
+
+[node name="SaveBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_pause_btn_hover")
+text = "💾 Salvar Progresso [S]"
+
+[node name="RestartBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_pause_btn_hover")
+text = "🔄 Reiniciar [R]"
+
+[node name="ExitBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_colors/font_hover_color = Color(1, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_pause_btn_hover")
+text = "🚪 Sair do Jogo [Q]"
+
+[node name="PauseHint" type="Label" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.6, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "[Setas] Navegar | [Enter/Z] Selecionar | [Esc] Fechar"
+horizontal_alignment = 1

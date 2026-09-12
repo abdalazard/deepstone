@@ -67,7 +67,7 @@ func is_block_mined(grid_pos: Vector2i) -> bool:
 func request_save() -> void:
 	if _save_debounced: return
 	_save_debounced = true
-	var tree = get_tree()
+	var tree = get_tree() if is_inside_tree() else null
 	if tree:
 		tree.create_timer(0.5).timeout.connect(func():
 			_save_debounced = false
@@ -78,7 +78,7 @@ func request_save() -> void:
 		save_game(false)
 
 func save_game(show_notify: bool = false) -> void:
-	var tree = get_tree()
+	var tree = get_tree() if is_inside_tree() else null
 	var current = tree.current_scene if tree else null
 	var player = current.get_node_or_null("Player") if current else null
 	var chest = current.get_node_or_null("Chest") if current else null
