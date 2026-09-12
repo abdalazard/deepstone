@@ -1,10 +1,10 @@
 [gd_scene load_steps=7 format=3 uid="uid://b0nhxf5kvw22x"]
 
 [ext_resource type="Script" uid="uid://bbti2jpp1csp8" path="res://scripts/player.gd" id="1_player"]
-[ext_resource type="Texture2D" uid="uid://ci0o6rs3nvf3w" path="res://assets/player_sheet.png" id="2_player_tex"]
+[ext_resource type="Texture2D" uid="uid://bddwjnjwegxh7" path="res://assets/sprites/Idle.png" id="2_player_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(14, 26)
+size = Vector2(14, 22)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pickup"]
 radius = 24.0
@@ -29,10 +29,9 @@ script = ExtResource("1_player")
 shape = SubResource("RectangleShape2D_player")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.22, 0.22)
+scale = Vector2(3, 3)
 texture = ExtResource("2_player_tex")
-hframes = 4
-vframes = 4
+hframes = 16
 
 [node name="PickupArea" type="Area2D" parent="."]
 collision_layer = 0

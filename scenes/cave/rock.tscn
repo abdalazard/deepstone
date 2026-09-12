@@ -20,8 +20,7 @@ scale = Vector2(2, 2)
 texture = ExtResource("2_ores")
 hframes = 11
 vframes = 11
+frame = 0
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("OccluderPolygon2D_rock")
-
-frame = 0

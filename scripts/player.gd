@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 @export var speed: float = 120.0
 @export var jump_velocity: float = -250.0
+@export var sprite_scale: Vector2 = Vector2(3.0, 3.0)
 
 var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
@@ -21,6 +22,11 @@ var tex_walk = preload("res://assets/sprites/Walk.png")
 var tex_jump = preload("res://assets/sprites/Jump.png")
 var tex_mine = preload("res://assets/sprites/Minering.png")
 var tex_climb = preload("res://assets/sprites/Rope.png")
+
+func _ready() -> void:
+	var sprite = $Sprite2D
+	if sprite:
+		sprite.scale = sprite_scale
 
 func _process(delta: float) -> void:
 	if is_mining:
@@ -59,7 +65,7 @@ func _process(delta: float) -> void:
 		sprite.texture = current_tex
 		sprite.vframes = 1
 		sprite.hframes = int(current_tex.get_width() / 32.0)
-		sprite.scale = Vector2(1.5, 1.5) # Increased scale per user request
+		sprite.scale = sprite_scale
 		anim_frame = 0 # reset frame on state change
 	
 	if anim_timer > 1.0 / fps:
