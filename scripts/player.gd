@@ -7,8 +7,9 @@ var gravity: float = 980.0
 var last_direction: Vector2 = Vector2.DOWN
 const MINE_DISTANCE: float = 24.0
 
-var on_ladder: bool = false
-
+var in_ladder_count: int = 0
+var on_ladder: bool:
+	get: return in_ladder_count > 0
 func _physics_process(delta: float) -> void:
 	if on_ladder:
 		if Input.is_action_pressed("ui_up"):
@@ -57,28 +58,32 @@ func _physics_process(delta: float) -> void:
 			if collider is RigidBody2D and collider.has_method("is_resource"):
 				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
+	if Input.is_action_just_pressed("slot_1"): set_slot(0)
+	if Input.is_action_just_pressed("slot_2"): set_slot(1)
+	if Input.is_action_just_pressed("slot_3"): set_slot(2)
+	if Input.is_action_just_pressed("slot_4"): set_slot(3)
+	if Input.is_action_just_pressed("slot_5"): set_slot(4)
+	
 	if Input.is_action_just_pressed("action_mine"):
-		var hud = get_tree().current_scene.get_node_or_null("HUD")
-		if hud and hud.container.visible:
-			Inventory.sign_selected = !Inventory.sign_selected
-			Inventory.inventory_changed.emit()
-		elif Inventory.sign_selected and Inventory.signs > 0:
-			place_torch()
-		else:
+		if Inventory.active_slot == 0:
 			try_mine()
+		elif Inventory.active_slot == 1 and Inventory.signs > 0:
+			place_torch()
+		elif Inventory.active_slot == 2 and Inventory.ladders > 0:
+			place_ladder()
 			
-	if Input.is_action_just_pressed("action_ladder"):
-		place_ladder()
-		
 	if Input.is_action_just_pressed("action_collect"):
 		try_collect()
 		
 	if Input.is_action_just_pressed("action_inventory"):
 		toggle_inventory()
 
+func set_slot(slot: int) -> void:
+	Inventory.active_slot = slot
+	Inventory.inventory_changed.emit()
+
 func place_torch() -> void:
 	Inventory.signs -= 1
-	Inventory.sign_selected = false
 	Inventory.inventory_changed.emit()
 	
 	var torch_scene = load("res://scenes/environment/torch.tscn")
@@ -89,6 +94,9 @@ func place_torch() -> void:
 	get_tree().current_scene.add_child(torch)
 
 func place_ladder() -> void:
+	Inventory.ladders -= 1
+	Inventory.inventory_changed.emit()
+	
 	var ladder_scene = load("res://scenes/environment/ladder_segment.tscn")
 	if not ladder_scene: return
 	var ladder = ladder_scene.instantiate()

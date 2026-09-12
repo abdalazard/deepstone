@@ -6,12 +6,12 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		body.on_ladder = true
+		body.in_ladder_count += 1
 	elif body.has_method("is_chest"):
 		body.in_ladder = true
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.name == "Player":
-		body.on_ladder = false
+		body.in_ladder_count = max(0, body.in_ladder_count - 1)
 	elif body.has_method("is_chest"):
 		body.in_ladder = false

@@ -1,27 +1,46 @@
 extends CanvasLayer
 
-@onready var load_label = $MarginContainer/VBoxContainer/LoadLabel
-@onready var iron_label = $MarginContainer/VBoxContainer/IronLabel
-@onready var gold_label = $MarginContainer/VBoxContainer/GoldLabel
-@onready var sign_label = $MarginContainer/VBoxContainer/SignLabel
-@onready var container = $MarginContainer/VBoxContainer
+@onready var inventory_panel = $InventoryPanel
+@onready var load_label = $InventoryPanel/MarginContainer/VBoxContainer/LoadLabel
+@onready var iron_label = $InventoryPanel/MarginContainer/VBoxContainer/IronLabel
+@onready var gold_label = $InventoryPanel/MarginContainer/VBoxContainer/GoldLabel
+
+@onready var slot0 = $Hotbar/HBoxContainer/Slot0
+@onready var slot1 = $Hotbar/HBoxContainer/Slot1
+@onready var slot2 = $Hotbar/HBoxContainer/Slot2
+@onready var slot3 = $Hotbar/HBoxContainer/Slot3
+@onready var slot4 = $Hotbar/HBoxContainer/Slot4
 
 func _ready() -> void:
 	Inventory.inventory_changed.connect(_on_resources_changed)
 	_on_resources_changed()
-	container.hide() # Inventory starts closed!
+	inventory_panel.hide()
 
 func toggle() -> void:
-	container.visible = !container.visible
+	inventory_panel.visible = !inventory_panel.visible
 
 func _on_resources_changed() -> void:
-	load_label.text = "Carga: " + str(Inventory.current_load) + "/" + str(Inventory.MAX_CAPACITY)
+	# Update Inventory Panel
+	load_label.text = "Carga (Peso): " + str(Inventory.current_load) + "/" + str(Inventory.MAX_CAPACITY)
 	iron_label.text = "Ferro: " + str(Inventory.iron)
 	gold_label.text = "Ouro: " + str(Inventory.gold)
 	
-	if Inventory.sign_selected:
-		sign_label.text = "> PLACA EQUIPADA < (" + str(Inventory.signs) + ")"
-		sign_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))
-	else:
-		sign_label.text = "Placas (Z): " + str(Inventory.signs)
-		sign_label.add_theme_color_override("font_color", Color(0.5, 0.9, 1.0))
+	# Update Hotbar Text
+	slot1.text = "2:Placa (" + str(Inventory.signs) + ")"
+	slot2.text = "3:Escada (" + str(Inventory.ladders) + ")"
+	slot3.text = "4:Ferro (" + str(Inventory.iron) + ")"
+	slot4.text = "5:Ouro (" + str(Inventory.gold) + ")"
+	
+	# Reset Selection Colors
+	var slots = [slot0, slot1, slot2, slot3, slot4]
+	for i in range(slots.size()):
+		if i == Inventory.active_slot:
+			slots[i].add_theme_color_override("font_color", Color(1.0, 1.0, 0.0))
+			slots[i].text = "> " + slots[i].text + " <"
+		else:
+			# Default colors
+			if i == 0: slots[i].add_theme_color_override("font_color", Color(1, 1, 1))
+			elif i == 1: slots[i].add_theme_color_override("font_color", Color(0.5, 0.9, 1))
+			elif i == 2: slots[i].add_theme_color_override("font_color", Color(0.8, 0.6, 0.4))
+			elif i == 3: slots[i].add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+			elif i == 4: slots[i].add_theme_color_override("font_color", Color(0.9, 0.8, 0.2))

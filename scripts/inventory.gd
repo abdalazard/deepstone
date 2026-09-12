@@ -7,7 +7,8 @@ var iron: int = 0
 var gold: int = 0
 var current_load: int = 0
 var signs: int = 10
-var sign_selected: bool = false
+var ladders: int = 10
+var active_slot: int = 0 # 0=Pickaxe, 1=Sign, 2=Ladder, 3=Iron, 4=Gold
 
 func get_weight(type: int) -> int:
 	if type == 0: # IRON
