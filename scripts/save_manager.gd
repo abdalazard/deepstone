@@ -71,6 +71,11 @@ func clear_save() -> void:
 		inv.planks = 0
 		if "wood_logs" in inv: inv.wood_logs = 0
 		if "ladders" in inv: inv.ladders = 0
+		if "dirt" in inv: inv.dirt = 0
+		if "stone" in inv: inv.stone = 0
+		if "brick_floors" in inv: inv.brick_floors = 0
+		if "level" in inv: inv.level = 0
+		if "current_exp" in inv: inv.current_exp = 0
 		inv.active_slot = 0
 		inv.inventory_changed.emit()
 
@@ -175,7 +180,12 @@ func save_game(show_notify: bool = false) -> void:
 			"starter_lamps": inv.starter_lamps if (inv and "starter_lamps" in inv) else 1,
 			"planks": inv.planks if inv else 0,
 			"wood_logs": inv.wood_logs if (inv and "wood_logs" in inv) else 0,
-			"ladders": inv.ladders if (inv and "ladders" in inv) else 0
+			"ladders": inv.ladders if (inv and "ladders" in inv) else 0,
+			"dirt": inv.dirt if (inv and "dirt" in inv) else 0,
+			"stone": inv.stone if (inv and "stone" in inv) else 0,
+			"brick_floors": inv.brick_floors if (inv and "brick_floors" in inv) else 0,
+			"level": inv.level if (inv and "level" in inv) else 0,
+			"current_exp": inv.current_exp if (inv and "current_exp" in inv) else 0
 		},
 		"chest": chest_data,
 		"placed_torches": torches_list,
@@ -245,6 +255,16 @@ func load_game() -> bool:
 			inv.wood_logs = inv_data.get("wood_logs", 0)
 		if "ladders" in inv:
 			inv.ladders = inv_data.get("ladders", 0)
+		if "dirt" in inv:
+			inv.dirt = inv_data.get("dirt", 0)
+		if "stone" in inv:
+			inv.stone = inv_data.get("stone", 0)
+		if "brick_floors" in inv:
+			inv.brick_floors = inv_data.get("brick_floors", 0)
+		if "level" in inv:
+			inv.level = inv_data.get("level", 0)
+		if "current_exp" in inv:
+			inv.current_exp = inv_data.get("current_exp", 0)
 	
 	var p_data = data.get("player", {})
 	if p_data.has("x") and p_data.has("y"):

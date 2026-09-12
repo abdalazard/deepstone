@@ -273,6 +273,43 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_profile_badge"]
+bg_color = Color(0.12, 0.08, 0.04, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0.65, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_exp_bg"]
+bg_color = Color(0.06, 0.06, 0.08, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_exp_fill"]
+bg_color = Color(0.2, 0.85, 0.95, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_levelup_panel"]
+bg_color = Color(0.18, 0.12, 0.04, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.88, 0.2, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.85)
+shadow_size = 16
+
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
 script = ExtResource("1_hud")
@@ -295,6 +332,41 @@ alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
+
+[node name="ProfileBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="ProfileBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_profile_badge")
+
+[node name="ProfileMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="ProfileHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="AvatarRect" type="TextureRect" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = SubResource("AtlasTexture_char_idle")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelBadgeLabel" type="Label" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "Nv. 0"
 
 [node name="CoinsBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
 visible = false
@@ -1702,6 +1774,53 @@ theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
 text = "Forjar 5 Tábuas"
 
+[node name="BrickFloorRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("13_plank")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Piso de Tijolo"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 1 Lama + 1 Pedra -> 1 Piso de Tijolo"
+
+[node name="CraftBrickFloorBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+focus_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar 1 Piso"
+
 [node name="FooterHBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
 alignment = 2
@@ -1714,3 +1833,56 @@ theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
 theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 text = "Fechar"
+
+[node name="ExpProgressBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 6)
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_exp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_exp_fill")
+show_percentage = false
+
+[node name="LevelUpPanel" type="PanelContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(360, 90)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -45.0
+offset_right = 180.0
+offset_bottom = 45.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(180, 45)
+theme_override_styles/panel = SubResource("StyleBoxFlat_levelup_panel")
+
+[node name="VBox" type="VBoxContainer" parent="LevelUpPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="LevelUpTitle" type="Label" parent="LevelUpPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0.2, 0.1, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 18
+text = "⭐ NÍVEL 1 ALCANÇADO! ⭐"
+horizontal_alignment = 1
+
+[node name="LevelUpSubtitle" type="Label" parent="LevelUpPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.98, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "Próximo Nível: 170 EXP"
+horizontal_alignment = 1

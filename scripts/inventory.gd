@@ -2,6 +2,7 @@ extends Node
 
 signal inventory_changed
 signal notification_triggered(text: String, icon_type: String)
+signal level_up(new_level: int, exp_needed_next: int)
 
 const MAX_STACK: int = 20
 const MAX_CAPACITY: int = 60 # Capacidade total de minérios (Ferro + Ouro + Carvão)
@@ -14,11 +15,36 @@ var starter_lamps: int = 1 # 1 lanterna inicial grátis (forja exclusiva para no
 var wood_logs: int = 0 # Troncos de madeira obtidos de árvores
 var ladders: int = 0 # Escadas de madeira forjadas (1 tronco -> 5 escadas)
 var planks: int = 0 # Tábuas de madeira forjadas (1 tronco -> 5 tábuas)
+var dirt: int = 0 # Lama/Terra obtida de escavação
+var stone: int = 0 # Pedra obtida de escavação
+var brick_floors: int = 0 # Pisos de tijolo forjados (1 lama + 1 pedra)
+var level: int = 0 # Começa no nível zero
+var current_exp: int = 0 # EXP acumulada no nível atual
 var active_slot: int = 0 # 0=Pickaxe, 1=Lamp, 2=Escada, 3=Tábua
 
 const COAL_PRICE: int = 5
 const IRON_PRICE: int = 15
 const GOLD_PRICE: int = 50
+
+func get_exp_required_for_level(lvl: int) -> int:
+	return 100 + lvl * 70
+
+func get_current_level_max_exp() -> int:
+	return get_exp_required_for_level(level)
+
+func add_exp(amount: int) -> void:
+	if amount <= 0: return
+	current_exp += amount
+	var req = get_exp_required_for_level(level)
+	while current_exp >= req:
+		current_exp -= req
+		level += 1
+		req = get_exp_required_for_level(level)
+		level_up.emit(level, req)
+		notify("Nível %d Alcançado!" % level, "coin_gold")
+	inventory_changed.emit()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
 
 func add_coins(amount: int) -> void:
 	coins += amount
@@ -29,18 +55,24 @@ func add_coins(amount: int) -> void:
 
 func sell_resource(key: String, amount: int = 1) -> int:
 	var earned = 0
+	var exp_gain = 0
 	if key == "coal" and coal >= amount:
 		coal -= amount
 		earned = amount * COAL_PRICE
+		exp_gain = amount * 2
 	elif key == "iron" and iron >= amount:
 		iron -= amount
 		earned = amount * IRON_PRICE
+		exp_gain = amount * 5
 	elif key == "gold" and gold >= amount:
 		gold -= amount
 		earned = amount * GOLD_PRICE
+		exp_gain = amount * 15
 		
 	if earned > 0:
 		coins += earned
+		if exp_gain > 0:
+			add_exp(exp_gain)
 		inventory_changed.emit()
 		notify("+%d Moedas de Ouro!" % earned, "coin_gold")
 		if has_node("/root/SaveManager"):
@@ -86,6 +118,7 @@ func craft_lamp() -> bool:
 		coal -= 3
 		iron -= 2
 		starter_lamps += 1
+		add_exp(25)
 		inventory_changed.emit()
 		notify("+1 Poste de Luz Forjado!", "lamp")
 		if has_node("/root/SaveManager"):
@@ -100,6 +133,7 @@ func craft_ladders() -> bool:
 	if can_craft_ladders():
 		wood_logs -= 1
 		ladders += 5
+		add_exp(10)
 		inventory_changed.emit()
 		notify("+5 Escadas Forjadas!", "ladder")
 		if has_node("/root/SaveManager"):
@@ -114,6 +148,7 @@ func craft_planks() -> bool:
 	if can_craft_planks():
 		wood_logs -= 1
 		planks += 5
+		add_exp(10)
 		inventory_changed.emit()
 		notify("+5 Tábuas Forjadas!", "plank")
 		if has_node("/root/SaveManager"):
@@ -121,8 +156,25 @@ func craft_planks() -> bool:
 		return true
 	return false
 
+func can_craft_brick_floor() -> bool:
+	return dirt >= 1 and stone >= 1
+
+func craft_brick_floor() -> bool:
+	if can_craft_brick_floor():
+		dirt -= 1
+		stone -= 1
+		brick_floors += 1
+		add_exp(15)
+		inventory_changed.emit()
+		notify("+1 Piso de Tijolo Forjado!", "plank")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
 func add_wood(amount: int = 10) -> void:
 	wood_logs += amount
+	add_exp(10)
 	inventory_changed.emit()
 	notify("+%d Troncos de Madeira!" % amount, "wood")
 	if has_node("/root/SaveManager"):
@@ -136,6 +188,11 @@ func reset_inventory() -> void:
 	wood_logs = 0
 	ladders = 0
 	planks = 0
+	dirt = 0
+	stone = 0
+	brick_floors = 0
+	level = 0
+	current_exp = 0
 	starter_lamps = 1
 	active_slot = 0
 	inventory_changed.emit()

@@ -1,5 +1,11 @@
 extends CanvasLayer
 
+func _safe_grab_focus(ctrl: Control) -> void:
+	if is_instance_valid(ctrl):
+		if ctrl.focus_mode == Control.FOCUS_NONE:
+			ctrl.focus_mode = Control.FOCUS_ALL
+		ctrl.grab_focus()
+
 @onready var hotbar = find_child("HotbarVisual", true, false)
 @onready var capacity_badge_label = find_child("CapacityLabel", true, false)
 @onready var inventory_panel = find_child("InventoryPanel", true, false)
@@ -66,6 +72,16 @@ var wood_tex = preload("res://assets/sprites/wood_log.png")
 # Coins HUD
 @onready var coins_badge_container = find_child("CoinsBadgeContainer", true, false)
 @onready var coins_hud_label = find_child("CoinsLabel", true, false)
+
+# Profile Badge & EXP HUD
+@onready var profile_badge_container = find_child("ProfileBadgeContainer", true, false)
+@onready var avatar_rect = find_child("AvatarRect", true, false)
+@onready var level_badge_label = find_child("LevelBadgeLabel", true, false)
+@onready var exp_progress_bar = find_child("ExpProgressBar", true, false)
+@onready var level_up_panel = find_child("LevelUpPanel", true, false)
+@onready var level_up_title = find_child("LevelUpTitle", true, false)
+@onready var level_up_subtitle = find_child("LevelUpSubtitle", true, false)
+@onready var craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
 
 # Forge Menu nodes
 @onready var forge_panel = find_child("ForgePanel", true, false)
@@ -262,6 +278,13 @@ func _ready() -> void:
 		craft_ladder_btn.pressed.connect(_on_craft_ladder)
 	if craft_plank_btn and not craft_plank_btn.pressed.is_connected(_on_craft_plank):
 		craft_plank_btn.pressed.connect(_on_craft_plank)
+	if not craft_brick_floor_btn:
+		craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
+	if craft_brick_floor_btn and not craft_brick_floor_btn.pressed.is_connected(_on_craft_brick_floor):
+		craft_brick_floor_btn.pressed.connect(_on_craft_brick_floor)
+	if inv:
+		if inv.has_signal("level_up") and not inv.level_up.is_connected(_on_level_up):
+			inv.level_up.connect(_on_level_up)
 		
 	select_slot(0)
 	update_ui()
@@ -304,17 +327,45 @@ func _unhandled_input(event: InputEvent) -> void:
 				toggle_pause()
 				_consume_input()
 				return
-				
-		# Close Chest with [X] when chest panel is open
-		if is_instance_valid(chest_panel) and chest_panel.visible and event.physical_keycode == KEY_X:
-			close_chest()
-			_consume_input()
-			return
-		# Close Forge with [X] when forge panel is open
-		if is_instance_valid(forge_panel) and forge_panel.visible and event.physical_keycode == KEY_X:
-			close_forge()
-			_consume_input()
-			return
+
+		# Universal Close on [X] for any open modal
+		if event.physical_keycode == KEY_X:
+			if is_instance_valid(shop_panel) and shop_panel.visible:
+				close_shop()
+				_consume_input()
+				return
+			elif is_instance_valid(forge_panel) and forge_panel.visible:
+				close_forge()
+				_consume_input()
+				return
+			elif is_instance_valid(chest_panel) and chest_panel.visible:
+				close_chest()
+				_consume_input()
+				return
+			elif is_instance_valid(equipment_panel) and equipment_panel.visible:
+				close_equipment()
+				_consume_input()
+				return
+			elif is_instance_valid(inventory_panel) and inventory_panel.visible:
+				close_inventory()
+				_consume_input()
+				return
+
+		# Universal Confirm on [Z] for any open modal with focused button
+		if event.physical_keycode == KEY_Z:
+			var focus_node = get_viewport().gui_get_focus_owner() if get_viewport() else null
+			if focus_node and (focus_node is BaseButton) and focus_node.is_inside_tree() and focus_node.visible:
+				focus_node.pressed.emit()
+				_consume_input()
+				return
+			elif is_instance_valid(shop_panel) and shop_panel.visible and is_instance_valid(shop_sell_view) and shop_sell_view.visible:
+				_on_sell_all_minerals()
+				_consume_input()
+				return
+			elif is_instance_valid(chest_panel) and chest_panel.visible:
+				_on_chest_deposit()
+				_consume_input()
+				return
 				
 		# Hotkeys inside Pause Menu
 		if is_instance_valid(pause_panel) and pause_panel.visible:
@@ -336,6 +387,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		toggle_shop()
 		_consume_input()
 		return
+
+	# Shop Tab Switching with Left/Right Arrows
+	if is_instance_valid(shop_panel) and shop_panel.visible and (not pause_panel or not pause_panel.visible):
+		if event.is_action_pressed("ui_left"):
+			switch_shop_tab("buy")
+			if is_instance_valid(shop_tab_buy_btn): _safe_grab_focus(shop_tab_buy_btn)
+			_consume_input()
+			return
+		elif event.is_action_pressed("ui_right"):
+			switch_shop_tab("sell")
+			if is_instance_valid(shop_tab_sell_btn): _safe_grab_focus(shop_tab_sell_btn)
+			_consume_input()
+			return
 
 	# Inventory Keyboard Navigation
 	if is_instance_valid(inventory_panel) and inventory_panel.visible and (not pause_panel or not pause_panel.visible):
@@ -377,6 +441,8 @@ func open_equipment() -> void:
 		close_pause()
 	if is_instance_valid(equipment_panel):
 		equipment_panel.visible = true
+		if is_instance_valid(equip_close_btn):
+			_safe_grab_focus(equip_close_btn)
 
 func close_equipment() -> void:
 	if is_instance_valid(equipment_panel):
@@ -404,7 +470,7 @@ func open_pause() -> void:
 	if is_inside_tree() and get_tree():
 		get_tree().paused = true
 	if is_inside_tree() and is_instance_valid(resume_btn):
-		resume_btn.grab_focus()
+		_safe_grab_focus(resume_btn)
 
 func close_pause() -> void:
 	if is_instance_valid(pause_panel):
@@ -441,6 +507,8 @@ func open_forge(forge_node: Node = null) -> void:
 	if is_instance_valid(forge_panel):
 		forge_panel.visible = true
 		update_forge_ui()
+		if is_instance_valid(craft_lamp_btn):
+			_safe_grab_focus(craft_lamp_btn)
 
 func close_forge() -> void:
 	if is_instance_valid(forge_panel):
@@ -451,12 +519,12 @@ func update_forge_ui() -> void:
 	if not inv: return
 	var mat_lbl = find_child("MaterialsLabel", true, false)
 	if mat_lbl:
-		mat_lbl.text = "🪵 Troncos: %d  |  🪨 Carvão: %d  |  ⛓️ Ferro: %d  |  🪜 Escadas: %d  |  🪵 Tábuas: %d" % [
+		mat_lbl.text = "🪵 Troncos: %d  |  🪨 Carvão: %d  |  ⛓️ Ferro: %d  |  🟫 Lama: %d  |  🗿 Pedra: %d" % [
 			inv.wood_logs if "wood_logs" in inv else 0,
 			inv.coal,
 			inv.iron,
-			inv.ladders if "ladders" in inv else 0,
-			inv.planks
+			inv.dirt if "dirt" in inv else 0,
+			inv.stone if "stone" in inv else 0
 		]
 	var btn_lamp = find_child("CraftLampBtn", true, false)
 	if btn_lamp:
@@ -467,6 +535,9 @@ func update_forge_ui() -> void:
 	var btn_plank = find_child("CraftPlankBtn", true, false)
 	if btn_plank:
 		btn_plank.disabled = not (inv.has_method("can_craft_planks") and inv.can_craft_planks())
+	var btn_brick = find_child("CraftBrickFloorBtn", true, false)
+	if btn_brick:
+		btn_brick.disabled = not (inv.has_method("can_craft_brick_floor") and inv.can_craft_brick_floor())
 
 func _on_craft_lamp() -> void:
 	var inv = _get_inv()
@@ -488,6 +559,41 @@ func _on_craft_plank() -> void:
 		inv.craft_planks()
 		update_forge_ui()
 		update_ui()
+
+func _on_craft_brick_floor() -> void:
+	var inv = _get_inv()
+	if inv and inv.has_method("craft_brick_floor"):
+		inv.craft_brick_floor()
+		update_forge_ui()
+		update_ui()
+
+func _on_level_up(new_level: int, exp_needed_next: int) -> void:
+	show_level_up_vfx(new_level, exp_needed_next)
+
+func show_level_up_vfx(new_level: int, exp_needed_next: int) -> void:
+	if not is_instance_valid(level_up_panel):
+		level_up_panel = find_child("LevelUpPanel", true, false)
+	if not is_instance_valid(level_up_panel): return
+	if not is_instance_valid(level_up_title):
+		level_up_title = find_child("LevelUpTitle", true, false)
+	if not is_instance_valid(level_up_subtitle):
+		level_up_subtitle = find_child("LevelUpSubtitle", true, false)
+		
+	if is_instance_valid(level_up_title):
+		level_up_title.text = "⭐ NÍVEL %d ALCANÇADO! ⭐" % new_level
+	if is_instance_valid(level_up_subtitle):
+		level_up_subtitle.text = "Próximo Nível: %d EXP" % exp_needed_next
+		
+	level_up_panel.visible = true
+	level_up_panel.modulate.a = 0.0
+	level_up_panel.scale = Vector2(0.8, 0.8)
+	
+	var tween = create_tween()
+	tween.tween_property(level_up_panel, "modulate:a", 1.0, 0.2)
+	tween.parallel().tween_property(level_up_panel, "scale", Vector2(1.0, 1.0), 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(1.0)
+	tween.tween_property(level_up_panel, "modulate:a", 0.0, 0.25)
+	tween.tween_callback(func(): if is_instance_valid(level_up_panel): level_up_panel.visible = false)
 
 func _on_reset_mine_pressed() -> void:
 	if is_inside_tree() and get_tree():
@@ -567,6 +673,8 @@ func open_shop() -> void:
 		shop_panel.visible = true
 		switch_shop_tab("sell")
 		update_shop_ui()
+		if is_instance_valid(shop_tab_sell_btn):
+			_safe_grab_focus(shop_tab_sell_btn)
 
 func close_shop() -> void:
 	if is_instance_valid(shop_panel):
@@ -939,6 +1047,19 @@ func update_ui() -> void:
 		coins_badge_container.visible = (inv.coins > 0)
 		if is_instance_valid(coins_hud_label):
 			coins_hud_label.text = "%d" % inv.coins
+			
+	if not is_instance_valid(level_badge_label):
+		level_badge_label = find_child("LevelBadgeLabel", true, false)
+	if is_instance_valid(level_badge_label):
+		level_badge_label.text = "Nv. %d" % (inv.level if "level" in inv else 0)
+		
+	if not is_instance_valid(exp_progress_bar):
+		exp_progress_bar = find_child("ExpProgressBar", true, false)
+	if is_instance_valid(exp_progress_bar):
+		var req = inv.get_exp_required_for_level(inv.level) if inv.has_method("get_exp_required_for_level") else 100
+		var cur = inv.current_exp if "current_exp" in inv else 0
+		exp_progress_bar.max_value = float(req)
+		exp_progress_bar.value = float(cur)
 	
 	var can_craft_lamp = inv.can_place_lamp() if inv.has_method("can_place_lamp") else (inv.starter_lamps > 0 if "starter_lamps" in inv else false)
 	var craftable_lamps = inv.starter_lamps if "starter_lamps" in inv else 0
@@ -1087,6 +1208,8 @@ func open_chest(chest_node: Node = null) -> void:
 	if is_instance_valid(chest_panel):
 		chest_panel.visible = true
 		update_chest_ui()
+		if is_instance_valid(chest_deposit_btn):
+			_safe_grab_focus(chest_deposit_btn)
 
 func close_chest() -> void:
 	if is_instance_valid(chest_panel):

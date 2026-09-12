@@ -249,7 +249,7 @@ func generate_world() -> void:
 			add_child(instance)
 
 	# Spawn cuttable surface trees (above grass line at Y = 112)
-	var tree_positions = [64, 160, 256, 352, 720, 816, 896]
+	var tree_positions = [48, 112, 176, 240, 304, 368, 672, 736, 800, 864, 912]
 	for tx in tree_positions:
 		var tree = TREE_SCENE.instantiate()
 		tree.position = Vector2(tx, 112)

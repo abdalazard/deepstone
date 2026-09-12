@@ -84,6 +84,7 @@ func _ready() -> void:
 	inv.starter_lamps = 0
 	save.has_loaded_save = false
 	var loaded = save.load_game()
+	print("DEBUG TEST 4: loaded=", loaded, " inv.iron=", inv.iron, " file_exists=", FileAccess.file_exists(save.SAVE_PATH))
 	assert(loaded == true, "Load failed")
 	assert(inv.iron == 12, "Iron restored")
 	assert(inv.gold == 3, "Gold restored")
@@ -662,6 +663,186 @@ func _ready() -> void:
 	assert(save.is_block_mined(Vector2i(5, 5)) == false, "Mined blocks must be completely wiped")
 	print("[PASS] Test 33: Resetar Mina completely resets saves, excavations, and inventory")
 
+	# Test 34: Block kick with second [X] (kick_push)
+	var kick_ore = rock_scene.instantiate()
+	add_child(kick_ore)
+	kick_ore._ready()
+	assert(kick_ore.has_method("kick_push"), "Rock must implement kick_push")
+	kick_ore.kick_push(1.0, 220.0)
+	assert(kick_ore.freeze == false, "kick_push must unfreeze rock")
+	assert(kick_ore.linear_velocity.x == 220.0, "kick_push must impart 220 px/s velocity")
+	kick_ore.queue_free()
+	print("[PASS] Test 34: Block kick with second [X] (220 px/s impulse)")
+
+	# Test 35: Ladder protection when mining sideways
+	var test_player_ladder = player_scene.instantiate()
+	add_child(test_player_ladder)
+	test_player_ladder._ready()
+	var test_rope = load("res://scenes/environment/rope_segment.tscn").instantiate()
+	test_rope.global_position = test_player_ladder.global_position
+	add_child(test_rope)
+	test_rope._ready()
+	test_player_ladder.in_ladder_count = 1
+	assert(test_player_ladder.on_ladder == true, "Player must be on ladder")
+	
+	# Simulate mining to the right while on ladder
+	Input.action_press("ui_right")
+	test_player_ladder.try_mine()
+	Input.action_release("ui_right")
+	assert(is_instance_valid(test_rope), "Mining sideways on ladder MUST NOT destroy the ladder segment!")
+	test_rope.queue_free()
+	test_player_ladder.queue_free()
+	print("[PASS] Test 35: Ladder protection when mining sideways")
+
+	# Test 36: Jackhammer (Britadeira) on DOWN + Z when stuck inside block
+	var jack_player = player_scene.instantiate()
+	add_child(jack_player)
+	jack_player._ready()
+	
+	# Place solid block at player position
+	var stuck_block = StaticBody2D.new()
+	var stuck_col = CollisionShape2D.new()
+	var s_box = RectangleShape2D.new()
+	s_box.size = Vector2(32, 32)
+	stuck_col.shape = s_box
+	stuck_block.add_child(stuck_col)
+	stuck_block.collision_layer = 1
+	stuck_block.global_position = jack_player.global_position
+	add_child(stuck_block)
+	
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var pos_before = jack_player.global_position.y
+	Input.action_press("ui_down")
+	jack_player.try_mine()
+	Input.action_release("ui_down")
+	assert(jack_player.velocity.y < 0.0, "Jackhammer on DOWN + Z must give upward hop")
+	assert(jack_player.global_position.y < pos_before, "Jackhammer must extract/shift player upward out of block")
+	stuck_block.queue_free()
+	jack_player.queue_free()
+	print("[PASS] Test 36: Jackhammer (Britadeira) on DOWN + Z extracts player from block")
+
+	# Test 37: Forge interaction opens with [Z] as well as [X]
+	var forge_scene = load("res://scenes/environment/forge.tscn")
+	assert(forge_scene != null, "Forge scene must exist")
+	var forge_inst = forge_scene.instantiate()
+	add_child(forge_inst)
+	forge_inst._ready()
+	forge_inst.player_in_range = true
+	var ev_z = InputEventKey.new()
+	ev_z.pressed = true
+	ev_z.physical_keycode = KEY_Z
+	forge_inst._unhandled_input(ev_z)
+	assert("[Z/X]" in forge_inst.prompt_label.text, "Forge prompt must indicate [Z/X]")
+	forge_inst.queue_free()
+	print("[PASS] Test 37: Forge interaction accepts [Z] and displays [Z/X]")
+
+	# Test 38: Enhanced Tree with stump state and 120s regrowth timer
+	var tree_inst = tree_scene.instantiate()
+	add_child(tree_inst)
+	tree_inst._ready()
+	assert(tree_inst.hp == 3, "Tree HP is 3")
+	tree_inst.hit()
+	tree_inst.hit()
+	tree_inst.hit()
+	assert(tree_inst.is_stump == true, "Felling tree must leave stump in place")
+	assert(tree_inst.stump_sprite != null and tree_inst.stump_sprite.visible == true, "Stump sprite must be visible")
+	assert(tree_inst.regrow_time_left == 120.0, "Regrowth timer must start at 120.0 seconds")
+	# Simulate 120 seconds elapsed
+	tree_inst._process(121.0)
+	assert(tree_inst.is_stump == false, "Tree must regrow after timer expires")
+	assert(tree_inst.hp == 3, "Regrown tree must have HP restored to 3")
+	tree_inst.queue_free()
+	print("[PASS] Test 38: Tree stump preservation and 120s automatic regrowth")
+
+	# Test 39: Air control / Fall physics
+	var air_player = player_scene.instantiate()
+	add_child(air_player)
+	air_player._ready()
+	air_player.velocity = Vector2.ZERO
+	# Simulate in-air movement
+	air_player._physics_process(0.016)
+	Input.action_press("ui_right")
+	air_player._physics_process(0.016)
+	Input.action_release("ui_right")
+	assert(abs(air_player.velocity.x) < 120.0, "In-air velocity must accelerate smoothly and not snap to instant ground run speed (120 px/s)")
+	assert(air_player.velocity.x > 0.0, "Lateral impulse must accelerate player rightward")
+	air_player.queue_free()
+	print("[PASS] Test 39: Air control fall physics with smooth lateral impulse")
+
+	# Test 40: Forge crafting of Brick Floor (1 mud + 1 stone -> 1 brick floor + 15 EXP)
+	inv.dirt = 1
+	inv.stone = 1
+	inv.brick_floors = 0
+	var exp_before = inv.current_exp
+	assert(inv.can_craft_brick_floor() == true, "Must be able to craft brick floor with 1 mud + 1 stone")
+	var crafted_bf = inv.craft_brick_floor()
+	assert(crafted_bf == true, "Crafting brick floor should succeed")
+	assert(inv.dirt == 0 and inv.stone == 0, "1 mud and 1 stone must be deducted")
+	assert(inv.brick_floors == 1, "Must receive 1 brick floor")
+	assert(inv.current_exp == exp_before + 15, "Crafting brick floor must grant 15 EXP")
+	print("[PASS] Test 40: Forge crafting of Brick Floor (1 Mud + 1 Stone -> 1 Piso + 15 EXP)")
+
+	# Test 41: Brick Floor platform placement (collision layer 32, one-way)
+	var brick_scene = load("res://scenes/environment/brick_floor.tscn")
+	assert(brick_scene != null, "Brick floor scene must exist")
+	var brick_node = brick_scene.instantiate()
+	add_child(brick_node)
+	brick_node._ready()
+	assert(brick_node.collision_layer == 32, "Brick floor must use collision layer 32")
+	var bf_col = brick_node.get_node("CollisionShape2D")
+	assert(bf_col.one_way_collision == true, "Brick floor must have one_way_collision = true")
+	brick_node.queue_free()
+	print("[PASS] Test 41: Brick Floor platform scene & collision physics")
+
+	# Test 42: EXP progression curve, Level Up event (100 EXP -> Level 1, 170 EXP -> Level 2), and HUD bottom EXP bar + Profile badge
+	inv.level = 0
+	inv.current_exp = 0
+	assert(inv.get_exp_required_for_level(0) == 100, "Level 0 -> 1 requires exactly 100 EXP")
+	assert(inv.get_exp_required_for_level(1) == 170, "Level 1 -> 2 requires exactly 170 EXP")
+	assert(inv.get_exp_required_for_level(2) == 240, "Level 2 -> 3 requires exactly 240 EXP")
+	
+	var level_up_detected = false
+	var new_lvl_detected = -1
+	var callback = func(lvl, req):
+		level_up_detected = true
+		new_lvl_detected = lvl
+	inv.level_up.connect(callback)
+	
+	# Add 100 EXP -> Should reach Level 1
+	inv.add_exp(100)
+	assert(inv.level == 1, "Player should reach Level 1 after 100 EXP")
+	assert(inv.current_exp == 0, "Current EXP should be 0 towards Level 2")
+	assert(level_up_detected == true and new_lvl_detected == 1, "level_up signal must emit with new level 1")
+	
+	# Add 170 EXP -> Should reach Level 2
+	inv.add_exp(170)
+	assert(inv.level == 2, "Player should reach Level 2 after 170 EXP")
+	assert(new_lvl_detected == 2, "level_up signal must emit with new level 2")
+	inv.level_up.disconnect(callback)
+	
+	# Verify HUD bottom EXP bar & Profile badge
+	var hud_test = hud_scene.instantiate()
+	add_child(hud_test)
+	hud_test._ready()
+	hud_test.update_ui()
+	var exp_bar = hud_test.find_child("ExpProgressBar", true, false)
+	assert(exp_bar != null, "Bottom ExpProgressBar must exist on HUD")
+	assert(exp_bar.max_value == 240.0, "EXP bar max_value should match required EXP for Level 2 (240)")
+	
+	var lvl_lbl = hud_test.find_child("LevelBadgeLabel", true, false)
+	assert(lvl_lbl != null, "LevelBadgeLabel must exist on HUD")
+	assert("Nv. 2" in lvl_lbl.text, "Level badge must display current level (Nv. 2)")
+	
+	# Level Up celebration VFX
+	hud_test.show_level_up_vfx(2, 240)
+	var lu_panel = hud_test.find_child("LevelUpPanel", true, false)
+	assert(lu_panel != null and lu_panel.visible == true, "Level up celebratory banner must be shown")
+	assert("NÍVEL 2" in hud_test.find_child("LevelUpTitle", true, false).text, "Celebration title must show level")
+	
+	hud_test.queue_free()
+	print("[PASS] Test 42: EXP progression curve, Level Up event, HUD bottom bar & Level Up celebration")
+
 	hud.queue_free()
-	print("--- ALL 33 TESTS PASSED SUCCESSFULLY! ---")
+	print("--- ALL 42 TESTS PASSED SUCCESSFULLY! ---")
 	get_tree().quit(0)

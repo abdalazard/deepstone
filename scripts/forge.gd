@@ -12,10 +12,12 @@ func _ready() -> void:
 	if prompt_label:
 		prompt_label.modulate.a = 0.0
 		prompt_label.visible = false
-		prompt_label.text = "[X] Usar Forja"
+		prompt_label.text = "[Z/X] Usar Forja"
 	if interact_area:
-		interact_area.body_entered.connect(_on_body_entered)
-		interact_area.body_exited.connect(_on_body_exited)
+		if not interact_area.body_entered.is_connected(_on_body_entered):
+			interact_area.body_entered.connect(_on_body_entered)
+		if not interact_area.body_exited.is_connected(_on_body_exited):
+			interact_area.body_exited.connect(_on_body_exited)
 
 func _process(delta: float) -> void:
 	# Subtle flame flicker effect
@@ -24,7 +26,11 @@ func _process(delta: float) -> void:
 		fire_light.energy = base_energy + sin(flicker_timer) * 0.12 + randf_range(-0.04, 0.04)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player_in_range and (event.is_action_pressed("action_drag") or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_X)):
+	if player_in_range and (
+		event.is_action_pressed("action_drag") 
+		or event.is_action_pressed("action_mine") 
+		or (event is InputEventKey and event.pressed and not event.echo and (event.physical_keycode == KEY_X or event.physical_keycode == KEY_Z))
+	):
 		var hud = _get_hud()
 		if hud and hud.has_method("toggle_forge"):
 			hud.toggle_forge(self)

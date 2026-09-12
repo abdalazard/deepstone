@@ -179,16 +179,25 @@ func _physics_process(delta: float) -> void:
 	# Movement
 	var direction := Input.get_axis("ui_left", "ui_right")
 	var is_dragging = Input.is_action_pressed("action_drag")
+	var is_kick = Input.is_action_just_pressed("action_drag")
 	var current_speed = speed
 
-	if direction != 0:
-		facing_x = sign(direction)
-		if is_dragging:
-			# Pushing effort: slow speed to 40.0
-			current_speed = 40.0
-		velocity.x = direction * current_speed
+	if is_on_floor() or on_ladder:
+		if direction != 0:
+			facing_x = sign(direction)
+			if is_dragging:
+				# Pushing effort: slow speed to 40.0
+				current_speed = 40.0
+			velocity.x = direction * current_speed
+		else:
+			velocity.x = move_toward(velocity.x, 0, current_speed)
 	else:
-		velocity.x = move_toward(velocity.x, 0, current_speed)
+		# Air control: lateral impulse control via left/right arrows without instant ground friction
+		if direction != 0:
+			facing_x = sign(direction)
+			velocity.x = move_toward(velocity.x, direction * speed, 320.0 * delta)
+		else:
+			velocity.x = move_toward(velocity.x, 0, 140.0 * delta)
 
 	# Clamp velocity so external impulses never catapult or bury the character
 	velocity.x = clamp(velocity.x, -speed, speed)
@@ -199,13 +208,21 @@ func _physics_process(delta: float) -> void:
 	# Active depenetration: if character overlaps any solid blocks, step upward to top surface
 	_depenetrate_from_blocks()
 
-	# Push loose ores when holding [X]
+	# Push / Kick loose ores when interacting with [X]
 	for i in get_slide_collision_count():
 		if i < get_slide_collision_count():
 			var c = get_slide_collision(i)
 			var collider = c.get_collider()
 			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
-				if is_dragging and direction != 0:
+				if is_kick:
+					# Second X tap: Kick the block with high force and distance
+					if collider.has_method("kick_push"):
+						collider.kick_push(facing_x, 220.0)
+					velocity.x = -facing_x * 30.0 # Small recoil
+					var inv_n = _get_inv()
+					if inv_n: inv_n.notify("Chute no bloco!", "dash")
+					break
+				elif is_dragging and direction != 0:
 					velocity.x = clamp(velocity.x, -40.0, 40.0)
 					if collider.has_method("drag_push"):
 						collider.drag_push(facing_x, 45.0)
@@ -305,24 +322,32 @@ func place_rope() -> void:
 
 func place_plank() -> void:
 	var inv = _get_inv()
-	if not inv or inv.planks <= 0:
-		if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
-		return
-	inv.planks -= 1
-	inv.inventory_changed.emit()
+	if not inv: return
 	
-	var plank_scene = load("res://scenes/environment/plank.tscn")
-	if not plank_scene: return
-	var plank = plank_scene.instantiate()
+	var use_brick = false
+	if inv.planks > 0:
+		inv.planks -= 1
+		inv.inventory_changed.emit()
+	elif "brick_floors" in inv and inv.brick_floors > 0:
+		inv.brick_floors -= 1
+		use_brick = true
+		inv.inventory_changed.emit()
+	else:
+		inv.notify("Sem tábuas ou pisos de tijolo! Crie na Forja.", "plank")
+		return
+	
+	var scene_path = "res://scenes/environment/brick_floor.tscn" if use_brick else "res://scenes/environment/plank.tscn"
+	var platform_scene = load(scene_path)
+	if not platform_scene: return
+	var platform = platform_scene.instantiate()
 	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
-	# Align top of plank exactly with top of blocks at grid_y * 32.0 + 112.0
 	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
 	if Input.is_action_pressed("ui_down"): grid_y += 1
 	elif Input.is_action_pressed("ui_up"): grid_y -= 1
 	var place_y = grid_y * 32.0 + 117.0
-	plank.position = Vector2(place_x, place_y)
-	plank.add_to_group("placed_planks")
-	get_tree().current_scene.add_child(plank)
+	platform.position = Vector2(place_x, place_y)
+	platform.add_to_group("placed_planks")
+	get_tree().current_scene.add_child(platform)
 	var sm = _get_save()
 	if sm:
 		sm.request_save()
@@ -350,6 +375,10 @@ func _try_chest_interaction() -> bool:
 					body.extract()
 				return true
 	return false
+
+func _is_ladder_segment(col: Node) -> bool:
+	if not is_instance_valid(col): return false
+	return col.is_in_group("placed_ropes") or col.name.begins_with("RopeSegment") or (col is Area2D and col.has_method("hit") and not col.has_method("is_ore") and not col.has_method("fell_tree") and not col.name.begins_with("Torch") and not col.name.begins_with("Plank"))
 
 func try_mine() -> void:
 	# Determine mining aim: if no directional keys held, mine horizontally in current facing direction
@@ -379,6 +408,13 @@ func try_mine() -> void:
 	is_mining = true
 	mine_timer = 0.5
 	
+	# Britadeira (Jackhammer action) when pressing DOWN and stuck inside a block
+	if Input.is_action_pressed("ui_down") and _is_overlapping_solid(global_position):
+		velocity.y = -140.0 # Small jackhammer hop
+		global_position.y -= 4.0 # Gradually pops player upward out of the block
+		var inv_b = _get_inv()
+		if inv_b: inv_b.notify("Britadeira!", "pickaxe")
+	
 	var world_2d = get_world_2d()
 	if not world_2d and is_inside_tree() and get_viewport():
 		world_2d = get_viewport().find_world_2d()
@@ -386,11 +422,19 @@ func try_mine() -> void:
 		return
 	var space_state = world_2d.direct_space_state
 	
+	var excludes = [get_rid()]
+	# Protect ladder: if on ladder and mining sideways, exclude ladders so pickaxe strikes surrounding blocks
+	if on_ladder and last_direction.x != 0:
+		if is_inside_tree() and get_tree():
+			for r in get_tree().get_nodes_in_group("placed_ropes"):
+				if is_instance_valid(r):
+					excludes.append(r.get_rid())
+	
 	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
 	query.collide_with_bodies = true
 	query.collide_with_areas = true
 	query.hit_from_inside = true
-	query.exclude = [get_rid()]
+	query.exclude = excludes
 	query.collision_mask = 37 # 1 (Blocks), 4 (Drops), 32 (Planks)
 	
 	var target_collider = null
@@ -413,17 +457,24 @@ func try_mine() -> void:
 			point_query.collision_mask = 37
 			point_query.collide_with_bodies = true
 			point_query.collide_with_areas = true
-			point_query.exclude = [get_rid()]
+			point_query.exclude = excludes
 			var hits = space_state.intersect_point(point_query, 8)
 			for hit in hits:
 				var c = hit.get("collider")
 				if c and (c.has_method("hit") or c.has_method("collect")):
+					if on_ladder and last_direction.x != 0 and _is_ladder_segment(c):
+						continue # Skip ladder segment
 					target_collider = c
 					break
 			if target_collider:
 				break
 				
 	if target_collider:
+		# Double-check: escada só é destruída com mira vertical estrita ou se o jogador estiver fora dela
+		if _is_ladder_segment(target_collider):
+			var is_strictly_vertical = (last_direction.y != 0 and last_direction.x == 0)
+			if on_ladder and not is_strictly_vertical:
+				return # Ladder is protected!
 		if target_collider.has_method("hit"):
 			target_collider.hit()
 		elif target_collider.has_method("collect"):

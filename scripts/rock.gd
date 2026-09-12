@@ -150,6 +150,15 @@ func drag_push(dir_x: float, push_speed: float) -> void:
 	linear_velocity.x = dir_x * push_speed
 	set_physics_process(true)
 
+func kick_push(dir_x: float, force: float = 200.0) -> void:
+	if not is_ore():
+		return
+	freeze = false
+	drag_timer = 0.6
+	linear_velocity.x = dir_x * force
+	set_physics_process(true)
+	spawn_particles()
+
 func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 	if is_falling:
 		# Cap fall speed to 240 px/s so it never hits with catastrophic force
@@ -157,7 +166,7 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 			state.linear_velocity.y = 240.0
 		state.linear_velocity.x = clamp(state.linear_velocity.x, -30.0, 30.0)
 	elif drag_timer > 0.0:
-		state.linear_velocity.x = clamp(state.linear_velocity.x, -60.0, 60.0)
+		state.linear_velocity.x = clamp(state.linear_velocity.x, -240.0, 240.0)
 
 func _physics_process(delta: float) -> void:
 	if drag_timer > 0.0:
@@ -229,7 +238,25 @@ func destroy() -> void:
 	spawn_particles()
 	_wake_block_above()
 	
-	if not is_dirt and not is_stone:
+	var inv = null
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		inv = get_tree().root.get_node("Inventory")
+	
+	if is_dirt:
+		if inv:
+			inv.dirt += 1
+			inv.add_exp(1)
+			inv.inventory_changed.emit()
+	elif is_stone:
+		if inv:
+			inv.stone += 1
+			inv.add_exp(2)
+			inv.inventory_changed.emit()
+	elif not is_unbreakable:
+		if inv:
+			if is_coal: inv.add_exp(3)
+			elif is_copper: inv.add_exp(15)
+			else: inv.add_exp(5)
 		var drop = DROP_SCENE.instantiate()
 		if is_coal:
 			drop.type = 2 # COAL
