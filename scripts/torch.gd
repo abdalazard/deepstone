@@ -48,6 +48,10 @@ func hit() -> void:
 	if not target_player:
 		queue_free()
 
+var anim_timer: float = 0.0
+var anim_frame: int = 0
+const ANIM_FPS: float = 6.0
+
 func _process(delta: float) -> void:
 	if target_player:
 		var sprite = $Sprite2D
@@ -55,6 +59,15 @@ func _process(delta: float) -> void:
 			sprite.global_position = sprite.global_position.lerp(target_player.global_position, 10.0 * delta)
 			if sprite.global_position.distance_to(target_player.global_position) < 8.0:
 				queue_free()
+	else:
+		anim_timer += delta
+		if anim_timer >= 1.0 / ANIM_FPS:
+			anim_timer = 0.0
+			anim_frame = (anim_frame + 1) % 4
+			if has_node("Sprite2D"):
+				$Sprite2D.frame = anim_frame
+			if has_node("PointLight2D"):
+				$PointLight2D.energy = 1.8 + randf_range(-0.06, 0.06)
 
 func _physics_process(delta: float) -> void:
 	if target_player:

@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://btorchuidxxx"]
 
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="1_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/lamp_post.png" id="1_tex"]
 [ext_resource type="Script" path="res://scripts/torch.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_torch"]
@@ -33,9 +33,9 @@ shape = SubResource("RectangleShape2D_torch")
 texture_filter = 1
 scale = Vector2(2, 2)
 texture = ExtResource("1_tex")
-hframes = 11
-vframes = 11
-frame = 8
+hframes = 4
+vframes = 1
+frame = 0
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
 color = Color(1, 0.92, 0.65, 1)

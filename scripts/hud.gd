@@ -10,6 +10,7 @@ var slots: Array = []
 var extras_tex = preload("res://assets/Caves and Mines/extras.png")
 var ores_tex = preload("res://assets/Caves and Mines/ores.png")
 var rope_tex = preload("res://assets/sprites/rope_tile.png")
+var lamp_tex = preload("res://assets/sprites/lamp_post.png")
 
 func _ready() -> void:
 	_build_hotbar()
@@ -39,8 +40,8 @@ func _build_hotbar() -> void:
 			icon.texture = atlas
 		elif i == 1:
 			var atlas = AtlasTexture.new()
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(128, 0, 16, 16) # Sign / Placa
+			atlas.atlas = lamp_tex
+			atlas.region = Rect2(0, 0, 16, 16) # Mini Poste / Lampião
 			icon.texture = atlas
 		elif i == 2:
 			icon.texture = rope_tex # Corda (not Escada)
