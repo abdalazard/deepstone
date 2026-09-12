@@ -65,10 +65,37 @@ func _ready() -> void:
 	
 	if self is RigidBody2D:
 		lock_rotation = true
-		mass = 100.0
-		if is_dirt or is_unbreakable:
+		mass = 1.5 # Balanced mass so it never launches the player
+		freeze = true
+		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+
+var is_falling: bool = false
+var fall_timer: float = 0.0
+
+func unfreeze_ore() -> void:
+	if is_ore() and freeze:
+		freeze = false
+		is_falling = true
+		fall_timer = 0.0
+
+func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
+	if is_falling:
+		# Cap fall speed to 240 px/s so it never hits with catastrophic force
+		if state.linear_velocity.y > 240.0:
+			state.linear_velocity.y = 240.0
+		state.linear_velocity.x = clamp(state.linear_velocity.x, -30.0, 30.0)
+
+func _physics_process(delta: float) -> void:
+	if is_falling:
+		fall_timer += delta
+		# After at least 0.2s of falling, if it has settled or stopped:
+		if fall_timer > 0.2 and linear_velocity.length_squared() < 100.0:
+			is_falling = false
 			freeze = true
 			freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+			# Snap gently to nearest tile column
+			global_position.x = round((global_position.x - 16.0) / 32.0) * 32.0 + 16.0
+			_wake_block_above()
 
 func is_ore() -> bool:
 	return !is_dirt and !is_unbreakable
@@ -116,6 +143,7 @@ func hit() -> void:
 
 func destroy() -> void:
 	spawn_particles()
+	_wake_block_above()
 	
 	if not is_dirt:
 		var drop = DROP_SCENE.instantiate()
@@ -124,6 +152,17 @@ func destroy() -> void:
 		get_parent().add_child(drop)
 	
 	queue_free()
+
+func _wake_block_above() -> void:
+	var space = get_world_2d().direct_space_state
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = global_position + Vector2(0, -32)
+	query.collision_mask = 1
+	var results = space.intersect_point(query)
+	for r in results:
+		var col = r.collider
+		if is_instance_valid(col) and col != self and col.has_method("unfreeze_ore"):
+			col.unfreeze_ore()
 
 func spawn_particles() -> void:
 	var particles = CPUParticles2D.new()

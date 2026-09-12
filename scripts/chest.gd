@@ -6,11 +6,15 @@ var is_closed: bool = false
 
 @onready var sprite = $Sprite2D
 @onready var prompt_label = $PromptLabel
-@onready var player_detect = $PlayerDetect
+@onready var player_detect = $InteractArea
 
 func _ready() -> void:
-	player_detect.body_entered.connect(_on_player_entered)
-	player_detect.body_exited.connect(_on_player_exited)
+	if prompt_label:
+		prompt_label.modulate.a = 0.0
+		prompt_label.visible = false
+	if player_detect:
+		player_detect.body_entered.connect(_on_player_entered)
+		player_detect.body_exited.connect(_on_player_exited)
 	update_visuals()
 
 func update_visuals() -> void:
@@ -19,23 +23,29 @@ func update_visuals() -> void:
 		sprite.frame = 30
 	else:
 		sprite.frame = 32
-	if prompt_label.visible:
+	if prompt_label and prompt_label.visible:
 		_update_prompt_text()
 
 func _on_player_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		prompt_label.visible = true
 		_update_prompt_text()
+		if prompt_label:
+			prompt_label.visible = true
+			var tween = create_tween()
+			tween.tween_property(prompt_label, "modulate:a", 1.0, 0.2)
 
 func _on_player_exited(body: Node2D) -> void:
 	if body.name == "Player":
-		prompt_label.visible = false
+		if prompt_label:
+			var tween = create_tween()
+			tween.tween_property(prompt_label, "modulate:a", 0.0, 0.2)
+			tween.tween_callback(prompt_label.hide)
 
 func _update_prompt_text() -> void:
 	if is_closed:
 		prompt_label.text = "[Z] Extrair Baú"
 	else:
-		prompt_label.text = "[Z] Armazenar (" + str(stored_load) + "/" + str(MAX_CAPACITY) + ")"
+		prompt_label.text = "[Z] Armazenar recursos"
 
 var in_ladder: bool = false
 var gravity_scale_default: float = 1.0

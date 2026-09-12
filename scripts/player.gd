@@ -125,7 +125,24 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0, speed)
 
+	# Clamp velocity so external impulses never catapult the character into walls
+	velocity.x = clamp(velocity.x, -speed, speed)
+	velocity.y = clamp(velocity.y, -400.0, 500.0)
+
 	move_and_slide()
+	
+	# Anti-stuck depenetration safety
+	if test_move(global_transform, Vector2.ZERO):
+		var escape_offsets = [
+			Vector2(0, -4), Vector2(0, -8), Vector2(0, -16),
+			Vector2(-4, 0), Vector2(4, 0), Vector2(-8, 0), Vector2(8, 0),
+			Vector2(-16, 0), Vector2(16, 0), Vector2(0, -24)
+		]
+		for off in escape_offsets:
+			if not test_move(global_transform.translated(off), Vector2.ZERO):
+				global_position += off
+				velocity = Vector2.ZERO
+				break
 	
 	# Push only resource RigidBodies when holding Drag key
 	var push_force = 40.0
