@@ -2,6 +2,7 @@ class_name Rock
 extends RigidBody2D
 
 @export var is_copper: bool = false
+@export var is_coal: bool = false
 @export var is_dirt: bool = false
 @export var is_unbreakable: bool = false
 
@@ -36,16 +37,21 @@ func _ready() -> void:
 		if sprite_2d and sprite_2d.hframes == 11:
 			sprite_2d.frame = 2 # Dirt block
 			sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0) # Brown tint for dirt
+	elif is_coal:
+		max_hp = 2
+		hp = 2
+		if sprite_2d:
+			sprite_2d.frame = 0 # Frame 0: Coal specks
 	elif is_copper:
 		max_hp = 4
 		hp = 4
 		if sprite_2d:
-			sprite_2d.frame = 4 # Row 1 Col 3 (Copper ore)
+			sprite_2d.frame = 8 # Frame 8: Gold specks
 	else:
 		max_hp = 3
 		hp = 3
 		if sprite_2d:
-			sprite_2d.frame = 0 # Row 1 Col 2 (Stone/Iron ore)
+			sprite_2d.frame = 2 # Frame 2: Iron specks
 			
 	# Setup node to draw cracks over the rock
 	if not is_unbreakable:
@@ -155,7 +161,12 @@ func destroy() -> void:
 	
 	if not is_dirt:
 		var drop = DROP_SCENE.instantiate()
-		drop.type = 1 if is_copper else 0
+		if is_coal:
+			drop.type = 2 # COAL
+		elif is_copper:
+			drop.type = 1 # GOLD
+		else:
+			drop.type = 0 # IRON
 		drop.global_position = global_position
 		get_parent().add_child(drop)
 	
@@ -190,6 +201,7 @@ func spawn_particles() -> void:
 	var p_color = Color(0.4, 0.4, 0.45, 1)
 	if is_unbreakable: p_color = Color(0.85, 0.9, 1.0, 1) # Bright metallic sparks
 	elif is_copper: p_color = Color(0.9, 0.8, 0.2, 1) # Gold color
+	elif is_coal: p_color = Color(0.18, 0.18, 0.2, 1) # Charcoal black
 	elif is_dirt: p_color = Color(0.5, 0.35, 0.2, 1)
 	particles.color = p_color
 	
@@ -218,7 +230,7 @@ func _on_cracks_draw() -> void:
 		cracks.draw_line(Vector2(-1, 0), Vector2(2, -2), crack_color, 1.5)
 
 func _process(delta: float) -> void:
-	if is_shining and not is_dirt and hp > 0:
+	if is_shining and not is_dirt and not is_coal and hp > 0:
 		shine_timer -= delta
 		if shine_timer <= 0.0:
 			shine_timer = randf_range(1.0, 1.8)
@@ -253,7 +265,7 @@ func set_illuminated(active: bool, source: Node2D) -> void:
 	else:
 		light_sources.erase(source)
 		
-	var should_shine = (!light_sources.is_empty()) and (!is_dirt)
+	var should_shine = (!light_sources.is_empty()) and (!is_dirt) and (!is_coal)
 	if should_shine != is_shining:
 		is_shining = should_shine
 		if not is_shining:

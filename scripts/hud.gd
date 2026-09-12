@@ -6,19 +6,26 @@ extends CanvasLayer
 @onready var chest_grid = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/ChestGrid
 @onready var item_title = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ItemTitle
 @onready var item_desc = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ItemDesc
+@onready var equip_button = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox/EquipButton
+@onready var drop_button = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox/DropButton
 @onready var capacity_label = $InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox/CapacityLabel
 @onready var shop_button = $TopRightContainer/ShopButton
 @onready var toast_list = $ToastContainer/ToastList
 
 var slots: Array = []
 var chest_slots: Array = []
+var selected_index: int = 0
+var drag_start_idx: int = -1
+
 var extras_tex = preload("res://assets/Caves and Mines/extras.png")
 var ores_tex = preload("res://assets/Caves and Mines/ores.png")
 var rope_tex = preload("res://assets/sprites/rope_tile.png")
 var lamp_tex = preload("res://assets/sprites/lamp_post.png")
+var plank_tex = preload("res://assets/sprites/plank.png")
 
 var chest_items_def = [
 	{
+		"key": "pickaxe",
 		"name": "Picareta de Ferro",
 		"desc": "Ferramenta para escavar terra e rochas. Pressione [1] para equipar (Botão Z para minerar).",
 		"icon_type": "atlas",
@@ -29,6 +36,7 @@ var chest_items_def = [
 		"tool_slot": 0
 	},
 	{
+		"key": "lamp",
 		"name": "Mini Poste de Luz",
 		"desc": "Lampião portátil que ilumina a caverna e faz os minérios brilharem no escuro. Pressione [2].",
 		"icon_type": "atlas",
@@ -39,8 +47,9 @@ var chest_items_def = [
 		"tool_slot": 1
 	},
 	{
-		"name": "Corda de Escalada",
-		"desc": "Corda de alta resistência para descer em abismos e subir poços profundos. Pressione [3].",
+		"key": "ladder",
+		"name": "Escada de Madeira",
+		"desc": "Escada portátil com degraus para descer e subir poços profundos. Pressione [3] para equipar.",
 		"icon_type": "direct",
 		"tex": "rope",
 		"shortcut": "3",
@@ -48,45 +57,52 @@ var chest_items_def = [
 		"tool_slot": 2
 	},
 	{
+		"key": "plank",
+		"name": "Tábua de Madeira",
+		"desc": "Prancha de madeira reforçada para criar pontes horizontais sobre vãos e fossos. Pressione [4].",
+		"icon_type": "direct",
+		"tex": "plank",
+		"shortcut": "4",
+		"is_tool": true,
+		"tool_slot": 3
+	},
+	{
+		"key": "iron",
 		"name": "Minério de Ferro",
 		"desc": "Metal resistente e condutor. Deposite no baú da superfície para forjar ferramentas.",
 		"icon_type": "atlas",
 		"atlas": "ores",
-		"region": Rect2(0, 0, 16, 16),
+		"region": Rect2(32, 0, 16, 16), # Iron specks
 		"shortcut": "",
 		"is_tool": false
 	},
 	{
+		"key": "gold",
 		"name": "Minério de Ouro",
 		"desc": "Metal nobre e brilhante de alto valor encontrado em veios profundos. Alto valor comercial.",
 		"icon_type": "atlas",
 		"atlas": "ores",
-		"region": Rect2(64, 0, 16, 16),
+		"region": Rect2(128, 0, 16, 16), # Gold specks (col 8)
 		"shortcut": "",
 		"is_tool": false
 	},
 	{
+		"key": "coal",
 		"name": "Carvão Mineral",
-		"desc": "Combustível fóssil que aquece forjas e alimenta fundições avançadas. [Em Breve]",
+		"desc": "Combustível fóssil que aquece forjas e alimenta fundições avançadas. Deposite no baú.",
 		"icon_type": "atlas",
 		"atlas": "ores",
-		"region": Rect2(32, 0, 16, 16),
+		"region": Rect2(0, 0, 16, 16), # Charcoal specks
 		"shortcut": "",
 		"is_tool": false
 	},
 	{
+		"key": "bar",
 		"name": "Barra Forjada",
 		"desc": "Lingote de metal puro fundido na fornalha da superfície para novos itens. [Em Breve]",
 		"icon_type": "atlas",
 		"atlas": "extras",
 		"region": Rect2(32, 0, 16, 16),
-		"shortcut": "",
-		"is_tool": false
-	},
-	{
-		"name": "Espaço Livre",
-		"desc": "Compartimento vazio do baú reservado para novas ferramentas e gemas preciosas.",
-		"icon_type": "none",
 		"shortcut": "",
 		"is_tool": false
 	}
@@ -100,18 +116,54 @@ func _ready() -> void:
 		close_button.pressed.connect(toggle)
 	if shop_button:
 		shop_button.pressed.connect(_on_shop_pressed)
+	if equip_button:
+		equip_button.pressed.connect(_on_slot_equip_pressed)
+	if drop_button:
+		drop_button.pressed.connect(_on_slot_drop_pressed)
 		
 	Inventory.inventory_changed.connect(_on_resources_changed)
 	Inventory.notification_triggered.connect(show_toast)
 	_on_resources_changed()
 	inventory_panel.hide()
 
+func _unhandled_input(event: InputEvent) -> void:
+	# Hotkey for Shop [L] or [P]
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode in [KEY_L, KEY_P]:
+			_on_shop_pressed()
+			get_viewport().set_input_as_handled()
+			return
+		elif event.keycode == KEY_ESCAPE and inventory_panel.visible:
+			toggle()
+			get_viewport().set_input_as_handled()
+			return
+	
+	# Keyboard navigation inside inventory
+	if inventory_panel.visible:
+		if event.is_action_pressed("ui_right"):
+			_select_slot((selected_index + 1) % chest_slots.size())
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_left"):
+			_select_slot((selected_index - 1 + chest_slots.size()) % chest_slots.size())
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_down"):
+			_select_slot((selected_index + 4) % chest_slots.size())
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_up"):
+			_select_slot((selected_index - 4 + chest_slots.size()) % chest_slots.size())
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("action_mine") or event.is_action_pressed("ui_accept"): # Z or Enter
+			_on_slot_equip_pressed()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("action_drag"): # X to drop
+			_on_slot_drop_pressed()
+			get_viewport().set_input_as_handled()
+
 func _build_hotbar() -> void:
-	for i in range(5):
+	for i in range(7):
 		var panel = PanelContainer.new()
-		panel.custom_minimum_size = Vector2(56, 56)
+		panel.custom_minimum_size = Vector2(50, 50)
 		
-		# Background color
 		var rect = ColorRect.new()
 		rect.color = Color(0.2, 0.2, 0.2, 0.8)
 		panel.add_child(rect)
@@ -129,39 +181,43 @@ func _build_hotbar() -> void:
 		elif i == 1:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = lamp_tex
-			atlas.region = Rect2(0, 0, 16, 16) # Mini Poste / Lampião
+			atlas.region = Rect2(0, 0, 16, 16) # Mini Poste
 			icon.texture = atlas
 		elif i == 2:
-			icon.texture = rope_tex # Corda (not Escada)
+			icon.texture = rope_tex # Escada
 		elif i == 3:
-			var atlas = AtlasTexture.new()
-			atlas.atlas = ores_tex
-			atlas.region = Rect2(0, 0, 16, 16) # Iron
-			icon.texture = atlas
+			icon.texture = plank_tex # Tábua
 		elif i == 4:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
-			atlas.region = Rect2(64, 0, 16, 16) # Gold
+			atlas.region = Rect2(32, 0, 16, 16) # Iron
+			icon.texture = atlas
+		elif i == 5:
+			var atlas = AtlasTexture.new()
+			atlas.atlas = ores_tex
+			atlas.region = Rect2(128, 0, 16, 16) # Gold
+			icon.texture = atlas
+		elif i == 6:
+			var atlas = AtlasTexture.new()
+			atlas.atlas = ores_tex
+			atlas.region = Rect2(0, 0, 16, 16) # Coal
 			icon.texture = atlas
 			
-		# Number Label: only 1, 2, 3 for tools usable with button Z
 		var num_lbl = Label.new()
-		num_lbl.text = str(i + 1) if i < 3 else ""
-		num_lbl.add_theme_font_size_override("font_size", 14)
+		num_lbl.text = str(i + 1) if i < 4 else ""
+		num_lbl.add_theme_font_size_override("font_size", 13)
 		num_lbl.add_theme_color_override("font_color", Color(1,1,1))
 		num_lbl.add_theme_color_override("font_outline_color", Color(0,0,0))
 		num_lbl.add_theme_constant_override("outline_size", 4)
 		
-		# Qty Label
 		var qty_lbl = Label.new()
 		qty_lbl.text = ""
 		qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		qty_lbl.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-		qty_lbl.add_theme_font_size_override("font_size", 14)
+		qty_lbl.add_theme_font_size_override("font_size", 13)
 		qty_lbl.add_theme_color_override("font_outline_color", Color(0,0,0))
 		qty_lbl.add_theme_constant_override("outline_size", 4)
 		
-		# Layout
 		var margin = MarginContainer.new()
 		margin.add_theme_constant_override("margin_left", 4)
 		margin.add_theme_constant_override("margin_top", 4)
@@ -226,6 +282,7 @@ func _build_chest_grid() -> void:
 			icon.texture = atlas
 		elif def.icon_type == "direct":
 			if def.tex == "rope": icon.texture = rope_tex
+			elif def.tex == "plank": icon.texture = plank_tex
 		
 		var icon_margin = MarginContainer.new()
 		icon_margin.add_theme_constant_override("margin_left", 6)
@@ -235,7 +292,6 @@ func _build_chest_grid() -> void:
 		icon_margin.add_child(icon)
 		slot_panel.add_child(icon_margin)
 		
-		# Top-left shortcut tag
 		if def.shortcut != "":
 			var tag_lbl = Label.new()
 			tag_lbl.text = "[" + def.shortcut + "]"
@@ -250,7 +306,6 @@ func _build_chest_grid() -> void:
 			tag_margin.add_child(tag_lbl)
 			slot_panel.add_child(tag_margin)
 		
-		# Bottom-right quantity label
 		var qty_lbl = Label.new()
 		qty_lbl.text = ""
 		qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -266,17 +321,22 @@ func _build_chest_grid() -> void:
 		qty_margin.add_child(qty_lbl)
 		slot_panel.add_child(qty_margin)
 		
-		# Interaction
 		var slot_index = i
 		slot_panel.mouse_entered.connect(func():
-			_on_chest_slot_hover(slot_index)
-		)
-		slot_panel.mouse_exited.connect(func():
-			_on_chest_slot_unhover(slot_index)
+			_select_slot(slot_index)
 		)
 		slot_panel.gui_input.connect(func(event: InputEvent):
-			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-				_on_chest_slot_clicked(slot_index)
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+				if event.pressed:
+					drag_start_idx = slot_index
+					_select_slot(slot_index)
+				else:
+					# On release, check if dropped outside inventory panel onto world
+					if drag_start_idx == slot_index:
+						var mouse_pos = slot_panel.get_global_mouse_position()
+						if not inventory_panel.get_global_rect().has_point(mouse_pos):
+							_drop_slot_item(slot_index)
+					drag_start_idx = -1
 		)
 		
 		chest_grid.add_child(slot_panel)
@@ -287,37 +347,63 @@ func _build_chest_grid() -> void:
 			"def": def
 		})
 
-func _on_chest_slot_hover(idx: int) -> void:
-	if idx < chest_slots.size():
-		var def = chest_slots[idx].def
-		if item_title: item_title.text = def.name
-		if item_desc: item_desc.text = def.desc
-		var s: StyleBoxFlat = chest_slots[idx].style
-		s.border_color = Color(1.0, 0.85, 0.35, 1.0) # Golden glow
-
-func _on_chest_slot_unhover(idx: int) -> void:
-	if idx < chest_slots.size():
-		var s: StyleBoxFlat = chest_slots[idx].style
-		if idx < 3 and idx == Inventory.active_slot:
-			s.border_color = Color(0.9, 0.75, 0.2, 1.0)
+func _select_slot(idx: int) -> void:
+	if idx < 0 or idx >= chest_slots.size(): return
+	selected_index = idx
+	
+	# Update borders
+	for i in range(chest_slots.size()):
+		var s: StyleBoxFlat = chest_slots[i].style
+		if i == selected_index:
+			s.border_color = Color(1.0, 0.88, 0.35, 1.0)
+			s.bg_color = Color(0.24, 0.16, 0.08, 0.98)
+		elif i < 4 and i == Inventory.active_slot:
+			s.border_color = Color(0.85, 0.7, 0.2, 1.0)
+			s.bg_color = Color(0.18, 0.12, 0.06, 0.96)
 		else:
 			s.border_color = Color(0.38, 0.25, 0.14, 1.0)
+			s.bg_color = Color(0.12, 0.08, 0.04, 0.95)
+			
+	var def = chest_slots[idx].def
+	if item_title: item_title.text = def.name
+	if item_desc: item_desc.text = def.desc
+	
+	# Update action buttons visibility
+	if equip_button:
+		equip_button.visible = def.is_tool
+	if drop_button:
+		var has_drop = false
+		if def.key == "iron": has_drop = Inventory.iron > 0
+		elif def.key == "gold": has_drop = Inventory.gold > 0
+		elif def.key == "coal": has_drop = Inventory.coal > 0
+		elif def.key == "plank": has_drop = Inventory.planks > 0
+		elif def.key == "lamp": has_drop = Inventory.signs > 0
+		drop_button.visible = has_drop
 
-func _on_chest_slot_clicked(idx: int) -> void:
-	if idx < chest_slots.size():
-		var def = chest_slots[idx].def
+func _on_slot_equip_pressed() -> void:
+	if selected_index < chest_slots.size():
+		var def = chest_slots[selected_index].def
 		if def.is_tool and def.has("tool_slot"):
 			Inventory.active_slot = def.tool_slot
 			Inventory.inventory_changed.emit()
-		_on_chest_slot_hover(idx)
+			Inventory.notify("Equipado: " + def.name, def.key)
+		_select_slot(selected_index)
+
+func _on_slot_drop_pressed() -> void:
+	_drop_slot_item(selected_index)
+
+func _drop_slot_item(idx: int) -> void:
+	if idx < chest_slots.size():
+		var def = chest_slots[idx].def
+		Inventory.drop_item(def.key, 1)
+		_select_slot(idx)
 
 func toggle() -> void:
 	var opening = !inventory_panel.visible
 	inventory_panel.visible = opening
 	if opening:
 		_on_resources_changed()
-		_on_chest_slot_hover(Inventory.active_slot)
-		# Smooth popup animation
+		_select_slot(Inventory.active_slot)
 		inventory_panel.scale = Vector2(0.95, 0.95)
 		inventory_panel.modulate.a = 0.5
 		var tween = create_tween()
@@ -327,44 +413,36 @@ func toggle() -> void:
 
 func _on_resources_changed() -> void:
 	# Update Hotbar Slots Qty
-	if slots.size() >= 5:
-		slots[0].qty.text = "" # Pickaxe is infinite
-		slots[1].qty.text = str(Inventory.signs)
-		slots[2].qty.text = "" # Rope is infinite
-		slots[3].qty.text = str(Inventory.iron)
-		slots[4].qty.text = str(Inventory.gold)
+	if slots.size() >= 7:
+		slots[0].qty.text = "" # Picareta
+		slots[1].qty.text = str(Inventory.signs) # Lamp
+		slots[2].qty.text = "" # Escada
+		slots[3].qty.text = str(Inventory.planks) # Tábua
+		slots[4].qty.text = str(Inventory.iron) # Ferro
+		slots[5].qty.text = str(Inventory.gold) # Ouro
+		slots[6].qty.text = str(Inventory.coal) # Carvão
 		
-		# Reset Hotbar Selection Colors
 		for i in range(slots.size()):
-			if i < 3 and i == Inventory.active_slot:
-				slots[i].bg.color = Color(0.8, 0.8, 0.2, 0.9) # Highlight yellow
+			if i < 4 and i == Inventory.active_slot:
+				slots[i].bg.color = Color(0.85, 0.8, 0.2, 0.9)
 			else:
-				slots[i].bg.color = Color(0.2, 0.2, 0.2, 0.8) # Default dark
+				slots[i].bg.color = Color(0.2, 0.2, 0.2, 0.8)
 
-	# Update Chest Inventory Slots Qty & Active Borders
+	# Update Chest Inventory Slots Qty
 	if chest_slots.size() >= 8:
 		chest_slots[0].qty_lbl.text = "∞"
 		chest_slots[1].qty_lbl.text = str(Inventory.signs)
 		chest_slots[2].qty_lbl.text = "∞"
-		chest_slots[3].qty_lbl.text = str(Inventory.iron) + "/20"
-		chest_slots[4].qty_lbl.text = str(Inventory.gold) + "/20"
-		chest_slots[5].qty_lbl.text = "0"
-		chest_slots[6].qty_lbl.text = "0"
-		chest_slots[7].qty_lbl.text = "-"
-		
-		for i in range(chest_slots.size()):
-			var s: StyleBoxFlat = chest_slots[i].style
-			if i < 3 and i == Inventory.active_slot:
-				s.border_color = Color(0.95, 0.8, 0.25, 1.0)
-				s.bg_color = Color(0.2, 0.14, 0.07, 0.98)
-			else:
-				s.border_color = Color(0.38, 0.25, 0.14, 1.0)
-				s.bg_color = Color(0.12, 0.08, 0.04, 0.95)
+		chest_slots[3].qty_lbl.text = str(Inventory.planks)
+		chest_slots[4].qty_lbl.text = str(Inventory.iron) + "/20"
+		chest_slots[5].qty_lbl.text = str(Inventory.gold) + "/20"
+		chest_slots[6].qty_lbl.text = str(Inventory.coal) + "/20"
+		chest_slots[7].qty_lbl.text = "0"
+		_select_slot(selected_index)
 
-	# Update Capacity label
 	if capacity_label:
-		var total_ores = Inventory.iron + Inventory.gold
-		capacity_label.text = "Carga: " + str(total_ores) + "/40 minérios  (Ferro: " + str(Inventory.iron) + "/20 | Ouro: " + str(Inventory.gold) + "/20)"
+		var total_ores = Inventory.iron + Inventory.gold + Inventory.coal
+		capacity_label.text = "Carga: %d/60 minérios (Fe: %d | Au: %d | C: %d)" % [total_ores, Inventory.iron, Inventory.gold, Inventory.coal]
 
 func _on_shop_pressed() -> void:
 	if shop_button:
@@ -413,17 +491,22 @@ func show_toast(text: String, icon_type: String = "") -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		
-		if icon_type == "iron":
+		if icon_type in ["iron", "ores"]:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
-			atlas.region = Rect2(0, 0, 16, 16)
+			atlas.region = Rect2(32, 0, 16, 16)
 			icon.texture = atlas
 		elif icon_type == "gold":
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex
-			atlas.region = Rect2(64, 0, 16, 16)
+			atlas.region = Rect2(128, 0, 16, 16)
 			icon.texture = atlas
-		elif icon_type == "save" or icon_type == "chest":
+		elif icon_type == "coal":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = ores_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		elif icon_type in ["save", "chest"]:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = extras_tex
 			atlas.region = Rect2(160, 32, 16, 16)
@@ -436,6 +519,20 @@ func show_toast(text: String, icon_type: String = "") -> void:
 		elif icon_type == "sign":
 			var sign_tex = load("res://assets/sprites/signpost.png")
 			if sign_tex: icon.texture = sign_tex
+		elif icon_type == "plank":
+			icon.texture = plank_tex
+		elif icon_type == "lamp":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = lamp_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		elif icon_type == "ladder":
+			icon.texture = rope_tex
+		elif icon_type == "dash":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = extras_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
 		hbox.add_child(icon)
 		
 	var label = Label.new()

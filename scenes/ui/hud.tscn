@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=12 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
@@ -52,6 +52,30 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn"]
+bg_color = Color(0.25, 0.18, 0.1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.8, 0.65, 0.25, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn_hover"]
+bg_color = Color(0.35, 0.25, 0.14, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.85, 0.4, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_btn"]
 bg_color = Color(0.18, 0.12, 0.06, 0.95)
 border_width_left = 2
@@ -92,7 +116,7 @@ theme_override_constants/margin_top = 16
 
 [node name="HotbarVisual" type="HBoxContainer" parent="TopContainer"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="TopRightContainer" type="MarginContainer" parent="."]
@@ -117,7 +141,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
-text = "🏪 LOJA"
+text = "🏪 LOJA [L]"
 
 [node name="ToastContainer" type="MarginContainer" parent="."]
 anchors_preset = 2
@@ -145,9 +169,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -230.0
-offset_top = -170.0
+offset_top = -180.0
 offset_right = 230.0
-offset_bottom = 170.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_chest_outer")
@@ -205,13 +229,13 @@ text = "X"
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 10
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_bottom = 8
 
 [node name="InnerVBox" type="VBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="ChestGrid" type="GridContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
@@ -220,7 +244,7 @@ theme_override_constants/v_separation = 8
 columns = 4
 
 [node name="InfoPlaque" type="PanelContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_plaque")
 
@@ -247,7 +271,31 @@ text = "Selecione um item..."
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 11
-text = "Passe o cursor ou clique em um slot para ver detalhes."
+text = "Navegue com [Setas] ou mouse. Pressione [Z] para Equipar, [X] para Dropar."
+
+[node name="ActionHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox"]
+custom_minimum_size = Vector2(90, 22)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_btn_hover")
+text = "[Z] Equipar"
+
+[node name="DropButton" type="Button" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/InfoPlaque/PlaqueMargin/PlaqueVBox/ActionHBox"]
+custom_minimum_size = Vector2(110, 22)
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.85, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_btn_hover")
+text = "[X] Dropar no Chão"
 
 [node name="FooterHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
@@ -259,10 +307,10 @@ theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 12
-text = "Carga: 0/40 minérios"
+text = "Carga: 0/60 minérios"
 
 [node name="CloseHint" type="Label" parent="InventoryPanel/VBoxContainer/ContentMargin/InnerVBox/FooterHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_font_sizes/font_size = 12
-text = "[I] Fechar"
+text = "[I] / [Esc] Fechar | [L] Loja"

@@ -58,7 +58,7 @@ func deposit(items: Dictionary) -> void:
 		extract()
 		return
 	
-	var total_weight = items["iron"] * 1 + items["gold"] * 2
+	var total_weight = items.get("iron", 0) * 1 + items.get("gold", 0) * 2 + items.get("coal", 0) * 1
 	stored_load += total_weight
 	
 	if stored_load >= MAX_CAPACITY:

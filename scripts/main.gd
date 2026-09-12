@@ -9,6 +9,7 @@ const TORCH_SCENE = preload("res://scenes/environment/torch.tscn")
 const ROPE_SCENE = preload("res://scenes/environment/rope_segment.tscn")
 const SIGNPOST_SCENE = preload("res://scenes/environment/signpost.tscn")
 const UNBREAKABLE_SCENE = preload("res://scenes/cave/unbreakable_rock.tscn")
+const PLANK_SCENE = preload("res://scenes/environment/plank.tscn")
 
 @onready var player = $Player
 
@@ -19,9 +20,9 @@ func _ready() -> void:
 	if has_node("/root/SaveManager"):
 		seed(SaveManager.world_seed)
 	
-	# Spawn signpost 1 block before entrance hole (column 16, X = 528, Y = 96)
+	# Spawn signpost AFTER entrance hole (column 18, X = 592, Y = 96)
 	var sign = SIGNPOST_SCENE.instantiate()
-	sign.position = Vector2(528, 96)
+	sign.position = Vector2(592, 96)
 	add_child(sign)
 	
 	generate_world()
@@ -48,6 +49,12 @@ func restore_placed_items() -> void:
 		rope.position = Vector2(r.x, r.y)
 		rope.add_to_group("placed_ropes")
 		add_child(rope)
+
+	for p in SaveManager.placed_planks_data:
+		var plank = PLANK_SCENE.instantiate()
+		plank.position = Vector2(p.x, p.y)
+		plank.add_to_group("placed_planks")
+		add_child(plank)
 
 func generate_world() -> void:
 	const GRID_W = 30
@@ -145,16 +152,24 @@ func generate_world() -> void:
 				instance = UNBREAKABLE_SCENE.instantiate()
 			else:
 				var ore_roll = randf()
-				var gold_thresh = 0.85 if y < 25 else 0.75
-				var iron_thresh = 0.65
+				# Abundance hierarchy: Carvão (Coal) > Ferro (Iron) > Ouro (Gold)
+				var gold_thresh = 0.88 if y < 25 else 0.84
+				var iron_thresh = 0.70
+				var coal_thresh = 0.44
 				
 				if ore_roll > gold_thresh:
 					var rock = ROCK_SCENE.instantiate()
-					rock.is_copper = true # Gold ore
+					rock.is_copper = true # Gold ore (rarest: ~15%)
 					instance = rock
 				elif ore_roll > iron_thresh:
 					var rock = ROCK_SCENE.instantiate()
-					rock.is_copper = false # Iron ore
+					rock.is_copper = false
+					rock.is_coal = false # Iron ore (intermediate: ~33%)
+					instance = rock
+				elif ore_roll > coal_thresh:
+					var rock = ROCK_SCENE.instantiate()
+					rock.is_copper = false
+					rock.is_coal = true # Coal ore (most abundant: ~52%)
 					instance = rock
 				else:
 					instance = DIRT_SCENE.instantiate()

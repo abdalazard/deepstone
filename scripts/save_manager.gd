@@ -7,6 +7,7 @@ var has_loaded_save: bool = false
 var mined_blocks: Dictionary = {}
 var placed_torches_data: Array = []
 var placed_ropes_data: Array = []
+var placed_planks_data: Array = []
 var player_saved_pos: Vector2 = Vector2.ZERO
 var chest_saved_load: int = 0
 var chest_saved_closed: bool = false
@@ -47,6 +48,7 @@ func clear_save() -> void:
 	mined_blocks.clear()
 	placed_torches_data.clear()
 	placed_ropes_data.clear()
+	placed_planks_data.clear()
 	has_loaded_save = false
 	world_seed = randi()
 	player_saved_pos = Vector2.ZERO
@@ -102,12 +104,24 @@ func save_game(show_notify: bool = false) -> void:
 		for t in tree.get_nodes_in_group("placed_torches"):
 			if is_instance_valid(t):
 				torches_list.append({"x": t.global_position.x, "y": t.global_position.y})
+	if torches_list.is_empty() and not placed_torches_data.is_empty():
+		torches_list = placed_torches_data
 	
 	var ropes_list = []
 	if tree:
 		for r in tree.get_nodes_in_group("placed_ropes"):
 			if is_instance_valid(r):
 				ropes_list.append({"x": r.global_position.x, "y": r.global_position.y})
+	if ropes_list.is_empty() and not placed_ropes_data.is_empty():
+		ropes_list = placed_ropes_data
+	
+	var planks_list = []
+	if tree:
+		for p in tree.get_nodes_in_group("placed_planks"):
+			if is_instance_valid(p):
+				planks_list.append({"x": p.global_position.x, "y": p.global_position.y})
+	if planks_list.is_empty() and not placed_planks_data.is_empty():
+		planks_list = placed_planks_data
 	
 	var save_data = {
 		"version": 1,
@@ -117,11 +131,14 @@ func save_game(show_notify: bool = false) -> void:
 		"inventory": {
 			"iron": inv.iron if inv else 0,
 			"gold": inv.gold if inv else 0,
-			"signs": inv.signs if inv else 10
+			"coal": inv.coal if inv else 0,
+			"signs": inv.signs if inv else 10,
+			"planks": inv.planks if inv else 15
 		},
 		"chest": chest_data,
 		"placed_torches": torches_list,
-		"placed_ropes": ropes_list
+		"placed_ropes": ropes_list,
+		"placed_planks": planks_list
 	}
 	
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -163,7 +180,9 @@ func load_game() -> bool:
 	if inv:
 		inv.iron = inv_data.get("iron", 0)
 		inv.gold = inv_data.get("gold", 0)
+		inv.coal = inv_data.get("coal", 0)
 		inv.signs = inv_data.get("signs", 10)
+		inv.planks = inv_data.get("planks", 15)
 	
 	var p_data = data.get("player", {})
 	if p_data.has("x") and p_data.has("y"):
@@ -177,6 +196,7 @@ func load_game() -> bool:
 	
 	placed_torches_data = data.get("placed_torches", [])
 	placed_ropes_data = data.get("placed_ropes", [])
+	placed_planks_data = data.get("placed_planks", [])
 	
 	has_loaded_save = true
 	if inv:

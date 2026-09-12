@@ -18,6 +18,10 @@ var anim_state: String = "idle" # idle, dig, walk
 var is_mining: bool = false
 var mine_timer: float = 0.0
 
+var last_down_press_time: float = -1.0
+const DOUBLE_TAP_MAX_DELAY: float = 0.28
+var down_dash_timer: float = 0.0
+
 var tex_idle = preload("res://assets/sprites/Idle.png")
 var tex_walk = preload("res://assets/sprites/Walk.png")
 var tex_jump = preload("res://assets/sprites/Jump.png")
@@ -41,7 +45,12 @@ func _process(delta: float) -> void:
 	if is_mining:
 		anim_state = "dig"
 	elif on_ladder:
-		if velocity.y != 0:
+		if is_on_floor() and not Input.is_action_pressed("ui_up"):
+			if velocity.x != 0:
+				anim_state = "walk"
+			else:
+				anim_state = "idle"
+		elif velocity.y != 0:
 			anim_state = "climb"
 		else:
 			anim_state = "climb_idle"
@@ -84,15 +93,33 @@ func _process(delta: float) -> void:
 		sprite.flip_h = (facing_x < 0)
 
 func _physics_process(delta: float) -> void:
-	if on_ladder:
+	# Double-tap down dash on ladder
+	if Input.is_action_just_pressed("ui_down") and on_ladder:
+		var now = Time.get_ticks_msec() / 1000.0
+		if (now - last_down_press_time) <= DOUBLE_TAP_MAX_DELAY and not is_on_floor():
+			down_dash_timer = 0.35
+			velocity.y = 380.0
+			Inventory.notify("Descida Rápida!", "dash")
+		last_down_press_time = now
+
+	if down_dash_timer > 0:
+		down_dash_timer -= delta
+		velocity.y = 380.0
+		if is_on_floor():
+			down_dash_timer = 0.0
+	elif on_ladder:
 		if is_mining:
 			velocity.y = 0
 		elif Input.is_action_pressed("ui_up"):
 			velocity.y = -100
-		elif Input.is_action_pressed("ui_down"):
+		elif Input.is_action_pressed("ui_down") and not is_on_floor():
 			velocity.y = 100
-		else:
+		elif not is_on_floor():
 			velocity.y = 0
+		else:
+			# On floor on ladder
+			if not is_on_floor():
+				velocity.y += gravity * delta
 	else:
 		# Add the gravity.
 		if not is_on_floor():
@@ -155,14 +182,15 @@ func _physics_process(delta: float) -> void:
 			if collider is RigidBody2D and collider.has_method("is_ore") and collider.is_ore():
 				collider.apply_central_impulse(-c.get_normal() * push_force)
 	
-	# Only slots 1, 2, 3 (Pickaxe, Sign, Rope) can be selected for button Z
+	# Only slots 1, 2, 3, 4 (Pickaxe, Lamp, Escada, Tábua) can be selected for button Z
 	if Input.is_action_just_pressed("slot_1"): set_slot(0)
 	if Input.is_action_just_pressed("slot_2"): set_slot(1)
 	if Input.is_action_just_pressed("slot_3"): set_slot(2)
+	if Input.is_action_just_pressed("slot_4"): set_slot(3)
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
-		# Cycle strictly between 0, 1, 2 (Pickaxe, Sign, Rope)
-		set_slot((Inventory.active_slot + 1) % 3)
+		# Cycle strictly between 0, 1, 2, 3 (Pickaxe, Lamp, Escada, Tábua)
+		set_slot((Inventory.active_slot + 1) % 4)
 	
 	if Input.is_action_just_pressed("action_mine"):
 		if _try_chest_interaction():
@@ -173,6 +201,8 @@ func _physics_process(delta: float) -> void:
 			place_torch()
 		elif Inventory.active_slot == 2:
 			place_rope()
+		elif Inventory.active_slot == 3 and Inventory.planks > 0:
+			place_plank()
 			
 	if Input.is_action_just_pressed("action_collect"):
 		try_collect()
@@ -181,7 +211,7 @@ func _physics_process(delta: float) -> void:
 		toggle_inventory()
 
 func set_slot(slot: int) -> void:
-	if slot in [0, 1, 2]:
+	if slot in [0, 1, 2, 3]:
 		Inventory.active_slot = slot
 		Inventory.inventory_changed.emit()
 
@@ -200,7 +230,7 @@ func place_torch() -> void:
 		SaveManager.request_save()
 
 func place_rope() -> void:
-	# Rope is infinite, no decrement needed
+	# Rope / Ladder is infinite
 	var rope_scene = load("res://scenes/environment/rope_segment.tscn")
 	if not rope_scene: return
 	var rope = rope_scene.instantiate()
@@ -209,6 +239,21 @@ func place_rope() -> void:
 	rope.position = Vector2(snapped_x, snapped_y)
 	rope.add_to_group("placed_ropes")
 	get_tree().current_scene.add_child(rope)
+	if has_node("/root/SaveManager"):
+		SaveManager.request_save()
+
+func place_plank() -> void:
+	Inventory.planks -= 1
+	Inventory.inventory_changed.emit()
+	
+	var plank_scene = load("res://scenes/environment/plank.tscn")
+	if not plank_scene: return
+	var plank = plank_scene.instantiate()
+	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
+	var place_y = round((global_position.y + 12.0) / 32.0) * 32.0
+	plank.position = Vector2(place_x, place_y)
+	plank.add_to_group("placed_planks")
+	get_tree().current_scene.add_child(plank)
 	if has_node("/root/SaveManager"):
 		SaveManager.request_save()
 
@@ -227,7 +272,7 @@ func _try_chest_interaction() -> bool:
 	if has_node("PickupArea"):
 		for body in $PickupArea.get_overlapping_bodies():
 			if body.has_method("is_chest"):
-				if not body.is_closed and (Inventory.iron > 0 or Inventory.gold > 0):
+				if not body.is_closed and (Inventory.iron > 0 or Inventory.gold > 0 or Inventory.coal > 0):
 					var dropped = Inventory.remove_all()
 					body.deposit(dropped)
 				elif body.is_closed:

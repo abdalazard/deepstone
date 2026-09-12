@@ -1,14 +1,33 @@
 extends RigidBody2D
 
-enum ResourceType { IRON, GOLD }
+enum ResourceType { IRON, GOLD, COAL, PLANK, LAMP }
 @export var type: ResourceType = ResourceType.IRON
+var is_player_drop: bool = false
+var pickup_delay: float = 0.0
 
 func _ready() -> void:
 	var sprite = $Sprite2D
 	if type == ResourceType.IRON:
 		sprite.frame = 24 # Row 5 Col 1
-	else:
-		sprite.frame = 27 # Row 5 Col 4 (Gold color ingot in Kenney)
+		sprite.modulate = Color(1, 1, 1, 1)
+	elif type == ResourceType.GOLD:
+		sprite.frame = 27 # Row 5 Col 4 (Gold ingot)
+		sprite.modulate = Color(1, 1, 1, 1)
+	elif type == ResourceType.COAL:
+		sprite.frame = 24
+		sprite.modulate = Color(0.2, 0.2, 0.22, 1.0) # Charcoal lump
+	elif type == ResourceType.PLANK:
+		sprite.texture = load("res://assets/sprites/plank.png")
+		sprite.hframes = 1
+		sprite.vframes = 1
+		sprite.frame = 0
+		sprite.scale = Vector2(0.8, 0.8)
+	elif type == ResourceType.LAMP:
+		sprite.texture = load("res://assets/sprites/lamp_post.png")
+		sprite.hframes = 4
+		sprite.vframes = 1
+		sprite.frame = 0
+		sprite.scale = Vector2(1.2, 1.2)
 		
 	# Pop out effect
 	apply_impulse(Vector2(randf_range(-50, 50), randf_range(-150, -50)))
@@ -17,13 +36,16 @@ func _ready() -> void:
 	var tween = create_tween()
 	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.3).set_trans(Tween.TRANS_BOUNCE)
 	
-	# Auto collect for basic ores (Start almost immediately!)
-	var timer = Timer.new()
-	timer.wait_time = 0.3
-	timer.one_shot = true
-	timer.timeout.connect(_auto_fly_to_player)
-	add_child(timer)
-	timer.start()
+	if is_player_drop:
+		pickup_delay = 1.2
+	else:
+		# Auto collect for basic mined ores
+		var timer = Timer.new()
+		timer.wait_time = 0.3
+		timer.one_shot = true
+		timer.timeout.connect(_auto_fly_to_player)
+		add_child(timer)
+		timer.start()
 	
 	# Add area for auto-pickup (when player presses C)
 	var pickup_area = Area2D.new()
@@ -40,15 +62,37 @@ func _ready() -> void:
 
 var target_player: Node2D = null
 
+func _get_inv() -> Node:
+	if Engine.has_singleton("Inventory"):
+		return Engine.get_singleton("Inventory")
+	var loop = Engine.get_main_loop()
+	if loop and "root" in loop and loop.root and loop.root.has_node("Inventory"):
+		return loop.root.get_node("Inventory")
+	return null
+
+func _can_be_collected() -> bool:
+	if pickup_delay > 0.0:
+		return false
+	var inv = _get_inv()
+	if not inv: return true
+	if type in [ResourceType.IRON, ResourceType.GOLD, ResourceType.COAL]:
+		return inv.can_add(type)
+	return true
+
 func _auto_fly_to_player() -> void:
-	target_player = get_tree().current_scene.get_node_or_null("Player")
-	if not target_player or not Inventory.can_add(type): return
+	var tree = get_tree()
+	if not tree: return
+	var parent_node = tree.current_scene if tree.current_scene else tree.root
+	target_player = parent_node.get_node_or_null("Player") if parent_node else null
+	if not target_player or not _can_be_collected(): return
 	
 	set_deferred("freeze", true)
 	if has_node("CollisionShape2D"):
 		get_node("CollisionShape2D").set_deferred("disabled", true)
 
 func _process(delta: float) -> void:
+	if pickup_delay > 0.0:
+		pickup_delay -= delta
 	if target_player:
 		global_position = global_position.lerp(target_player.global_position, 10.0 * delta)
 		if global_position.distance_to(target_player.global_position) < 8.0:
@@ -56,12 +100,29 @@ func _process(delta: float) -> void:
 			target_player = null
 
 func collect() -> void:
-	if not Inventory.can_add(type): return
-	Inventory.add_resource(type, 1)
+	if not _can_be_collected(): return
+	var inv = _get_inv()
+	if not inv:
+		queue_free()
+		return
+		
+	if type in [ResourceType.IRON, ResourceType.GOLD, ResourceType.COAL]:
+		inv.add_resource(type, 1)
+	elif type == ResourceType.PLANK:
+		inv.planks = min(inv.planks + 1, 99)
+		inv.notify("+1 Tábua", "plank")
+		inv.inventory_changed.emit()
+	elif type == ResourceType.LAMP:
+		inv.signs = min(inv.signs + 1, 99)
+		inv.notify("+1 Mini Poste", "lamp")
+		inv.inventory_changed.emit()
 	
 	# Create light flash effect
 	var flash = PointLight2D.new()
-	flash.color = Color(1.0, 0.8, 0.2, 1.0) # Golden flash
+	var flash_col = Color(1.0, 0.8, 0.2, 1.0)
+	if type == ResourceType.COAL: flash_col = Color(0.6, 0.6, 0.7, 1.0)
+	elif type == ResourceType.PLANK: flash_col = Color(0.7, 0.5, 0.3, 1.0)
+	flash.color = flash_col
 	flash.energy = 2.0
 	
 	var grad = Gradient.new()
