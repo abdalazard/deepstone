@@ -6,8 +6,7 @@ const MAX_STACK: int = 20
 var iron: int = 0
 var gold: int = 0
 var signs: int = 10
-var ladders: int = 10
-var active_slot: int = 0 # 0=Pickaxe, 1=Sign, 2=Ladder, 3=Iron, 4=Gold
+var active_slot: int = 0 # 0=Pickaxe, 1=Sign, 2=Rope, 3=Iron, 4=Gold
 
 func can_add(type: int) -> bool:
 	if type == 0: return iron < MAX_STACK

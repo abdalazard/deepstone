@@ -19,9 +19,6 @@ func _on_body_exited(body: Node2D) -> void:
 var target_player: Node2D = null
 
 func hit() -> void:
-	Inventory.ladders += 1
-	Inventory.inventory_changed.emit()
-	
 	target_player = get_tree().current_scene.get_node_or_null("Player")
 	if not target_player:
 		queue_free()

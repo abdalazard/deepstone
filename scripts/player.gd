@@ -108,7 +108,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("slot_5"): set_slot(4)
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
-		# Cycle between 0, 1, 2 (Pickaxe, Sign, Ladder)
+		# Cycle between 0, 1, 2 (Pickaxe, Sign, Rope)
 		set_slot((Inventory.active_slot + 1) % 3)
 	
 	if Input.is_action_just_pressed("action_mine"):
@@ -118,8 +118,8 @@ func _physics_process(delta: float) -> void:
 			try_mine()
 		elif Inventory.active_slot == 1 and Inventory.signs > 0:
 			place_torch()
-		elif Inventory.active_slot == 2 and Inventory.ladders > 0:
-			place_ladder()
+		elif Inventory.active_slot == 2:
+			place_rope()
 			
 	if Input.is_action_just_pressed("action_collect"):
 		try_collect()
@@ -142,17 +142,15 @@ func place_torch() -> void:
 	torch.position = Vector2(snapped_x, snapped_y)
 	get_tree().current_scene.add_child(torch)
 
-func place_ladder() -> void:
-	Inventory.ladders -= 1
-	Inventory.inventory_changed.emit()
-	
-	var ladder_scene = load("res://scenes/environment/ladder_segment.tscn")
-	if not ladder_scene: return
-	var ladder = ladder_scene.instantiate()
+func place_rope() -> void:
+	# Rope is infinite, no decrement needed
+	var rope_scene = load("res://scenes/environment/rope_segment.tscn")
+	if not rope_scene: return
+	var rope = rope_scene.instantiate()
 	var snapped_x = floor(global_position.x / 32.0) * 32.0 + 16.0
 	var snapped_y = round(global_position.y / 32.0) * 32.0
-	ladder.position = Vector2(snapped_x, snapped_y)
-	get_tree().current_scene.add_child(ladder)
+	rope.position = Vector2(snapped_x, snapped_y)
+	get_tree().current_scene.add_child(rope)
 
 func try_collect() -> void:
 	if has_node("PickupArea"):

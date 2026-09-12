@@ -107,7 +107,7 @@ func _on_resources_changed() -> void:
 	# Update Slots Qty
 	slots[0].qty.text = "" # Pickaxe is infinite
 	slots[1].qty.text = str(Inventory.signs)
-	slots[2].qty.text = str(Inventory.ladders)
+	slots[2].qty.text = "" # Rope is infinite
 	slots[3].qty.text = str(Inventory.iron)
 	slots[4].qty.text = str(Inventory.gold)
 	
