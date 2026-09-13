@@ -148,6 +148,9 @@ func _ready() -> void:
 		mass = 1.5 # Balanced mass so it never launches the player
 		freeze = true
 		freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+		# Colide com blocos sólidos, tábuas/lajes/colunas (32) e o player (2),
+		# para que blocos despencando descansem sobre estruturas e machuquem o player.
+		collision_mask = 1 | 2 | 32
 
 	set_process(false)
 	set_physics_process(false)
@@ -181,7 +184,7 @@ func _has_support_below() -> bool:
 	if not space: return true
 	var query = PhysicsPointQueryParameters2D.new()
 	query.position = global_position + Vector2(0, 34)
-	query.collision_mask = 1
+	query.collision_mask = 1 | 32 # Blocos sólidos + tábuas/lajes/colunas
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
 	var results = space.intersect_point(query)

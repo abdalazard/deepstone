@@ -91,8 +91,19 @@ var column_tex: Texture2D = null
 
 func _get_column_tex() -> Texture2D:
 	if column_tex == null:
-		var img: Image = brick_tex.get_image()
-		img.rotate_90(ClockDirection.CLOCKWISE)
+		var w := 20
+		var h := 52
+		var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0.14, 0.1, 0.06, 1))
+		var src: Image = brick_tex.get_image()
+		var row_h := 16
+		var brick := src.duplicate()
+		brick.resize(w - 7, row_h, Image.INTERPOLATE_NEAREST)
+		for i in range(3):
+			var yy := 3 + i * (row_h + 2)
+			var ox := 4 if i % 2 == 0 else 7
+			var bh := min(row_h, h - yy)
+			img.blit_rect(brick, Rect2(0, 0, w - 7, bh), Vector2i(ox, yy))
 		column_tex = ImageTexture.create_from_image(img)
 	return column_tex
 
