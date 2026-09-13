@@ -12,7 +12,7 @@ func _safe_grab_focus(ctrl: Control) -> void:
 func is_some_panel_open() -> bool:
 	var panels: Array = [
 		inventory_panel, equipment_panel, shop_panel,
-		forge_panel, chest_panel, pause_panel, hotbar_config_panel
+		forge_panel, chest_panel, pause_panel, hotbar_config_panel, death_panel
 	]
 	for p in panels:
 		if is_instance_valid(p) and p.visible:
@@ -102,6 +102,9 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var avatar_rect = find_child("AvatarRect", true, false)
 @onready var level_badge_label = find_child("LevelBadgeLabel", true, false)
 @onready var exp_progress_bar = find_child("ExpProgressBar", true, false)
+@onready var health_bar = find_child("HealthBar", true, false)
+@onready var death_panel = find_child("DeathPanel", true, false)
+@onready var death_restart_btn = find_child("RestartBtn", true, false)
 @onready var level_up_panel = find_child("LevelUpPanel", true, false)
 @onready var level_up_title = find_child("LevelUpTitle", true, false)
 @onready var level_up_subtitle = find_child("LevelUpSubtitle", true, false)
@@ -115,6 +118,8 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var craft_ladder_btn = find_child("CraftLadderBtn", true, false)
 @onready var craft_plank_btn = find_child("CraftPlankBtn", true, false)
 @onready var craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
+@onready var craft_column_btn = find_child("CraftColumnBtn", true, false)
+@onready var craft_slab_btn = find_child("CraftSlabBtn", true, false)
 @onready var craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 var current_forge_node: Node = null
 var forge_tab_upgrade: bool = false
@@ -196,6 +201,26 @@ var chest_items_def = [
 		"shortcut": "6",
 		"is_tool": true,
 		"tool_slot": 5
+	},
+	{
+		"key": "column",
+		"name": "Coluna de Suporte",
+		"desc": "Pilar estrutural forjado com lama e pedra. Sustenta blocos 'pendurados' para evitar quedas.",
+		"icon_type": "direct",
+		"tex": "brick",
+		"shortcut": "",
+		"is_tool": true,
+		"tool_slot": 6
+	},
+	{
+		"key": "slab",
+		"name": "Laje de Tijolos",
+		"desc": "Laje estrutural de tijolos. Serve de base para apoiar e segurar blocos acima.",
+		"icon_type": "direct",
+		"tex": "brick",
+		"shortcut": "",
+		"is_tool": true,
+		"tool_slot": 7
 	},
 	{
 		"key": "wood",
@@ -330,6 +355,8 @@ func _ready() -> void:
 		restart_btn.pressed.connect(_on_restart_pressed)
 	if exit_btn and not exit_btn.pressed.is_connected(_on_exit_pressed):
 		exit_btn.pressed.connect(_on_exit_pressed)
+	if death_restart_btn and not death_restart_btn.pressed.is_connected(_on_death_restart):
+		death_restart_btn.pressed.connect(_on_death_restart)
 	if reset_mine_btn and not reset_mine_btn.pressed.is_connected(_on_reset_mine_pressed):
 		reset_mine_btn.pressed.connect(_on_reset_mine_pressed)
 
@@ -358,6 +385,10 @@ func _ready() -> void:
 		craft_pickaxe_btn.pressed.connect(_on_craft_pickaxe)
 	if craft_brick_floor_btn and not craft_brick_floor_btn.pressed.is_connected(_on_craft_brick_floor):
 		craft_brick_floor_btn.pressed.connect(_on_craft_brick_floor)
+	if craft_column_btn and not craft_column_btn.pressed.is_connected(_on_craft_column):
+		craft_column_btn.pressed.connect(_on_craft_column)
+	if craft_slab_btn and not craft_slab_btn.pressed.is_connected(_on_craft_slab):
+		craft_slab_btn.pressed.connect(_on_craft_slab)
 	if craft_portable_forge_btn and not craft_portable_forge_btn.pressed.is_connected(_on_craft_portable_forge):
 		craft_portable_forge_btn.pressed.connect(_on_craft_portable_forge)
 		
@@ -929,6 +960,24 @@ func _on_craft_brick_floor() -> void:
 		else:
 			show_toast("Recursos insuficientes! Requer 1 Lama e 1 Pedra.", "plank")
 
+func _on_craft_column() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_column():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Recursos insuficientes! Requer 3 Lamas e 3 Pedras.", "plank")
+
+func _on_craft_slab() -> void:
+	var inv = _get_inv()
+	if inv:
+		if inv.craft_slab():
+			update_forge_ui()
+			update_ui()
+		else:
+			show_toast("Recursos insuficientes! Requer 2 Lamas e 2 Pedras.", "plank")
+
 func _on_craft_portable_forge() -> void:
 	var inv = _get_inv()
 	if inv:
@@ -978,6 +1027,12 @@ func update_forge_ui() -> void:
 	if not craft_brick_floor_btn: craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
 	if craft_brick_floor_btn:
 		craft_brick_floor_btn.disabled = not inv.can_craft_brick_floor()
+	if not craft_column_btn: craft_column_btn = find_child("CraftColumnBtn", true, false)
+	if craft_column_btn:
+		craft_column_btn.disabled = not inv.can_craft_column()
+	if not craft_slab_btn: craft_slab_btn = find_child("CraftSlabBtn", true, false)
+	if craft_slab_btn:
+		craft_slab_btn.disabled = not inv.can_craft_slab()
 	if not craft_portable_forge_btn: craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 	if craft_portable_forge_btn:
 		craft_portable_forge_btn.disabled = not inv.can_craft_portable_forge()
@@ -1088,6 +1143,18 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	var hbox = HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 10)
 	margin.add_child(hbox)
+	
+	var equip_def: Dictionary = {}
+	if inv:
+		equip_def = inv.get_equipped_def(up.get("target_slot", ""))
+	var row_icon = TextureRect.new()
+	row_icon.custom_minimum_size = Vector2(28, 28)
+	row_icon.texture = _equip_icon_tex(equip_def.get("icon", ""))
+	row_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	row_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	row_icon.modulate = _equip_tint(equip_def, up.get("current_level", 0), up.get("max_level", 5))
+	hbox.add_child(row_icon)
 	
 	var vbox = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1208,6 +1275,9 @@ func _update_single_slot_ui(slot_node: Node, def: Dictionary, slot: String) -> v
 	var name_lbl = slot_node.find_child("ItemName", true, false)
 	var desc_lbl = slot_node.find_child("ItemDesc", true, false)
 	var lvl = inv.get_upgrade_level(slot) if inv else 0
+	var icon = slot_node.find_child("SlotIcon", true, false)
+	if icon:
+		icon.modulate = _equip_tint(def, lvl, inv.UPGRADE_MAX_LEVEL if inv else 5)
 	if name_lbl:
 		var nm = def.get("name", "")
 		if lvl > 0:
@@ -1225,6 +1295,21 @@ func _update_single_slot_ui(slot_node: Node, def: Dictionary, slot: String) -> v
 				"glove": bonus = "+%d de forca e +%d de dano de chute" % [lvl, lvl]
 			desc += "\nNivel %d: %s." % [lvl, bonus]
 		desc_lbl.text = desc
+
+func _equip_icon_tex(icon_type: String) -> Texture2D:
+	match icon_type:
+		"helmet": return helmet_tex
+		"pickaxe": return pickaxe_tex
+		"armor": return armor_tex
+		"boots": return boots_tex
+		"glove": return pickaxe_tex
+		_: return helmet_tex
+
+func _equip_tint(def: Dictionary, lvl: int = 0, max_lvl: int = 5) -> Color:
+	var base = def.get("color", Color.WHITE)
+	if lvl > 0 and max_lvl > 0:
+		return base.lerp(Color(1.0, 0.92, 0.4), clampf(float(lvl) / float(max_lvl), 0.0, 1.0))
+	return base
 
 func toggle() -> void:
 	if not inventory_panel: return
@@ -1296,7 +1381,7 @@ func _refresh_inventory_hotbar_setup() -> void:
 		
 		if key == "ladder": icon.texture = rope_tex
 		elif key == "plank": icon.texture = plank_tex
-		elif key == "brick": icon.texture = brick_tex
+		elif key == "brick" or key == "column" or key == "slab": icon.texture = brick_tex
 		elif key == "forge": icon.texture = stone_tex
 		elif key == "lamp":
 			var atlas = AtlasTexture.new()
@@ -1304,15 +1389,15 @@ func _refresh_inventory_hotbar_setup() -> void:
 			atlas.region = Rect2(0, 0, 16, 16)
 			icon.texture = atlas
 		elif key == "pickaxe":
-			var atlas = AtlasTexture.new()
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(0, 0, 16, 16)
-			icon.texture = atlas
+			var atlas2 = AtlasTexture.new()
+			atlas2.atlas = extras_tex
+			atlas2.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas2
 		else:
-			var atlas = AtlasTexture.new()
-			atlas.atlas = extras_tex
-			atlas.region = Rect2(0, 0, 16, 16)
-			icon.texture = atlas
+			var atlas3 = AtlasTexture.new()
+			atlas3.atlas = extras_tex
+			atlas3.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas3
 		
 		vbox.add_child(icon)
 		
@@ -1356,6 +1441,23 @@ func open_pause() -> void:
 func close_pause() -> void:
 	if pause_panel:
 		pause_panel.visible = false
+
+func show_death_screen() -> void:
+	if death_panel:
+		death_panel.visible = true
+	update_ui()
+	if death_restart_btn:
+		_safe_grab_focus(death_restart_btn)
+
+func _on_death_restart() -> void:
+	if death_panel:
+		death_panel.visible = false
+	var inv = _get_inv()
+	if inv and inv.has_method("heal_full"):
+		inv.heal_full()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").restart_run_to_surface()
+	update_ui()
 
 func _on_save_pressed() -> void:
 	if has_node("/root/SaveManager"):
@@ -1506,6 +1608,15 @@ func _create_shop_buy_row(def: Dictionary) -> PanelContainer:
 	var hbox = HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 10)
 	margin.add_child(hbox)
+	
+	var icon_rect = TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(28, 28)
+	icon_rect.texture = _equip_icon_tex(def.get("icon", ""))
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon_rect.modulate = _equip_tint(def, 0, 5)
+	hbox.add_child(icon_rect)
 	
 	var vbox = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1698,7 +1809,7 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	var k = def.get("key", "")
 	if k == "ladder": icon.texture = rope_tex
 	elif k == "plank": icon.texture = plank_tex
-	elif k == "brick": icon.texture = brick_tex
+	elif k == "brick" or k == "column" or k == "slab": icon.texture = brick_tex
 	elif k == "forge": icon.texture = stone_tex
 	elif k == "lamp":
 		var atlas = AtlasTexture.new()
@@ -1765,7 +1876,7 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	var k = def.get("key", "")
 	if k == "ladder": icon.texture = rope_tex
 	elif k == "plank": icon.texture = plank_tex
-	elif k == "brick": icon.texture = brick_tex
+	elif k == "brick" or k == "column" or k == "slab": icon.texture = brick_tex
 	elif k == "wood": icon.texture = wood_tex
 	elif k == "stone" or k == "forge": icon.texture = stone_tex
 	elif k == "dirt": icon.texture = dirt_tex
@@ -1899,6 +2010,8 @@ func _get_item_count(key: String) -> int:
 		"ladder": return inv.ladders if "ladders" in inv else 0
 		"plank": return inv.planks
 		"brick": return inv.brick_floors if "brick_floors" in inv else 0
+		"column": return inv.columns if "columns" in inv else 0
+		"slab": return inv.slabs if "slabs" in inv else 0
 		"forge": return inv.portable_forges if "portable_forges" in inv else 0
 		"wood": return inv.wood_logs if "wood_logs" in inv else 0
 		"iron": return inv.iron
@@ -1929,6 +2042,11 @@ func update_ui() -> void:
 		var cur = inv.current_exp if "current_exp" in inv else 0
 		exp_progress_bar.max_value = float(req)
 		exp_progress_bar.value = float(cur)
+
+	if health_bar:
+		var max_hp = inv.get_max_health() if inv.has_method("get_max_health") else 100
+		health_bar.max_value = float(max_hp)
+		health_bar.value = float(inv.current_health if "current_health" in inv else max_hp)
 	
 	# Update Hotbar Slots
 	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp", "ladder", "plank"]
@@ -1943,7 +2061,7 @@ func update_ui() -> void:
 		if icon:
 			if key == "ladder": icon.texture = rope_tex
 			elif key == "plank": icon.texture = plank_tex
-			elif key == "brick": icon.texture = brick_tex
+			elif key == "brick" or key == "column" or key == "slab": icon.texture = brick_tex
 			elif key == "forge": icon.texture = stone_tex
 			elif key == "lamp":
 				var atlas = AtlasTexture.new()
@@ -1980,6 +2098,9 @@ func update_ui() -> void:
 			style.bg_color = Color(0.16, 0.1, 0.05, 0.95)
 			
 		if key == "pickaxe":
+			if icon:
+				var p_def = inv.get_equipped_def("pickaxe")
+				icon.modulate = _equip_tint(p_def, inv.pickaxe_upgrade_level if "pickaxe_upgrade_level" in inv else 0, 5)
 			if inv.has_pickaxe:
 				count_lbl.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability]
 				var pct = (float(inv.pickaxe_durability) / float(inv.max_pickaxe_durability)) * 100.0
@@ -2009,6 +2130,12 @@ func update_ui() -> void:
 		elif key == "forge":
 			count_lbl.text = "%d" % inv.portable_forges
 			slot.modulate = Color.WHITE if inv.portable_forges > 0 else Color(1, 1, 1, 0.4)
+		elif key == "column":
+			count_lbl.text = "%d" % inv.columns
+			slot.modulate = Color.WHITE if inv.columns > 0 else Color(1, 1, 1, 0.4)
+		elif key == "slab":
+			count_lbl.text = "%d" % inv.slabs
+			slot.modulate = Color.WHITE if inv.slabs > 0 else Color(1, 1, 1, 0.4)
 
 	# Update Chest Grid slots counts
 	for i in range(chest_slots.size()):

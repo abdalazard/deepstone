@@ -379,6 +379,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("slot_2"): set_slot(1)
 	if Input.is_action_just_pressed("slot_3"): set_slot(2)
 	if Input.is_action_just_pressed("slot_4"): set_slot(3)
+	if Input.is_action_just_pressed("slot_5"): set_slot(4)
 	
 	if Input.is_action_just_pressed("action_cycle_slot"):
 		var cur_slot = inv.active_slot if inv else 0
@@ -425,7 +426,17 @@ func execute_active_item() -> void:
 			if inv and inv.portable_forges > 0:
 				place_portable_forge()
 			else:
-				if inv: inv.notify("Sem forjas portáteis! Crie na Forja usando 5 lama, 4 pedra e 2 ferro.", "forge")
+				if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 terra, 4 pedra e 2 ferro.", "forge")
+		"column":
+			if inv and inv.columns > 0:
+				place_column()
+			else:
+				if inv: inv.notify("Sem colunas de suporte! Forje na Forja.", "plank")
+		"slab":
+			if inv and inv.slabs > 0:
+				place_slab()
+			else:
+				if inv: inv.notify("Sem lajes de tijolos! Forje na Forja.", "plank")
 		_:
 			try_mine()
 
@@ -521,7 +532,51 @@ func place_brick_floor() -> void:
 	if sm:
 		sm.request_save()
 
-func place_portable_forge() -> void:
+func place_column() -> void:
+	var inv = _get_inv()
+	if not inv or inv.columns <= 0:
+		if inv: inv.notify("Sem colunas de suporte!", "plank")
+		return
+	inv.columns -= 1
+	inv.inventory_changed.emit()
+	
+	var platform_scene = load("res://scenes/environment/brick_floor.tscn")
+	if not platform_scene: return
+	var platform = platform_scene.instantiate()
+	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
+	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
+	if Input.is_action_pressed("ui_down"): grid_y += 1
+	elif Input.is_action_pressed("ui_up"): grid_y -= 1
+	var place_y = grid_y * 32.0 + 117.0
+	platform.position = Vector2(place_x, place_y)
+	platform.add_to_group("placed_planks")
+	get_tree().current_scene.add_child(platform)
+	if inv: inv.notify("Coluna Instalada!", "plank")
+	var sm = _get_save()
+	if sm: sm.request_save()
+
+func place_slab() -> void:
+	var inv = _get_inv()
+	if not inv or inv.slabs <= 0:
+		if inv: inv.notify("Sem lajes de tijolos!", "plank")
+		return
+	inv.slabs -= 1
+	inv.inventory_changed.emit()
+	
+	var platform_scene = load("res://scenes/environment/brick_floor.tscn")
+	if not platform_scene: return
+	var platform = platform_scene.instantiate()
+	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
+	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
+	if Input.is_action_pressed("ui_down"): grid_y += 1
+	elif Input.is_action_pressed("ui_up"): grid_y -= 1
+	var place_y = grid_y * 32.0 + 117.0
+	platform.position = Vector2(place_x, place_y)
+	platform.add_to_group("placed_planks")
+	get_tree().current_scene.add_child(platform)
+	if inv: inv.notify("Laje Instalada!", "plank")
+	var sm = _get_save()
+	if sm: sm.request_save()
 	var inv = _get_inv()
 	if not inv or inv.portable_forges <= 0:
 		if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 lama, 4 pedra e 2 ferro.", "forge")

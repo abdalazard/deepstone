@@ -18,7 +18,65 @@ var planks: int = 0 # Tábuas de madeira forjadas (1 tronco -> 5 tábuas)
 var dirt: int = 0 # Lama/Terra obtida de escavação
 var stone: int = 0 # Pedra obtida de escavação
 var brick_floors: int = 0 # Pisos de tijolo forjados (1 lama + 1 pedra)
+var columns: int = 0 # Colunas de suporte estrutural (3 lama + 3 pedra)
+var slabs: int = 0 # Lajes de tijolo estruturais (2 lama + 2 pedra)
 var portable_forges: int = 0 # Forjas portáteis (5 lama + 4 pedra + 2 ferro)
+
+# Saúde e Resistência do jogador
+var current_health: float = 100.0
+
+func get_max_health() -> int:
+	return 100 + level * 20
+
+func get_resistance() -> int:
+	var armor_def = get_equipped_def("armor")
+	var helmet_def = get_equipped_def("helmet")
+	var armor_res = armor_def.get("capacity_bonus", 0) / 4 + armor_upgrade_level * 5
+	var helmet_res = int(helmet_def.get("light_radius", 110.0) / 30.0) + helmet_upgrade_level * 5
+	return armor_res + helmet_res
+
+func take_damage(amount: int) -> bool:
+	var mitigation = get_resistance()
+	var final_dmg = max(1, amount - mitigation)
+	current_health = max(0.0, current_health - final_dmg)
+	inventory_changed.emit()
+	if current_health <= 0.0:
+		die()
+		return true
+	return false
+
+func die() -> void:
+	# Perde os recursos que NÃO foram guardados no baú, mas mantém os equipamentos
+	iron = 0
+	gold = 0
+	coal = 0
+	wood_logs = 0
+	ladders = 0
+	planks = 0
+	dirt = 0
+	stone = 0
+	brick_floors = 0
+	columns = 0
+	slabs = 0
+	portable_forges = 0
+	bombs = 0
+	starter_lamps = 0
+	notify("Você morreu! Os recursos coletados foram perdidos.", "pickaxe")
+	inventory_changed.emit()
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
+	var hud = _get_hud()
+	if hud and hud.has_method("show_death_screen"):
+		hud.show_death_screen()
+
+func heal_full() -> void:
+	current_health = float(get_max_health())
+	inventory_changed.emit()
+
+func _get_hud() -> Node:
+	if is_inside_tree() and get_tree() and get_tree().current_scene:
+		return get_tree().current_scene.get_node_or_null("HUD")
+	return null
 var bombs: int = 0 # Bombas de dinamite para escavação rápida
 
 # Picareta & Durabilidade
@@ -75,6 +133,7 @@ const EQUIPMENT_DEFS = {
 		"cost_coins": 0,
 		"level_req": 0,
 		"light_radius": 110.0,
+		"color": Color(0.72, 0.68, 0.6),
 		"icon": "helmet"
 	},
 	"helmet_lamp": {
@@ -82,9 +141,10 @@ const EQUIPMENT_DEFS = {
 		"name": "Capacete com Lanterna",
 		"slot": "helmet",
 		"desc": "Possui foco luminoso frontal acoplado para iluminar o subsolo.",
-		"cost_coins": 40,
+		"cost_coins": 150,
 		"level_req": 3,
 		"light_radius": 170.0,
+		"color": Color(1.0, 0.85, 0.35),
 		"icon": "helmet"
 	},
 	"helmet_iron_lamp": {
@@ -92,9 +152,10 @@ const EQUIPMENT_DEFS = {
 		"name": "Capacete de Ferro Iluminado",
 		"slot": "helmet",
 		"desc": "Lanterna de alto alcance e casco blindado forjado em ferro espesso.",
-		"cost_coins": 90,
+		"cost_coins": 650,
 		"level_req": 8,
 		"light_radius": 240.0,
+		"color": Color(0.88, 0.9, 0.95),
 		"icon": "helmet"
 	},
 	
@@ -108,6 +169,7 @@ const EQUIPMENT_DEFS = {
 		"level_req": 0,
 		"max_durability": 100,
 		"mine_speed_mult": 1.0,
+		"color": Color(0.86, 0.55, 0.3),
 		"icon": "pickaxe"
 	},
 	"pickaxe_iron": {
@@ -115,10 +177,11 @@ const EQUIPMENT_DEFS = {
 		"name": "Picareta de Ferro Reforçada",
 		"slot": "pickaxe",
 		"desc": "+60% de resistência. Durabilidade: 160 HP e corte 25% mais rápido.",
-		"cost_coins": 80,
+		"cost_coins": 400,
 		"level_req": 6,
 		"max_durability": 160,
 		"mine_speed_mult": 1.25,
+		"color": Color(0.68, 0.72, 0.8),
 		"icon": "pickaxe"
 	},
 	"pickaxe_gold": {
@@ -126,10 +189,11 @@ const EQUIPMENT_DEFS = {
 		"name": "Picareta de Ouro Nobre",
 		"slot": "pickaxe",
 		"desc": "Super resistente (+150%) e veloz. Durabilidade: 250 HP e corte 60% mais rápido.",
-		"cost_coins": 200,
+		"cost_coins": 1300,
 		"level_req": 11,
 		"max_durability": 250,
 		"mine_speed_mult": 1.6,
+		"color": Color(1.0, 0.82, 0.25),
 		"icon": "pickaxe"
 	},
 	
@@ -142,6 +206,7 @@ const EQUIPMENT_DEFS = {
 		"cost_coins": 0,
 		"level_req": 0,
 		"capacity_bonus": 0,
+		"color": Color(0.6, 0.52, 0.42),
 		"icon": "armor"
 	},
 	"armor_reinforced": {
@@ -149,9 +214,10 @@ const EQUIPMENT_DEFS = {
 		"name": "Traje Reforçado",
 		"slot": "armor",
 		"desc": "Costura reforçada com bolsos extras (+20 carga: total 80).",
-		"cost_coins": 60,
+		"cost_coins": 220,
 		"level_req": 5,
 		"capacity_bonus": 20,
+		"color": Color(0.78, 0.68, 0.5),
 		"icon": "armor"
 	},
 	"armor_explorer": {
@@ -159,9 +225,10 @@ const EQUIPMENT_DEFS = {
 		"name": "Traje do Explorador",
 		"slot": "armor",
 		"desc": "Mochila integrada de alta resistência (+40 carga: total 100).",
-		"cost_coins": 120,
+		"cost_coins": 800,
 		"level_req": 10,
 		"capacity_bonus": 40,
+		"color": Color(0.48, 0.72, 0.55),
 		"icon": "armor"
 	},
 	
@@ -175,6 +242,7 @@ const EQUIPMENT_DEFS = {
 		"level_req": 0,
 		"jump_mult": 1.0,
 		"speed_mult": 1.0,
+		"color": Color(0.55, 0.42, 0.3),
 		"icon": "boots"
 	},
 	"boots_leather": {
@@ -182,10 +250,11 @@ const EQUIPMENT_DEFS = {
 		"name": "Botas de Couro Leves",
 		"slot": "boots",
 		"desc": "+15% de velocidade de corrida e +15% de altura no salto.",
-		"cost_coins": 35,
+		"cost_coins": 120,
 		"level_req": 4,
 		"jump_mult": 1.15,
 		"speed_mult": 1.15,
+		"color": Color(0.72, 0.5, 0.28),
 		"icon": "boots"
 	},
 	"boots_steel": {
@@ -193,10 +262,11 @@ const EQUIPMENT_DEFS = {
 		"name": "Botas de Aço com Molas",
 		"slot": "boots",
 		"desc": "+25% de velocidade e +30% de altura de salto extraordinário.",
-		"cost_coins": 85,
+		"cost_coins": 550,
 		"level_req": 9,
 		"jump_mult": 1.30,
 		"speed_mult": 1.25,
+		"color": Color(0.82, 0.86, 0.92),
 		"icon": "boots"
 	},
 	
@@ -210,6 +280,7 @@ const EQUIPMENT_DEFS = {
 		"level_req": 0,
 		"strength_bonus": 1,
 		"kick_damage": 1,
+		"color": Color(0.7, 0.52, 0.32),
 		"icon": "glove"
 	},
 	"glove_iron": {
@@ -217,10 +288,11 @@ const EQUIPMENT_DEFS = {
 		"name": "Luva de Ferro",
 		"slot": "glove",
 		"desc": "Manopla reforçada de ferro (+2 força, +2 dano de chute).",
-		"cost_coins": 50,
-		"level_req": 5,
+		"cost_coins": 350,
+		"level_req": 7,
 		"strength_bonus": 2,
 		"kick_damage": 2,
+		"color": Color(0.6, 0.68, 0.75),
 		"icon": "glove"
 	},
 	"glove_gold": {
@@ -228,10 +300,11 @@ const EQUIPMENT_DEFS = {
 		"name": "Luva de Ouro Nobre",
 		"slot": "glove",
 		"desc": "Luva resiliente banhada a ouro (+3 força, +3 dano de chute).",
-		"cost_coins": 130,
-		"level_req": 8,
+		"cost_coins": 1100,
+		"level_req": 12,
 		"strength_bonus": 3,
 		"kick_damage": 3,
+		"color": Color(1.0, 0.82, 0.25),
 		"icon": "glove"
 	}
 }
@@ -724,6 +797,38 @@ func craft_planks() -> bool:
 		return true
 	return false
 
+func can_craft_column() -> bool:
+	return dirt >= 3 and stone >= 3
+
+func craft_column() -> bool:
+	if can_craft_column():
+		dirt -= 3
+		stone -= 3
+		columns += 1
+		add_exp(8)
+		inventory_changed.emit()
+		notify("+1 Coluna de Suporte Forjada!", "plank")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
+func can_craft_slab() -> bool:
+	return dirt >= 2 and stone >= 2
+
+func craft_slab() -> bool:
+	if can_craft_slab():
+		dirt -= 2
+		stone -= 2
+		slabs += 1
+		add_exp(8)
+		inventory_changed.emit()
+		notify("+1 Laje de Tijolos Forjada!", "plank")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
 func can_craft_brick_floor() -> bool:
 	return dirt >= 1 and stone >= 1
 
@@ -865,6 +970,20 @@ func add_item(type: String, amount: int = 1) -> bool:
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
+	elif type == "column":
+		columns += amount
+		notify("+" + str(amount) + " Coluna de Suporte", "plank")
+		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	elif type == "slab":
+		slabs += amount
+		notify("+" + str(amount) + " Laje de Tijolos", "plank")
+		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
 	elif type == "bomb":
 		bombs += amount
 		notify("+%d Bomba!" % amount, "chest")
@@ -973,6 +1092,8 @@ func reset_inventory() -> void:
 	dirt = 0
 	stone = 0
 	brick_floors = 0
+	columns = 0
+	slabs = 0
 	portable_forges = 0
 	bombs = 0
 	has_pickaxe = true

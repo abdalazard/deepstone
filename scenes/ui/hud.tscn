@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=40 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" uid="uid://c3d5rj1y1aat2" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" uid="uid://ckk0xveldm2s" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
@@ -51,6 +51,13 @@ corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(0.9, 0.25, 0.25, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_btn_hover"]
 bg_color = Color(0.35, 0.22, 0.1, 1)
@@ -820,13 +827,13 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="StatsNames" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/StatsHBox"]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.85, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 10
-horizontal_alignment = 2
+horizontal_alignment = 0
 text = "FORCA
 VELOCIDADE
 PULO"
@@ -1778,6 +1785,98 @@ theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
 text = "Forjar 1 Piso"
 
+[node name="ColumnRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("13_plank")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Coluna de Suporte"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 3 Lamas + 3 Pedras -> 1 Coluna"
+
+[node name="CraftColumnBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar 1 Coluna"
+
+[node name="SlabRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("13_plank")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "Laje de Tijolos"
+
+[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Custo: 2 Lamas + 2 Pedras -> 1 Laje"
+
+[node name="CraftSlabBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox"]
+custom_minimum_size = Vector2(130, 30)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Forjar 1 Laje"
+
 [node name="PickaxeRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
@@ -1895,6 +1994,75 @@ grow_vertical = 0
 theme_override_styles/background = SubResource("StyleBoxFlat_exp_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_exp_fill")
 show_percentage = false
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 8)
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -16.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/background = SubResource("StyleBoxFlat_exp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_health_fill")
+show_percentage = false
+
+[node name="DeathPanel" type="PanelContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(460, 220)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -110.0
+offset_right = 230.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pause_panel")
+
+[node name="Margin" type="MarginContainer" parent="DeathPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="DeathPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="DeathPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "💀 VOCÊ MORREU!"
+horizontal_alignment = 1
+
+[node name="Desc" type="Label" parent="DeathPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.95, 0.88, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 13
+text = "Todos os recursos coletados foram perdidos (o que estava guardado no baú ficou salvo). Seus equipamentos foram preservados. Deseja voltar para a superfície e começar da onde parou?"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="RestartBtn" type="Button" parent="DeathPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
+text = "Voltar à Superfície"
 
 [node name="LevelUpPanel" type="PanelContainer" parent="."]
 visible = false

@@ -163,6 +163,61 @@ func unfreeze_ore() -> void:
 		fall_timer = 0.0
 		set_physics_process(true)
 
+# Gravidade dos blocos: solto o bloco para cair caso o suporte de baixo tenha
+# sido removido (escavação). Colunas e lajes servem de suporte (qualquer corpo
+# sólido embaixo impede a queda).
+func unfreeze_if_unsupported() -> void:
+	if is_unbreakable or not freeze:
+		return
+	if _has_support_below():
+		return
+	freeze = false
+	is_falling = true
+	fall_timer = 0.0
+	set_physics_process(true)
+
+func _has_support_below() -> bool:
+	var space = get_world_2d().direct_space_state
+	if not space: return true
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = global_position + Vector2(0, 34)
+	query.collision_mask = 1
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	var results = space.intersect_point(query)
+	for r in results:
+		var col = r.collider
+		if is_instance_valid(col) and col != self:
+			if col.has_method("is_falling") and col.get("is_falling"):
+				continue
+			return true
+	return false
+
+func get_impact_damage() -> int:
+	if is_unbreakable: return 5
+	if is_copper: return 5
+	if is_dirt or is_roots: return 1
+	if is_coal: return 2
+	if is_stone: return 2
+	return 3
+
+func _deal_impact_damage() -> void:
+	var inv = null
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		inv = get_tree().root.get_node("Inventory")
+	if not inv or not inv.has_method("take_damage"):
+		return
+	for body in get_colliding_bodies():
+		if body is CharacterBody2D and body.name == "Player":
+			inv.take_damage(get_impact_damage())
+			return
+
+# Atualiza a posição de grade após a queda do bloco (para persistência futura)
+func _refresh_grid_on_landing() -> void:
+	var gx := round((global_position.x - 16.0) / 32.0)
+	var gy := round((global_position.y - 128.0) / 32.0)
+	grid_pos = Vector2i(int(gx), int(gy))
+
 func drag_push(dir_x: float, push_speed: float) -> void:
 	if not is_ore():
 		return
@@ -208,6 +263,8 @@ func _physics_process(delta: float) -> void:
 			# Snap gently to nearest tile column
 			global_position.x = round((global_position.x - 16.0) / 32.0) * 32.0 + 16.0
 			set_physics_process(false)
+			_refresh_grid_on_landing()
+			_deal_impact_damage()
 			_wake_block_above()
 
 func is_ore() -> bool:
@@ -319,11 +376,16 @@ func _wake_block_above() -> void:
 	var query = PhysicsPointQueryParameters2D.new()
 	query.position = global_position + Vector2(0, -32)
 	query.collision_mask = 1
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
 	var results = space.intersect_point(query)
 	for r in results:
 		var col = r.collider
-		if is_instance_valid(col) and col != self and col.has_method("unfreeze_ore"):
-			col.unfreeze_ore()
+		if is_instance_valid(col) and col != self:
+			if col.has_method("unfreeze_if_unsupported"):
+				col.unfreeze_if_unsupported()
+			elif col.has_method("unfreeze_ore"):
+				col.unfreeze_ore()
 
 func spawn_particles() -> void:
 	var particles = CPUParticles2D.new()

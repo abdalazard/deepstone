@@ -179,6 +179,8 @@ func save_game(show_notify: bool = false) -> void:
 			"dirt": inv.dirt if (inv and "dirt" in inv) else 0,
 			"stone": inv.stone if (inv and "stone" in inv) else 0,
 			"brick_floors": inv.brick_floors if (inv and "brick_floors" in inv) else 0,
+			"columns": inv.columns if (inv and "columns" in inv) else 0,
+			"slabs": inv.slabs if (inv and "slabs" in inv) else 0,
 			"portable_forges": inv.portable_forges if (inv and "portable_forges" in inv) else 0,
 			"has_pickaxe": inv.has_pickaxe if (inv and "has_pickaxe" in inv) else true,
 			"pickaxe_durability": inv.pickaxe_durability if (inv and "pickaxe_durability" in inv) else 100,
@@ -271,6 +273,10 @@ func load_game() -> bool:
 			inv.stone = inv_data.get("stone", 0)
 		if "brick_floors" in inv:
 			inv.brick_floors = inv_data.get("brick_floors", 0)
+		if "columns" in inv:
+			inv.columns = inv_data.get("columns", 0)
+		if "slabs" in inv:
+			inv.slabs = inv_data.get("slabs", 0)
 		if "portable_forges" in inv:
 			inv.portable_forges = inv_data.get("portable_forges", 0)
 		if "has_pickaxe" in inv:
