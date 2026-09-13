@@ -290,6 +290,8 @@ func load_game() -> bool:
 			for s in saved_slots:
 				if s not in ["forge"]:
 					inv.hotbar_slots.append(s)
+			if inv.has_method("ensure_hotbar_slots"):
+				inv.ensure_hotbar_slots(5)
 		if "equipped_helmet" in inv:
 			inv.equipped_helmet = inv_data.get("equipped_helmet", "helmet_miner")
 		if "equipped_pickaxe" in inv:
