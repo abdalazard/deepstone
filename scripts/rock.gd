@@ -214,9 +214,9 @@ func _deal_impact_damage() -> void:
 
 # Atualiza a posição de grade após a queda do bloco (para persistência futura)
 func _refresh_grid_on_landing() -> void:
-	var gx := round((global_position.x - 16.0) / 32.0)
-	var gy := round((global_position.y - 128.0) / 32.0)
-	grid_pos = Vector2i(int(gx), int(gy))
+	var gx: int = int(round((global_position.x - 16.0) / 32.0))
+	var gy: int = int(round((global_position.y - 128.0) / 32.0))
+	grid_pos = Vector2i(gx, gy)
 
 func drag_push(dir_x: float, push_speed: float) -> void:
 	if not is_ore():
