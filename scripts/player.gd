@@ -31,6 +31,9 @@ var tex_climb = preload("res://assets/sprites/Rope.png")
 
 var inventory_override: Node = null
 
+var helmet_light: PointLight2D
+var helmet_light_tex: Texture2D
+
 func _get_inv() -> Node:
 	if inventory_override:
 		return inventory_override
@@ -42,6 +45,13 @@ func _get_save() -> Node:
 	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
 		return get_tree().root.get_node("SaveManager")
 	return null
+
+func _is_ui_open() -> bool:
+	if is_inside_tree() and get_tree() and get_tree().current_scene:
+		var hud = get_tree().current_scene.get_node_or_null("HUD")
+		if hud and hud.has_method("is_some_panel_open"):
+			return hud.is_some_panel_open()
+	return false
 
 func _ready() -> void:
 	var sm = _get_save()
@@ -59,6 +69,52 @@ func _ready() -> void:
 	var inv = _get_inv()
 	if inv and not inv.level_up.is_connected(_on_level_up):
 		inv.level_up.connect(_on_level_up)
+	
+	# Lanterna do capacete: cone de luz de 2 blocos (64px) apenas para a frente
+	helmet_light_tex = _build_helmet_light_texture()
+	helmet_light = PointLight2D.new()
+	helmet_light.name = "HelmetLight"
+	helmet_light.texture = helmet_light_tex
+	helmet_light.color = Color(1.0, 0.96, 0.82)
+	helmet_light.energy = 1.3
+	helmet_light.visible = false
+	add_child(helmet_light)
+
+func _build_helmet_light_texture() -> Texture2D:
+	var w := 128
+	var h := 64
+	var img := Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
+	var tan_half := tan(0.5)
+	var half_w := float(w) * 0.5
+	for y in range(h):
+		var dy := (float(y) - h * 0.5) / half_w
+		for x in range(w):
+			var dx := (float(x) - half_w) / half_w
+			var a := 0.0
+			if dx > 0.0:
+				var edge := maxf(dx * tan_half, 0.02)
+				var cone := exp(-0.5 * pow(dy / edge, 2.0))
+				var reach := pow(dx, 0.9) * (1.0 - 0.35 * dx)
+				a = clampf(cone * reach, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(img)
+
+func _update_helmet_light() -> void:
+	var inv = _get_inv()
+	var has_lamp := false
+	if inv and inv.has_method("get_equipped_def"):
+		var hdef = inv.get_equipped_def("helmet")
+		has_lamp = hdef.get("id", "") in ["helmet_lamp", "helmet_iron_lamp"]
+	if helmet_light:
+		helmet_light.visible = has_lamp
+		if has_lamp:
+			helmet_light.scale = Vector2.ONE
+			if Input.is_action_pressed("ui_up"):
+				helmet_light.rotation = -PI * 0.5
+			elif Input.is_action_pressed("ui_down"):
+				helmet_light.rotation = PI * 0.5
+			else:
+				helmet_light.rotation = 0.0 if facing_x >= 0.0 else PI
 
 func _on_level_up(new_lvl: int, _req_exp: int) -> void:
 	# In-world character Level Up VFX
@@ -84,7 +140,7 @@ func _spawn_level_up_aura(lvl: int) -> void:
 	
 	# Floating label over player
 	var lbl = Label.new()
-	lbl.text = "★ NÍVEL %d! ★" % lvl
+	lbl.text = "★ LEVEL UP! NÍVEL %d! ★" % lvl
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.modulate = Color(1.0, 0.9, 0.3, 1.0)
@@ -175,6 +231,8 @@ func _process(delta: float) -> void:
 		sprite.flip_h = (last_direction.x < 0)
 	elif facing_x != 0:
 		sprite.flip_h = (facing_x < 0)
+	
+	_update_helmet_light()
 
 func _physics_process(delta: float) -> void:
 	var inv_stats = _get_inv()
@@ -182,6 +240,21 @@ func _physics_process(delta: float) -> void:
 	var boots_jump_mult = inv_stats.get_boots_jump_multiplier() if (inv_stats and inv_stats.has_method("get_boots_jump_multiplier")) else 1.0
 	var effective_speed = speed * boots_speed_mult
 	var effective_jump = jump_velocity * boots_jump_mult
+	
+	# Com um menu aberto (inventário, equipamentos, forja, baú, loja, pausa), o
+	# personagem congela e o teclado navega apenas pelo menu (o foco já é
+	# capturado pelo HUD). Sem isso os movimentos do player e os menus disputam
+	# as teclas de direção.
+	if _is_ui_open():
+		if not is_on_floor():
+			velocity.y += gravity * delta
+		else:
+			velocity.y = minf(velocity.y, 0.0)
+		velocity.x = move_toward(velocity.x, 0.0, effective_speed)
+		move_and_slide()
+		_depenetrate_from_blocks()
+		return
+	
 	# Pass through planks (layer 6) freely when climbing on ladder or pressing down
 	if Input.is_action_pressed("ui_down"):
 		plank_drop_timer = 0.25
@@ -289,6 +362,11 @@ func _physics_process(delta: float) -> void:
 						collider.kick_push(facing_x, 220.0)
 					velocity.x = -facing_x * 30.0 # Small recoil
 					var inv_n = _get_inv()
+					# Luva: o chute gera dano no bloco (dano extra)
+					if inv_n and inv_n.has_method("get_glove_kick_damage") and collider.has_method("hit"):
+						var kick_dmg = inv_n.get_glove_kick_damage()
+						if kick_dmg > 0:
+							collider.hit(kick_dmg)
 					if inv_n: inv_n.notify("Chute no bloco!", "dash")
 					break
 				elif is_dragging and direction != 0:
@@ -342,12 +420,12 @@ func execute_active_item() -> void:
 			if inv and inv.brick_floors > 0:
 				place_brick_floor()
 			else:
-				if inv: inv.notify("Sem pisos de tijolo! Crie na Forja usando terra e pedra.", "plank")
+				if inv: inv.notify("Sem pisos de tijolo! Crie na Forja usando lama e pedra.", "plank")
 		"forge":
 			if inv and inv.portable_forges > 0:
 				place_portable_forge()
 			else:
-				if inv: inv.notify("Sem forjas portáteis! Crie na Forja usando pedra e ferro.", "forge")
+				if inv: inv.notify("Sem forjas portáteis! Crie na Forja usando 5 lama, 4 pedra e 2 ferro.", "forge")
 		_:
 			try_mine()
 
@@ -423,7 +501,7 @@ func place_plank() -> void:
 func place_brick_floor() -> void:
 	var inv = _get_inv()
 	if not inv or inv.brick_floors <= 0:
-		if inv: inv.notify("Sem pisos de tijolo! Crie na Forja com terra e pedra.", "plank")
+		if inv: inv.notify("Sem pisos de tijolo! Crie na Forja com lama e pedra.", "plank")
 		return
 	inv.brick_floors -= 1
 	inv.inventory_changed.emit()
@@ -446,7 +524,7 @@ func place_brick_floor() -> void:
 func place_portable_forge() -> void:
 	var inv = _get_inv()
 	if not inv or inv.portable_forges <= 0:
-		if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 pedras e 3 ferros.", "forge")
+		if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 lama, 4 pedra e 2 ferro.", "forge")
 		return
 	inv.portable_forges -= 1
 	inv.inventory_changed.emit()
@@ -493,6 +571,8 @@ func _is_ladder_segment(col: Node) -> bool:
 	return col.is_in_group("placed_ropes") or col.name.begins_with("RopeSegment") or (col is Area2D and col.has_method("hit") and not col.has_method("is_ore") and not col.has_method("fell_tree") and not col.name.begins_with("Torch") and not col.name.begins_with("Plank"))
 
 func _break_block_above() -> void:
+	var inv_above = _get_inv()
+	var dmg_above = inv_above.get_pickaxe_damage() if (inv_above and inv_above.has_method("get_pickaxe_damage")) else 1
 	var world_2d = get_world_2d()
 	if not world_2d and is_inside_tree() and get_viewport():
 		world_2d = get_viewport().find_world_2d()
@@ -509,7 +589,10 @@ func _break_block_above() -> void:
 		var col = r.collider
 		if is_instance_valid(col) and col != self:
 			if col.has_method("hit") and not col.get("is_unbreakable"):
-				col.hit()
+				if col is Rock:
+					col.hit(dmg_above)
+				else:
+					col.hit()
 
 func try_mine() -> void:
 	var inv = _get_inv()
@@ -611,7 +694,10 @@ func try_mine() -> void:
 		if on_ladder and last_direction.x != 0 and _is_ladder_segment(target_collider):
 			return # Shield ladder rung from lateral swings
 		if target_collider.has_method("hit"):
-			target_collider.hit()
+			if target_collider is Rock:
+				target_collider.hit(inv.get_pickaxe_damage() if inv else 1)
+			else:
+				target_collider.hit()
 		elif target_collider.has_method("collect"):
 			target_collider.collect()
 

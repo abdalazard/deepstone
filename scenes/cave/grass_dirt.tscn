@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://bajx2nbvjune4"]
+[gd_scene load_steps=5 format=3 uid="uid://c8kht1nxwx4qc"]
 
-[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assets/sprites/grass_tile.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://b31puutj5bbdk" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" uid="uid://d01huvlort3eu" path="res://assets/sprites/grass_tile.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dirt"]
 size = Vector2(32, 32)
@@ -21,7 +21,6 @@ texture_filter = 1
 scale = Vector2(2, 2)
 texture = ExtResource("2_tex")
 hframes = 2
-vframes = 1
 frame = 1
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]

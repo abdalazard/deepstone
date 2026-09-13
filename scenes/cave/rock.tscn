@@ -1,7 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://b8rockuidxxxx"]
+[gd_scene load_steps=5 format=3 uid="uid://b8rockuidxxxx"]
 
-[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="2_ores"]
+[ext_resource type="Script" uid="uid://b31puutj5bbdk" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" uid="uid://kgyq6c8dpmi8" path="res://assets/Caves and Mines/ores.png" id="2_ores"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rock"]
 size = Vector2(32, 32)
@@ -20,7 +20,6 @@ scale = Vector2(2, 2)
 texture = ExtResource("2_ores")
 hframes = 11
 vframes = 11
-frame = 0
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("OccluderPolygon2D_rock")

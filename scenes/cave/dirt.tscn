@@ -1,7 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://bdirtuidxxxx"]
+[gd_scene load_steps=5 format=3 uid="uid://00sy51ikt3aq"]
 
-[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="2_ores"]
+[ext_resource type="Script" uid="uid://b31puutj5bbdk" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" uid="uid://kgyq6c8dpmi8" path="res://assets/Caves and Mines/ores.png" id="2_ores"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dirt"]
 size = Vector2(32, 32)

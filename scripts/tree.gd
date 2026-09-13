@@ -21,6 +21,8 @@ func _ready() -> void:
 		sprite.visible = true
 		sprite.rotation = 0.0
 		sprite.modulate = Color.WHITE
+		sprite.frame = randi() % 2
+		sprite.position = Vector2(0, -48)
 
 func _process(delta: float) -> void:
 	if is_stump:
@@ -36,8 +38,8 @@ func hit() -> void:
 	# Shake effect
 	if sprite:
 		var tween = create_tween()
-		sprite.position = Vector2(randf_range(-3, 3), -36)
-		tween.tween_property(sprite, "position", Vector2(0, -36), 0.12)
+		sprite.position = Vector2(randf_range(-3, 3), -48)
+		tween.tween_property(sprite, "position", Vector2(0, -48), 0.12)
 		sprite.modulate = Color(1.4, 1.2, 0.8, 1.0)
 		tween.parallel().tween_property(sprite, "modulate", Color.WHITE, 0.15)
 		

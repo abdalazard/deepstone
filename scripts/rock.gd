@@ -15,6 +15,7 @@ var hp: int = 3
 @onready var sprite_2d: Sprite2D = get_node_or_null("Sprite2D")
 const DROP_SCENE = preload("res://scenes/items/resource_drop.tscn")
 var cracks: Node2D
+var health_bar: Node2D
 
 var light_sources: Array = []
 var is_shining: bool = false
@@ -120,6 +121,15 @@ func _ready() -> void:
 		cracks.z_index = 1
 		add_child(cracks)
 		cracks.draw.connect(_on_cracks_draw)
+		
+		# Health status bar above the block
+		health_bar = Node2D.new()
+		health_bar.name = "HealthBar"
+		health_bar.z_index = 3
+		health_bar.position = Vector2(0, -22)
+		health_bar.visible = false
+		add_child(health_bar)
+		health_bar.draw.connect(_on_health_bar_draw)
 	
 	if not is_dirt and not is_stone and not is_unbreakable:
 		sparkle_overlay = Node2D.new()
@@ -203,7 +213,7 @@ func _physics_process(delta: float) -> void:
 func is_ore() -> bool:
 	return !is_dirt and !is_unbreakable and !is_stone
 
-func hit() -> void:
+func hit(damage: int = 1) -> void:
 	if is_unbreakable:
 		if sprite_2d:
 			sprite_2d.modulate = Color(1.8, 1.8, 2.0, 1.0)
@@ -217,7 +227,7 @@ func hit() -> void:
 
 	if hp <= 0: return
 	
-	hp -= 1
+	hp -= max(1, damage)
 	
 	# Damage pickaxe based on block hardness
 	var inv = null
@@ -231,6 +241,9 @@ func hit() -> void:
 		inv.damage_pickaxe(wear)
 		
 	if cracks: cracks.queue_redraw()
+	if health_bar:
+		health_bar.visible = hp > 0 and hp < max_hp
+		health_bar.queue_redraw()
 	
 	if sprite_2d:
 		sprite_2d.modulate = sprite_2d.modulate + Color(0.5, 0, 0, 0) # Flash reddish
@@ -373,6 +386,17 @@ func _on_cracks_draw() -> void:
 		cracks.draw_line(Vector2(6, -4), Vector2(1, 1), crack_color, 1.5)
 		cracks.draw_line(Vector2(1, 1), Vector2(4, 5), crack_color, 1.5)
 		cracks.draw_line(Vector2(-1, 0), Vector2(2, -2), crack_color, 1.5)
+
+func _on_health_bar_draw() -> void:
+	if not health_bar: return
+	var w = 30.0
+	var h = 5.0
+	var ratio = clamp(float(hp) / float(max_hp), 0.0, 1.0)
+	health_bar.draw_rect(Rect2(-w / 2.0, -h / 2.0, w, h), Color(0.0, 0.0, 0.0, 0.75))
+	var bar_color = Color(0.35, 0.9, 0.4)
+	if ratio <= 0.67: bar_color = Color(0.95, 0.8, 0.2)
+	if ratio <= 0.34: bar_color = Color(0.9, 0.25, 0.25)
+	health_bar.draw_rect(Rect2(-w / 2.0 + 1, -h / 2.0 + 1, (w - 2.0) * ratio, h - 2.0), bar_color)
 
 func _process(delta: float) -> void:
 	if is_shining and not is_dirt and not is_coal and hp > 0:

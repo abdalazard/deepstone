@@ -36,6 +36,32 @@ func _unhandled_input(event: InputEvent) -> void:
 			hud.toggle_forge(self)
 			if get_viewport(): get_viewport().set_input_as_handled()
 
+func hit() -> void:
+	_break_forge()
+
+func _break_forge() -> void:
+	var hud = _get_hud()
+	if hud and hud.has_method("close_forge"):
+		hud.close_forge()
+	
+	var inv = _get_inv()
+	if inv:
+		inv.stone = min(inv.stone + 2, inv.get_max_capacity())
+		inv.dirt = min(inv.dirt + 2, inv.get_max_capacity())
+		inv.iron = min(inv.iron + 1, inv.get_max_capacity())
+		inv.inventory_changed.emit()
+		inv.notify("+2 Pedra, +2 Lama, +1 Ferro (Forja Desmontada)", "forge")
+	
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
+		get_tree().root.get_node("SaveManager").request_save()
+	
+	queue_free()
+
+func _get_inv() -> Node:
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		return get_tree().root.get_node("Inventory")
+	return null
+
 func _on_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
 		player_in_range = true

@@ -1,19 +1,44 @@
-[gd_scene load_steps=38 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=39 format=3 uid="uid://huduidxxxx"]
 
-[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
-[ext_resource type="Texture2D" path="res://assets/sprites/Idle.png" id="3_idle"]
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/ores.png" id="4_ores"]
-[ext_resource type="Texture2D" path="res://assets/sprites/coin_gold.png" id="5_coin_gold"]
-[ext_resource type="Texture2D" path="res://assets/sprites/equip_helmet.png" id="6_helmet"]
-[ext_resource type="Texture2D" path="res://assets/sprites/equip_pickaxe.png" id="7_pickaxe"]
-[ext_resource type="Texture2D" path="res://assets/sprites/equip_armor.png" id="8_armor"]
-[ext_resource type="Texture2D" path="res://assets/sprites/equip_boots.png" id="9_boots"]
-[ext_resource type="Texture2D" path="res://assets/sprites/wood_log.png" id="10_wood_log"]
-[ext_resource type="Texture2D" path="res://assets/sprites/lamp_post.png" id="11_lamp_post"]
-[ext_resource type="Texture2D" path="res://assets/sprites/rope_tile.png" id="12_rope"]
-[ext_resource type="Texture2D" path="res://assets/sprites/plank.png" id="13_plank"]
+[ext_resource type="Script" uid="uid://c3d5rj1y1aat2" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" uid="uid://ckk0xveldm2s" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
+[ext_resource type="Texture2D" uid="uid://bddwjnjwegxh7" path="res://assets/sprites/Idle.png" id="3_idle"]
+[ext_resource type="Texture2D" uid="uid://blc0dulfv1oya" path="res://assets/sprites/coin_gold.png" id="5_coin_gold"]
+[ext_resource type="Texture2D" uid="uid://q30dqehawe0" path="res://assets/sprites/equip_helmet.png" id="6_helmet"]
+[ext_resource type="Texture2D" uid="uid://d18llgy8jn241" path="res://assets/sprites/equip_pickaxe.png" id="7_pickaxe"]
+[ext_resource type="Texture2D" uid="uid://dmr6d3hcwr720" path="res://assets/sprites/equip_armor.png" id="8_armor"]
+[ext_resource type="Texture2D" uid="uid://0aeq5kdeydch" path="res://assets/sprites/equip_boots.png" id="9_boots"]
+[ext_resource type="Texture2D" uid="uid://d3j1x08h0yr4i" path="res://assets/sprites/lamp_post.png" id="11_lamp_post"]
+[ext_resource type="Texture2D" uid="uid://cor8ybemr0ccb" path="res://assets/sprites/rope_tile.png" id="12_rope"]
+[ext_resource type="Texture2D" uid="uid://bsjns5cgdahah" path="res://assets/sprites/plank.png" id="13_plank"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_profile_badge"]
+bg_color = Color(0.12, 0.08, 0.04, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0.65, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_char_idle"]
+atlas = ExtResource("3_idle")
+region = Rect2(9, 11, 14, 10)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_capacity_badge"]
+bg_color = Color(0.12, 0.08, 0.04, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.4, 0.2, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coins_badge"]
 bg_color = Color(0.18, 0.12, 0.04, 0.95)
@@ -27,29 +52,32 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reset_btn"]
-bg_color = Color(0.45, 0.12, 0.12, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_btn_hover"]
+bg_color = Color(0.35, 0.22, 0.1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.85, 0.25, 0.25, 1)
+border_color = Color(1, 0.85, 0.4, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.7)
+shadow_size = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reset_btn_hover"]
-bg_color = Color(0.65, 0.18, 0.18, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_btn"]
+bg_color = Color(0.2, 0.12, 0.06, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1.0, 0.4, 0.4, 1)
+border_color = Color(0.7, 0.52, 0.22, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
+shadow_size = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chest_outer"]
 bg_color = Color(0.22, 0.13, 0.07, 0.98)
@@ -75,26 +103,6 @@ corner_radius_top_right = 6
 [sub_resource type="AtlasTexture" id="AtlasTexture_chest_icon"]
 atlas = ExtResource("2_extras")
 region = Rect2(160, 32, 16, 16)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_equip_icon"]
-atlas = ExtResource("2_extras")
-region = Rect2(0, 0, 16, 16)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_char_idle"]
-atlas = ExtResource("3_idle")
-region = Rect2(9, 11, 14, 10)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_coal_icon"]
-atlas = ExtResource("4_ores")
-region = Rect2(0, 128, 16, 16)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_iron_icon"]
-atlas = ExtResource("4_ores")
-region = Rect2(32, 128, 16, 16)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_gold_icon"]
-atlas = ExtResource("4_ores")
-region = Rect2(128, 128, 16, 16)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn"]
 bg_color = Color(0.35, 0.12, 0.1, 1)
@@ -132,18 +140,6 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drop_btn"]
-bg_color = Color(0.28, 0.12, 0.08, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.65, 0.3, 0.2, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drop_btn_hover"]
 bg_color = Color(0.45, 0.18, 0.12, 1)
 border_width_left = 2
@@ -156,41 +152,53 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_btn"]
-bg_color = Color(0.2, 0.12, 0.06, 0.95)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drop_btn"]
+bg_color = Color(0.28, 0.12, 0.08, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.7, 0.52, 0.22, 1)
+border_color = Color(0.65, 0.3, 0.2, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_equip_icon"]
+atlas = ExtResource("2_extras")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_box"]
+bg_color = Color(0.14, 0.08, 0.04, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.3, 0.16, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.6)
-shadow_size = 4
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_btn_hover"]
-bg_color = Color(0.35, 0.22, 0.1, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_active"]
+bg_color = Color(0.36, 0.22, 0.1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.85, 0.4, 1)
+border_color = Color(1, 0.85, 0.35, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.7)
-shadow_size = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_capacity_badge"]
-bg_color = Color(0.12, 0.08, 0.04, 0.95)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.55, 0.4, 0.2, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_inactive"]
+bg_color = Color(0.16, 0.1, 0.05, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.3, 0.15, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -213,6 +221,18 @@ corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.85)
 shadow_size = 14
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_btn_hover"]
+bg_color = Color(0.32, 0.2, 0.09, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.85, 0.35, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_btn"]
 bg_color = Color(0.16, 0.1, 0.05, 0.95)
 border_width_left = 2
@@ -225,62 +245,25 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_btn_hover"]
-bg_color = Color(0.32, 0.2, 0.09, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reset_btn_hover"]
+bg_color = Color(0.65, 0.18, 0.18, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1.0, 0.85, 0.35, 1)
+border_color = Color(1, 0.4, 0.4, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_box"]
-bg_color = Color(0.14, 0.08, 0.04, 0.95)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reset_btn"]
+bg_color = Color(0.45, 0.12, 0.12, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.45, 0.3, 0.16, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_active"]
-bg_color = Color(0.36, 0.22, 0.1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1.0, 0.85, 0.35, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_inactive"]
-bg_color = Color(0.16, 0.1, 0.05, 0.9)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.45, 0.3, 0.15, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_profile_badge"]
-bg_color = Color(0.12, 0.08, 0.04, 0.95)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.8, 0.65, 0.25, 1)
+border_color = Color(0.85, 0.25, 0.25, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -327,38 +310,44 @@ theme_override_constants/margin_top = 10
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="ProfileBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
+[node name="ProfileColumn" type="VBoxContainer" parent="TopContainer/TopHBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ProfileBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn"]
 layout_mode = 2
 
-[node name="ProfileBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer"]
+[node name="ProfileBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_profile_badge")
 
-[node name="ProfileMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge"]
+[node name="ProfileMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/ProfileBadge"]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 2
 
-[node name="ProfileHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin"]
+[node name="ProfileHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/ProfileBadge/ProfileMargin"]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="AvatarRect" type="TextureRect" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
+[node name="AvatarRect" type="TextureRect" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
 texture_filter = 1
-custom_minimum_size = Vector2(52, 52)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 texture = SubResource("AtlasTexture_char_idle")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="LevelVBox" type="VBoxContainer" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
+[node name="LevelVBox" type="VBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox"]
 layout_mode = 2
 alignment = 1
 
-[node name="LevelBadgeLabel" type="Label" parent="TopContainer/TopHBox/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox/LevelVBox"]
+[node name="LevelBadgeLabel" type="Label" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/ProfileBadge/ProfileMargin/ProfileHBox/LevelVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -366,38 +355,75 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
 text = "Nv. 0"
 
-[node name="HotbarVisual" type="HBoxContainer" parent="TopContainer/TopHBox"]
+[node name="CapacityBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer"]
 layout_mode = 2
-theme_override_constants/separation = 8
+size_flags_vertical = 4
 
-[node name="CoinsBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
+[node name="CapacityBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/CapacityBadgeContainer"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_capacity_badge")
+
+[node name="CapacityMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/CapacityBadgeContainer/CapacityBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 2
+
+[node name="CapacityHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/CapacityBadgeContainer/CapacityBadge/CapacityMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="CapacityIcon" type="Label" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/CapacityBadgeContainer/CapacityBadge/CapacityMargin/CapacityHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "🎒"
+vertical_alignment = 1
+
+[node name="CapacityLabel" type="Label" parent="TopContainer/TopHBox/ProfileColumn/ProfileBadgeContainer/CapacityBadgeContainer/CapacityBadge/CapacityMargin/CapacityHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "0 / 60"
+vertical_alignment = 1
+
+[node name="ProfileSecondRow" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CoinsBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow"]
 visible = false
 layout_mode = 2
 
-[node name="CoinsBadge" type="PanelContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer"]
+[node name="CoinsBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow/CoinsBadgeContainer"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_coins_badge")
 
-[node name="CoinsMargin" type="MarginContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge"]
+[node name="CoinsMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow/CoinsBadgeContainer/CoinsBadge"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 4
 
-[node name="CoinsHBox" type="HBoxContainer" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge/CoinsMargin"]
+[node name="CoinsHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow/CoinsBadgeContainer/CoinsBadge/CoinsMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
 alignment = 1
 
-[node name="CoinIcon" type="TextureRect" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge/CoinsMargin/CoinsHBox"]
+[node name="CoinIcon" type="TextureRect" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow/CoinsBadgeContainer/CoinsBadge/CoinsMargin/CoinsHBox"]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 texture = ExtResource("5_coin_gold")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CoinsLabel" type="Label" parent="TopContainer/TopHBox/CoinsBadgeContainer/CoinsBadge/CoinsMargin/CoinsHBox"]
+[node name="CoinsLabel" type="Label" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow/CoinsBadgeContainer/CoinsBadge/CoinsMargin/CoinsHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -405,28 +431,10 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 13
 text = "0"
 
-[node name="CapacityBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox"]
+[node name="HotbarVisual" type="HBoxContainer" parent="TopContainer/TopHBox"]
 layout_mode = 2
-
-[node name="CapacityBadge" type="PanelContainer" parent="TopContainer/TopHBox/CapacityBadgeContainer"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_capacity_badge")
-
-[node name="CapacityMargin" type="MarginContainer" parent="TopContainer/TopHBox/CapacityBadgeContainer/CapacityBadge"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 4
-
-[node name="CapacityLabel" type="Label" parent="TopContainer/TopHBox/CapacityBadgeContainer/CapacityBadge/CapacityMargin"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "🎒 Carga: 0 / 60  |  Disponível: 60"
-horizontal_alignment = 1
+size_flags_vertical = 0
+theme_override_constants/separation = 8
 
 [node name="TopRightContainer" type="MarginContainer" parent="."]
 anchors_preset = 1
@@ -443,31 +451,31 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="PauseButton" type="Button" parent="TopRightContainer/TopRightHBox"]
-custom_minimum_size = Vector2(85, 36)
+custom_minimum_size = Vector2(85, 44)
 layout_mode = 2
 focus_mode = 0
-theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.7, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 text = "⏸️ [P]"
 
 [node name="ShopButton" type="Button" parent="TopRightContainer/TopRightHBox"]
-custom_minimum_size = Vector2(95, 36)
+custom_minimum_size = Vector2(95, 44)
 layout_mode = 2
 focus_mode = 0
-theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.7, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 text = "🏪 LOJA [L]"
 
 [node name="ToastContainer" type="MarginContainer" parent="."]
@@ -638,9 +646,47 @@ layout_mode = 2
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_drop_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
 text = "Soltar no Mapa [X]"
+
+[node name="HotbarSetupPanel" type="PanelContainer" parent="InventoryPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_chest_header")
+
+[node name="HotbarSetupMargin" type="MarginContainer" parent="InventoryPanel/VBoxContainer/HotbarSetupPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 7
+
+[node name="HotbarSetupHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/HotbarSetupPanel/HotbarSetupMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SetupTitle" type="Label" parent="InventoryPanel/VBoxContainer/HotbarSetupPanel/HotbarSetupMargin/HotbarSetupHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 12
+text = "ATALHOS:"
+vertical_alignment = 1
+
+[node name="HotbarSetBtnsHBox" type="HBoxContainer" parent="InventoryPanel/VBoxContainer/HotbarSetupPanel/HotbarSetupMargin/HotbarSetupHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="SetupHint" type="Label" parent="InventoryPanel/VBoxContainer/HotbarSetupPanel/HotbarSetupMargin/HotbarSetupHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.87, 0.72, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 11
+text = "Selecione o atalho, depois o item."
+vertical_alignment = 1
 
 [node name="EquipmentPanel" type="PanelContainer" parent="."]
 visible = false
@@ -733,8 +779,8 @@ theme_override_constants/margin_bottom = 10
 
 [node name="PreviewVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin"]
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 6
+alignment = 1
 
 [node name="PreviewTitle" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
@@ -766,7 +812,34 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.8, 0.65, 1)
 theme_override_font_sizes/font_size = 10
-text = "Modo: IDLE"
+text = "Nível: 0"
+horizontal_alignment = 1
+
+[node name="StatsHBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StatsNames" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/StatsHBox"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.85, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 2
+text = "FORCA
+VELOCIDADE
+PULO"
+
+[node name="StatsLabel" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/StatsHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.85, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 10
+text = "1
+10/10
+10/10"
 horizontal_alignment = 1
 
 [node name="SlotsVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox"]
@@ -926,6 +999,44 @@ theme_override_colors/font_color = Color(0.7, 0.65, 0.6, 1)
 theme_override_font_sizes/font_size = 10
 text = "Botas de borracha impermeáveis para terrenos úmidos."
 
+[node name="SlotGlove" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotGlove"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotGlove/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlotIcon" type="TextureRect" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotGlove/Margin/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("7_pickaxe")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotGlove/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemName" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotGlove/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Luva de Couro"
+
+[node name="ItemDesc" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/SlotsVBox/SlotGlove/Margin/HBox/InfoVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.65, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Aumenta a força (+1) e gera dano no chute (+1)."
+
 [node name="EquipFooterHBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
 
@@ -986,7 +1097,7 @@ theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 14
-text = "🪙 0 Moedas"
+text = "Moedas de Ouro: 0"
 
 [node name="ShopCloseButton" type="Button" parent="ShopPanel/VBoxContainer/HeaderPanel/HeaderMargin/HBoxContainer"]
 custom_minimum_size = Vector2(28, 28)
@@ -1019,8 +1130,8 @@ layout_mode = 2
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.88, 0.5, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_tab_inactive")
 theme_override_styles/hover = SubResource("StyleBoxFlat_tab_active")
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_inactive")
 text = "🛒 COMPRAR"
 
 [node name="ShopTabSellBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/TabHBox"]
@@ -1029,8 +1140,8 @@ layout_mode = 2
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.88, 0.5, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_tab_active")
 theme_override_styles/hover = SubResource("StyleBoxFlat_tab_active")
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_active")
 text = "💰 VENDER"
 
 [node name="ShopBuyView" type="VBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox"]
@@ -1066,158 +1177,23 @@ theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
 theme_override_font_sizes/font_size = 12
 text = "VENDA SEUS RECURSOS POR MOEDAS DE OURO:"
 
-[node name="CoalRow" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+[node name="SellScroll" type="ScrollContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
-[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 6
-
-[node name="HBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="Icon" type="TextureRect" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
-custom_minimum_size = Vector2(22, 22)
-layout_mode = 2
-texture = SubResource("AtlasTexture_coal_icon")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="NameLbl" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
+[node name="SellRowsContainer" type="VBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/SellScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_constants/separation = 8
+
+[node name="SellEmptyLabel" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.55, 1)
 theme_override_font_sizes/font_size = 12
-text = "Carvão Mineral (5 🪙)"
-
-[node name="SellCoalCount" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.85, 0.7, 1)
-theme_override_font_sizes/font_size = 11
-text = "Possui: 0"
-
-[node name="SellCoalOneBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
-custom_minimum_size = Vector2(90, 26)
-layout_mode = 2
-focus_mode = 0
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
-text = "Vender 1"
-
-[node name="SellCoalAllBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/CoalRow/Margin/HBox"]
-custom_minimum_size = Vector2(90, 26)
-layout_mode = 2
-focus_mode = 0
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
-text = "Vender Tudo"
-
-[node name="IronRow" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 6
-
-[node name="HBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="Icon" type="TextureRect" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
-custom_minimum_size = Vector2(22, 22)
-layout_mode = 2
-texture = SubResource("AtlasTexture_iron_icon")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="NameLbl" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
-theme_override_font_sizes/font_size = 12
-text = "Minério de Ferro (15 🪙)"
-
-[node name="SellIronCount" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.85, 0.7, 1)
-theme_override_font_sizes/font_size = 11
-text = "Possui: 0"
-
-[node name="SellIronOneBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
-custom_minimum_size = Vector2(90, 26)
-layout_mode = 2
-focus_mode = 0
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
-text = "Vender 1"
-
-[node name="SellIronAllBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/IronRow/Margin/HBox"]
-custom_minimum_size = Vector2(90, 26)
-layout_mode = 2
-focus_mode = 0
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
-text = "Vender Tudo"
-
-[node name="GoldRow" type="PanelContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 6
-
-[node name="HBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="Icon" type="TextureRect" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
-custom_minimum_size = Vector2(22, 22)
-layout_mode = 2
-texture = SubResource("AtlasTexture_gold_icon")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="NameLbl" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
-theme_override_font_sizes/font_size = 12
-text = "Minério de Ouro (50 🪙)"
-
-[node name="SellGoldCount" type="Label" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.85, 0.7, 1)
-theme_override_font_sizes/font_size = 11
-text = "Possui: 0"
-
-[node name="SellGoldOneBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
-custom_minimum_size = Vector2(90, 26)
-layout_mode = 2
-focus_mode = 0
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
-text = "Vender 1"
-
-[node name="SellGoldAllBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView/GoldRow/Margin/HBox"]
-custom_minimum_size = Vector2(90, 26)
-layout_mode = 2
-focus_mode = 0
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
-text = "Vender Tudo"
+text = "Você não tem recursos para vender."
+horizontal_alignment = 1
 
 [node name="SellAllMineralsBtn" type="Button" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox/ShopSellView"]
 custom_minimum_size = Vector2(0, 32)
@@ -1225,9 +1201,9 @@ layout_mode = 2
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.95, 0.6, 1)
 theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
-text = "💰 Vender Todos os Minérios (Carvão, Ferro e Ouro)"
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
+text = "Vender Todos os Minérios (Carvão, Ferro e Ouro)"
 
 [node name="ShopFooterHBox" type="HBoxContainer" parent="ShopPanel/VBoxContainer/ContentMargin/InnerVBox"]
 layout_mode = 2
@@ -1418,8 +1394,8 @@ size_flags_horizontal = 3
 focus_mode = 0
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_drop_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_drop_btn")
 text = "📤 Pegar Tudo do Baú"
 
 [node name="ChestCloseFooterBtn" type="Button" parent="ChestPanel/VBoxContainer/ContentMargin/InnerVBox/ActionsHBox"]
@@ -1475,9 +1451,9 @@ custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 text = "▶  Continuar ([P] / [Esc])"
 
 [node name="SaveBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
@@ -1485,9 +1461,9 @@ custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 text = "💾  Salvar Progresso ([S])"
 
 [node name="RestartBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
@@ -1495,9 +1471,9 @@ custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.6, 1)
 theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 text = "🔄  Reiniciar Superfície ([R])"
 
 [node name="ResetMineBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
@@ -1505,9 +1481,9 @@ custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("StyleBoxFlat_reset_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_reset_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_reset_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_reset_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_reset_btn")
 text = "⚠️  Resetar Mina (Zerar Tudo)"
 
 [node name="ExitBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
@@ -1515,9 +1491,9 @@ custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.65, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 text = "🚪  Sair do Jogo ([Q])"
 
 [node name="ForgePanel" type="PanelContainer" parent="."]
@@ -1797,7 +1773,6 @@ text = "Custo: 1 Lama + 1 Pedra -> 1 Piso de Tijolo"
 [node name="CraftBrickFloorBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
 custom_minimum_size = Vector2(130, 30)
 layout_mode = 2
-focus_mode = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
@@ -1844,7 +1819,6 @@ text = "Custo: 1 Ferro + 2 Madeiras + 1 Pedra"
 [node name="CraftPickaxeBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox"]
 custom_minimum_size = Vector2(130, 30)
 layout_mode = 2
-focus_mode = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
@@ -1891,7 +1865,6 @@ text = "Custo: 5 Pedras + 3 Ferros"
 [node name="CraftPortableForgeBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox"]
 custom_minimum_size = Vector2(130, 30)
 layout_mode = 2
-focus_mode = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")

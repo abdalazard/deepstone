@@ -229,7 +229,7 @@ func collect() -> void:
 	elif type == ResourceType.DIRT:
 		if "dirt" in inv:
 			inv.dirt += 1
-			inv.notify("+1 Terra", "dirt")
+			inv.notify("+1 Lama", "dirt")
 			inv.inventory_changed.emit()
 	elif type == ResourceType.BROKEN_PICKAXE:
 		if "iron" in inv and inv.can_add(0):

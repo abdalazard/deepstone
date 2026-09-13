@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://nn4b303tk66u"]
 
-[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assets/Caves and Mines/deepslate tiles.png" id="2_deepslate"]
+[ext_resource type="Script" uid="uid://b31puutj5bbdk" path="res://scripts/rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" uid="uid://ijqqwe2al330" path="res://assets/Caves and Mines/deepslate tiles.png" id="2_deepslate"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_block"]
 size = Vector2(32, 32)

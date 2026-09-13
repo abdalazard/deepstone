@@ -6,9 +6,24 @@ func _safe_grab_focus(ctrl: Control) -> void:
 			ctrl.focus_mode = Control.FOCUS_ALL
 		ctrl.grab_focus()
 
+# True quando algum menu (inventário, equipamentos, forja, baú, loja, pausa ou
+# configuração de atalhos) está aberto. Usado para travar o movimento do player
+# enquanto o teclado navega os menus.
+func is_some_panel_open() -> bool:
+	var panels: Array = [
+		inventory_panel, equipment_panel, shop_panel,
+		forge_panel, chest_panel, pause_panel, hotbar_config_panel
+	]
+	for p in panels:
+		if is_instance_valid(p) and p.visible:
+			return true
+	return false
+
 @onready var hotbar = find_child("HotbarVisual", true, false)
 @onready var capacity_badge_label = find_child("CapacityLabel", true, false)
 @onready var inventory_panel = find_child("InventoryPanel", true, false)
+@onready var hotbar_setup_hbox = find_child("HotbarSetBtnsHBox", true, false)
+@onready var hotbar_setup_hint = find_child("SetupHint", true, false)
 @onready var close_button = find_child("CloseButton", true, false)
 @onready var chest_grid = find_child("ChestGrid", true, false)
 @onready var item_title = find_child("ItemTitle", true, false)
@@ -117,13 +132,13 @@ var idle_anim_frame: int = 0
 
 # Hotbar Configuration Modal
 var hotbar_config_panel: PanelContainer = null
-var selected_config_slot: int = 0
+var selected_config_slot: int = -1
 
 var chest_items_def = [
 	{
 		"key": "pickaxe",
 		"name": "Picareta de Mineração",
-		"desc": "Ferramenta para escavar terra e minérios. Possui durabilidade e desgasta ao bater em minérios pesados.",
+		"desc": "Ferramenta para escavar lama e minérios. Possui durabilidade e desgasta ao bater em minérios pesados.",
 		"icon_type": "atlas",
 		"atlas": "extras",
 		"region": Rect2(0, 0, 16, 16),
@@ -165,7 +180,7 @@ var chest_items_def = [
 	{
 		"key": "brick",
 		"name": "Piso de Tijolo",
-		"desc": "Plataforma sólida forjada com terra e pedra. Cria passarelas firmes na mina.",
+		"desc": "Plataforma sólida forjada com lama e pedra. Cria passarelas firmes na mina.",
 		"icon_type": "direct",
 		"tex": "brick",
 		"shortcut": "5",
@@ -232,8 +247,8 @@ var chest_items_def = [
 	},
 	{
 		"key": "dirt",
-		"name": "Lama / Terra",
-		"desc": "Terra coletada das escavações. Usada para moldar e forjar pisos de tijolo.",
+		"name": "Lama",
+		"desc": "Lama coletada das escavações. Usada para moldar e forjar pisos de tijolo.",
 		"icon_type": "direct",
 		"tex": "dirt",
 		"shortcut": "",
@@ -300,6 +315,9 @@ func _ready() -> void:
 		shop_tab_buy_btn.pressed.connect(_on_shop_tab_buy)
 	if shop_tab_sell_btn and not shop_tab_sell_btn.pressed.is_connected(_on_shop_tab_sell):
 		shop_tab_sell_btn.pressed.connect(_on_shop_tab_sell)
+	var sell_all_btn = find_child("SellAllMineralsBtn", true, false)
+	if sell_all_btn and not sell_all_btn.pressed.is_connected(_on_sell_all_minerals):
+		sell_all_btn.pressed.connect(_on_sell_all_minerals)
 
 	# Pause Menu buttons
 	if pause_button and not pause_button.pressed.is_connected(toggle_pause):
@@ -363,6 +381,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Toggle Shop Menu with [L]
 		if event.physical_keycode == KEY_L:
 			toggle_shop()
+			_consume_input()
+			return
+
+		# Toggle Inventory with [I]
+		if event.physical_keycode == KEY_I:
+			toggle()
 			_consume_input()
 			return
 
@@ -561,12 +585,10 @@ func _update_hotbar_config_ui() -> void:
 	if items_grid:
 		for c in items_grid.get_children(): c.queue_free()
 		var available = [
-			{"key": "pickaxe", "label": "⛏ Picareta"},
-			{"key": "lamp", "label": "🏮 Poste de Luz"},
-			{"key": "ladder", "label": "🪜 Escada"},
-			{"key": "plank", "label": "🪵 Tábua"},
-			{"key": "brick", "label": "🧱 Piso Tijolo"},
-			{"key": "forge", "label": "⚒ Forja Portátil"}
+			{"key": "pickaxe", "label": "Picareta"},
+			{"key": "lamp", "label": "Poste de Luz"},
+			{"key": "ladder", "label": "Escada"},
+			{"key": "plank", "label": "Tabua"}
 		]
 		for it in available:
 			var ibtn = Button.new()
@@ -631,7 +653,9 @@ func _setup_forge_tabs() -> void:
 		
 		forge_tab_create_btn = Button.new()
 		forge_tab_create_btn.text = "⚒ CRIAR ITENS"
-		forge_tab_create_btn.custom_minimum_size = Vector2(130, 32)
+		forge_tab_create_btn.custom_minimum_size = Vector2(0, 32)
+		forge_tab_create_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		forge_tab_create_btn.add_theme_font_size_override("font_size", 13)
 		forge_tab_create_btn.pressed.connect(func():
 			forge_tab_upgrade = false
 			_update_forge_tab_visibility()
@@ -640,7 +664,9 @@ func _setup_forge_tabs() -> void:
 		
 		forge_tab_upgrade_btn = Button.new()
 		forge_tab_upgrade_btn.text = "⭐ APRIMORAR EQUIPES"
-		forge_tab_upgrade_btn.custom_minimum_size = Vector2(170, 32)
+		forge_tab_upgrade_btn.custom_minimum_size = Vector2(0, 32)
+		forge_tab_upgrade_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		forge_tab_upgrade_btn.add_theme_font_size_override("font_size", 13)
 		forge_tab_upgrade_btn.pressed.connect(func():
 			forge_tab_upgrade = true
 			_update_forge_tab_visibility()
@@ -650,6 +676,7 @@ func _setup_forge_tabs() -> void:
 		# Upgrade View container
 		forge_upgrade_view = VBoxContainer.new()
 		forge_upgrade_view.name = "ForgeUpgradeView"
+		forge_upgrade_view.custom_minimum_size = Vector2(0, 240)
 		forge_upgrade_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		forge_upgrade_view.add_theme_constant_override("separation", 8)
 		forge_upgrade_view.visible = false
@@ -674,16 +701,16 @@ func _update_forge_tab_visibility() -> void:
 	var inner_vbox = content_margin.get_node_or_null("InnerVBox")
 	if not inner_vbox: return
 	
-	var grid = inner_vbox.find_child("GridContainer", true, false)
-	var up_view = inner_vbox.find_child("ForgeUpgradeView", true, false)
+	var recipes = inner_vbox.get_node_or_null("RecipesVBox")
+	var up_view = inner_vbox.get_node_or_null("ForgeUpgradeView")
 	
 	if forge_tab_upgrade:
-		if grid: grid.visible = false
+		if recipes: recipes.visible = false
 		if up_view: up_view.visible = true
 		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
 		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
 	else:
-		if grid: grid.visible = true
+		if recipes: recipes.visible = true
 		if up_view: up_view.visible = false
 		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
 		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
@@ -700,7 +727,8 @@ func _setup_equipment_slot_interactions() -> void:
 		{"node": slots_vbox.get_node_or_null("SlotHelmet"), "slot": "helmet"},
 		{"node": slots_vbox.get_node_or_null("SlotPickaxe"), "slot": "pickaxe"},
 		{"node": slots_vbox.get_node_or_null("SlotArmor"), "slot": "armor"},
-		{"node": slots_vbox.get_node_or_null("SlotBoots"), "slot": "boots"}
+		{"node": slots_vbox.get_node_or_null("SlotBoots"), "slot": "boots"},
+		{"node": slots_vbox.get_node_or_null("SlotGlove"), "slot": "glove"}
 	]
 	
 	for sn in slot_nodes:
@@ -777,6 +805,10 @@ func _open_equipment_swap(slot_type: String) -> void:
 		slot_title = "BOTAS"
 		owned_list = inv.owned_boots
 		cur_equipped = inv.equipped_boots
+	elif slot_type == "glove":
+		slot_title = "LUVAS"
+		owned_list = inv.owned_gloves
+		cur_equipped = inv.equipped_glove
 		
 	var tlabel = Label.new()
 	tlabel.text = "SUBSTITUIR %s:" % slot_title
@@ -895,7 +927,7 @@ func _on_craft_brick_floor() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Recursos insuficientes! Requer 1 Terra e 1 Pedra.", "plank")
+			show_toast("Recursos insuficientes! Requer 1 Lama e 1 Pedra.", "plank")
 
 func _on_craft_portable_forge() -> void:
 	var inv = _get_inv()
@@ -931,18 +963,8 @@ func update_forge_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
 	
-	# Update Forge resource indicators
-	var f_coal = find_child("ForgeCoalCount", true, false)
-	var f_iron = find_child("ForgeIronCount", true, false)
-	var f_wood = find_child("ForgeWoodCount", true, false)
-	var f_stone = find_child("ForgeStoneCount", true, false)
-	var f_dirt = find_child("ForgeDirtCount", true, false)
-	
-	if f_coal: f_coal.text = "%d" % inv.coal
-	if f_iron: f_iron.text = "%d" % inv.iron
-	if f_wood: f_wood.text = "%d" % inv.wood_logs
-	if f_stone: f_stone.text = "%d" % inv.stone
-	if f_dirt: f_dirt.text = "%d" % inv.dirt
+	# Update Forge materials scoreboard
+	_update_forge_materials()
 	
 	if not craft_pickaxe_btn: craft_pickaxe_btn = find_child("CraftPickaxeBtn", true, false)
 	if craft_pickaxe_btn:
@@ -964,9 +986,81 @@ func update_forge_ui() -> void:
 	var up_rows = find_child("UpgradeRowsContainer", true, false)
 	if up_rows:
 		for c in up_rows.get_children(): c.queue_free()
-		for up in inv.FORGE_UPGRADES:
+		for up in inv.build_forge_upgrade_rows():
 			var row = _create_forge_upgrade_row(up)
 			up_rows.add_child(row)
+
+func _make_ores_icon(kind: String) -> AtlasTexture:
+	var atlas = AtlasTexture.new()
+	atlas.atlas = ores_tex
+	match kind:
+		"coal": atlas.region = Rect2(0, 128, 16, 16)
+		"iron": atlas.region = Rect2(32, 128, 16, 16)
+		"gold": atlas.region = Rect2(128, 128, 16, 16)
+	return atlas
+
+func _update_forge_materials() -> void:
+	var inv = _get_inv()
+	if not inv: return
+	var panel = find_child("MaterialsPanel", true, false)
+	if not panel: return
+	var margin = panel.get_child(0) if panel.get_child_count() > 0 else null
+	if not margin: return
+	for c in margin.get_children():
+		margin.remove_child(c)
+		c.queue_free()
+	
+	var mats: Array = [
+		{"tex": wood_tex, "name": "Troncos", "count": inv.wood_logs},
+		{"tex": _make_ores_icon("coal"), "name": "Carvoes", "count": inv.coal},
+		{"tex": _make_ores_icon("iron"), "name": "Ferros", "count": inv.iron},
+		{"tex": _make_ores_icon("gold"), "name": "Ouros", "count": inv.gold},
+		{"tex": stone_tex, "name": "Pedras", "count": inv.stone},
+		{"tex": dirt_tex, "name": "Lamas", "count": inv.dirt},
+		{"tex": plank_tex, "name": "Tabuas", "count": inv.planks},
+		{"tex": rope_tex, "name": "Escadas", "count": inv.ladders},
+		{"tex": brick_tex, "name": "Pisos", "count": inv.brick_floors}
+	]
+	
+	var owned: Array = []
+	for m in mats:
+		if m.count > 0:
+			owned.append(m)
+	
+	var empty_lbl = Label.new()
+	empty_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	empty_lbl.add_theme_font_size_override("font_size", 12)
+	empty_lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.7, 1))
+	
+	if owned.is_empty():
+		empty_lbl.text = "Nenhum material util"
+		margin.add_child(empty_lbl)
+		return
+	
+	var grid = GridContainer.new()
+	grid.columns = 3
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 4)
+	margin.add_child(grid)
+	
+	for m in owned:
+		var chip = HBoxContainer.new()
+		chip.add_theme_constant_override("separation", 4)
+		var icon = TextureRect.new()
+		icon.texture = m.tex
+		icon.custom_minimum_size = Vector2(14, 14)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		chip.add_child(icon)
+		var count_lbl = Label.new()
+		count_lbl.text = "%d %s" % [m.count, m.name]
+		count_lbl.add_theme_font_size_override("font_size", 11)
+		count_lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.7, 1))
+		chip.add_child(count_lbl)
+		grid.add_child(chip)
 
 func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	var inv = _get_inv()
@@ -1000,43 +1094,35 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	hbox.add_child(vbox)
 	
 	var title_lbl = Label.new()
-	title_lbl.text = up.get("name", "")
+	title_lbl.text = "%s  (%d/%d)" % [up.get("name", ""), up.get("current_level", 0), up.get("max_level", 5)]
 	title_lbl.add_theme_font_size_override("font_size", 12)
 	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.4, 1.0))
 	vbox.add_child(title_lbl)
 	
 	var desc_lbl = Label.new()
-	desc_lbl.text = "%s
-Custo: %s" % [up.get("desc", ""), _format_upgrade_cost(up.get("cost", {}))]
+	var cost_text = _format_upgrade_cost(up.get("cost", {}))
+	desc_lbl.text = up.get("desc", "") + (("\nCusto: " + cost_text) if not cost_text.is_empty() else "")
 	desc_lbl.add_theme_font_size_override("font_size", 10)
 	desc_lbl.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
 	vbox.add_child(desc_lbl)
 	
 	var btn = Button.new()
-	btn.custom_minimum_size = Vector2(120, 32)
-	var target = up.get("target_item", "")
+	btn.custom_minimum_size = Vector2(130, 32)
 	var req_lvl = up.get("level_req", 0)
 	
-	var already_max = false
-	if inv:
-		if target in inv.owned_helmets and inv.equipped_helmet == target: already_max = true
-		elif target in inv.owned_pickaxes and inv.equipped_pickaxe == target: already_max = true
-		elif target in inv.owned_armors and inv.equipped_armor == target: already_max = true
-		elif target in inv.owned_boots and inv.equipped_boots == target: already_max = true
-		
-	if already_max:
-		btn.text = "✓ Equipado"
+	if up.get("maxed", false):
+		btn.text = "✓ Nível Máximo"
 		btn.disabled = true
 	elif inv and inv.level < req_lvl:
 		btn.text = "🔒 Nível %d" % req_lvl
 		btn.disabled = true
 	else:
 		var can_up = inv.can_forge_upgrade(up) if inv else false
-		btn.text = "Aprimorar [Z]"
+		btn.text = "Aprimorar"
 		btn.disabled = not can_up
-		var up_k = up.get("key", "")
+		var up_def = up
 		btn.pressed.connect(func():
-			if inv and inv.execute_forge_upgrade(up_k):
+			if inv and inv.execute_forge_upgrade_def(up_def):
 				update_forge_ui()
 				update_ui()
 		)
@@ -1054,7 +1140,7 @@ func _format_upgrade_cost(cost: Dictionary) -> String:
 		elif k == "wood": name_str = "Madeira"
 		elif k == "stone": name_str = "Pedra"
 		elif k == "plank": name_str = "Tábua"
-		elif k == "dirt": name_str = "Terra"
+		elif k == "dirt": name_str = "Lama"
 		parts.append("%d %s" % [cost[k], name_str])
 	return ", ".join(parts)
 
@@ -1085,6 +1171,8 @@ func update_equipment_ui() -> void:
 	var inv = _get_inv()
 	if not inv or not is_instance_valid(equipment_panel): return
 	
+	var lvl = inv.level if "level" in inv else 0
+	
 	var slots_vbox = equipment_panel.find_child("SlotsVBox", true, false)
 	if not slots_vbox: return
 	
@@ -1092,18 +1180,51 @@ func update_equipment_ui() -> void:
 	var p_def = inv.get_equipped_def("pickaxe")
 	var a_def = inv.get_equipped_def("armor")
 	var b_def = inv.get_equipped_def("boots")
+	var g_def = inv.get_equipped_def("glove")
 	
-	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotHelmet"), h_def)
-	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotPickaxe"), p_def)
-	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotArmor"), a_def)
-	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotBoots"), b_def)
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotHelmet"), h_def, "helmet")
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotPickaxe"), p_def, "pickaxe")
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotArmor"), a_def, "armor")
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotBoots"), b_def, "boots")
+	_update_single_slot_ui(slots_vbox.get_node_or_null("SlotGlove"), g_def, "glove")
+	
+	var stats_lbl = equipment_panel.find_child("StatsLabel", true, false)
+	if stats_lbl:
+		var dmg = inv.get_strength() if inv.has_method("get_strength") else inv.get_pickaxe_damage()
+		var limit = _status_limit(lvl)
+		var spd = mini(int(round(inv.get_boots_speed_multiplier() * 10.0)), limit)
+		var jmp = mini(int(round(inv.get_boots_jump_multiplier() * 10.0)), limit)
+		stats_lbl.text = "%d\n%d/%d\n%d/%d" % [dmg, spd, limit, jmp, limit]
 
-func _update_single_slot_ui(slot_node: Node, def: Dictionary) -> void:
+	var char_desc = equipment_panel.find_child("CharDesc", true, false)
+	if char_desc:
+		char_desc.text = "Nível: %d" % lvl
+func _status_limit(level: int) -> int:
+	var decades: int = level / 10
+	return 10 + level * 3 + decades * (decades + 1) / 2
+func _update_single_slot_ui(slot_node: Node, def: Dictionary, slot: String) -> void:
 	if not is_instance_valid(slot_node) or def.is_empty(): return
+	var inv = _get_inv()
 	var name_lbl = slot_node.find_child("ItemName", true, false)
 	var desc_lbl = slot_node.find_child("ItemDesc", true, false)
-	if name_lbl: name_lbl.text = def.get("name", "")
-	if desc_lbl: desc_lbl.text = def.get("desc", "")
+	var lvl = inv.get_upgrade_level(slot) if inv else 0
+	if name_lbl:
+		var nm = def.get("name", "")
+		if lvl > 0:
+			nm += "  [Nivel %d/%d]" % [lvl, inv.UPGRADE_MAX_LEVEL]
+		name_lbl.text = nm
+	if desc_lbl:
+		var desc = def.get("desc", "")
+		if lvl > 0:
+			var bonus := ""
+			match slot:
+				"pickaxe": bonus = "+%d de dano e +%d%% de durabilidade/velocidade de mineracao" % [lvl * 2, lvl * 10]
+				"helmet": bonus = "+%d de alcance de luz na escuridao" % int(lvl * 60)
+				"armor": bonus = "+%d de carga maxima na mochila" % (lvl * 20)
+				"boots": bonus = "+%d%% de altura de pulo e +%d%% de velocidade" % [lvl * 20, lvl * 15]
+				"glove": bonus = "+%d de forca e +%d de dano de chute" % [lvl, lvl]
+			desc += "\nNivel %d: %s." % [lvl, bonus]
+		desc_lbl.text = desc
 
 func toggle() -> void:
 	if not inventory_panel: return
@@ -1117,8 +1238,103 @@ func open_inventory() -> void:
 		inventory_panel.visible = true
 		update_ui()
 		select_slot(selected_index)
+		_refresh_inventory_hotbar_setup()
 		if close_button:
 			_safe_grab_focus(close_button)
+
+func _refresh_inventory_hotbar_setup() -> void:
+	if not is_instance_valid(hotbar_setup_hbox): return
+	var inv = _get_inv()
+	if not inv: return
+	for c in hotbar_setup_hbox.get_children():
+		c.queue_free()
+	for i in range(inv.hotbar_slots.size()):
+		var key = inv.hotbar_slots[i]
+		var panel = PanelContainer.new()
+		panel.custom_minimum_size = Vector2(44, 44)
+		panel.focus_mode = Control.FOCUS_NONE
+		
+		var st = StyleBoxFlat.new()
+		st.bg_color = Color(0.16, 0.1, 0.05, 0.95)
+		st.border_width_left = 2
+		st.border_width_top = 2
+		st.border_width_right = 2
+		st.border_width_bottom = 2
+		st.border_color = Color(0.45, 0.3, 0.15, 1)
+		st.corner_radius_top_left = 6
+		st.corner_radius_top_right = 6
+		st.corner_radius_bottom_right = 6
+		st.corner_radius_bottom_left = 6
+		
+		if i == selected_config_slot:
+			st.border_color = Color(1.0, 0.88, 0.25, 1.0)
+			st.border_width_left = 3
+			st.border_width_top = 3
+			st.border_width_right = 3
+			st.border_width_bottom = 3
+			st.bg_color = Color(0.28, 0.16, 0.08, 0.98)
+		
+		panel.add_theme_stylebox_override("panel", st)
+		
+		var margin = MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 2)
+		margin.add_theme_constant_override("margin_top", 2)
+		margin.add_theme_constant_override("margin_right", 2)
+		margin.add_theme_constant_override("margin_bottom", 2)
+		panel.add_child(margin)
+		
+		var vbox = VBoxContainer.new()
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		vbox.add_theme_constant_override("separation", 1)
+		margin.add_child(vbox)
+		
+		var icon = TextureRect.new()
+		icon.custom_minimum_size = Vector2(20, 20)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		
+		if key == "ladder": icon.texture = rope_tex
+		elif key == "plank": icon.texture = plank_tex
+		elif key == "brick": icon.texture = brick_tex
+		elif key == "forge": icon.texture = stone_tex
+		elif key == "lamp":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = lamp_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		elif key == "pickaxe":
+			var atlas = AtlasTexture.new()
+			atlas.atlas = extras_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		else:
+			var atlas = AtlasTexture.new()
+			atlas.atlas = extras_tex
+			atlas.region = Rect2(0, 0, 16, 16)
+			icon.texture = atlas
+		
+		vbox.add_child(icon)
+		
+		var num_label = Label.new()
+		num_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		num_label.add_theme_font_size_override("font_size", 9)
+		num_label.add_theme_color_override("font_color", Color(1, 0.9, 0.6, 1))
+		num_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		num_label.add_theme_constant_override("outline_size", 3)
+		num_label.text = str(i + 1)
+		vbox.add_child(num_label)
+		
+		panel.gui_input.connect(func(event):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				selected_config_slot = i
+				_refresh_inventory_hotbar_setup()
+				if is_instance_valid(hotbar_setup_hint):
+					hotbar_setup_hint.text = "Atalho %d selecionado. Clique num item." % (i + 1)
+		)
+		hotbar_setup_hbox.add_child(panel)
+	if is_instance_valid(hotbar_setup_hint) and selected_config_slot < 0:
+		hotbar_setup_hint.text = "Selecione o atalho, depois o item."
 
 func close_inventory() -> void:
 	if inventory_panel:
@@ -1196,24 +1412,34 @@ func _on_shop_tab_sell() -> void:
 	if shop_tab_buy_btn: shop_tab_buy_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
 	update_shop_ui()
 
+func _on_sell_all_minerals() -> void:
+	var inv = _get_inv()
+	if inv and inv.sell_all_minerals() > 0:
+		update_shop_ui()
+		update_ui()
+
 func update_shop_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
 	
 	if shop_coins_label:
-		shop_coins_label.text = "🪙 Suas Moedas de Ouro: %d" % inv.coins
+		shop_coins_label.text = "[O] Moedas de Ouro: %d" % inv.coins
 		
 	# 1. Update BUY tab with purchasable equipment
 	var buy_container = find_child("BuyRowsContainer", true, false)
 	if buy_container:
 		for child in buy_container.get_children(): child.queue_free()
 		var buyable_keys = [
+			"pickaxe_iron",
+			"pickaxe_gold",
 			"helmet_lamp",
 			"boots_leather",
 			"armor_reinforced",
 			"helmet_iron_lamp",
 			"boots_steel",
-			"armor_explorer"
+			"armor_explorer",
+			"glove_iron",
+			"glove_gold"
 		]
 		for key in buyable_keys:
 			var def = inv.EQUIPMENT_DEFS.get(key, {})
@@ -1228,15 +1454,15 @@ func update_shop_ui() -> void:
 			child.queue_free()
 			
 		var sellable = [
-			{"key": "coal", "name": "Carvão Mineral", "price": inv.COAL_PRICE, "count": inv.coal},
-			{"key": "iron", "name": "Minério de Ferro", "price": inv.IRON_PRICE, "count": inv.iron},
-			{"key": "gold", "name": "Minério de Ouro", "price": inv.GOLD_PRICE, "count": inv.gold},
-			{"key": "wood", "name": "Madeira (Troncos)", "price": inv.WOOD_PRICE, "count": inv.wood_logs},
-			{"key": "stone", "name": "Pedra", "price": inv.STONE_PRICE, "count": inv.stone},
-			{"key": "dirt", "name": "Lama / Terra", "price": inv.DIRT_PRICE, "count": inv.dirt},
-			{"key": "plank", "name": "Tábua de Madeira", "price": inv.PLANK_PRICE, "count": inv.planks},
-			{"key": "brick", "name": "Piso de Tijolo", "price": inv.BRICK_PRICE, "count": inv.brick_floors},
-			{"key": "ladder", "name": "Escada", "price": inv.LADDER_PRICE, "count": inv.ladders}
+			{"key": "coal", "name": "Carvão Mineral", "price": inv.COAL_PRICE, "count": inv.coal, "tex": _make_ores_icon("coal")},
+			{"key": "iron", "name": "Minério de Ferro", "price": inv.IRON_PRICE, "count": inv.iron, "tex": _make_ores_icon("iron")},
+			{"key": "gold", "name": "Minério de Ouro", "price": inv.GOLD_PRICE, "count": inv.gold, "tex": _make_ores_icon("gold")},
+			{"key": "wood", "name": "Madeira (Troncos)", "price": inv.WOOD_PRICE, "count": inv.wood_logs, "tex": wood_tex},
+			{"key": "stone", "name": "Pedra", "price": inv.STONE_PRICE, "count": inv.stone, "tex": stone_tex},
+			{"key": "dirt", "name": "Lama", "price": inv.DIRT_PRICE, "count": inv.dirt, "tex": dirt_tex},
+			{"key": "plank", "name": "Tábua de Madeira", "price": inv.PLANK_PRICE, "count": inv.planks, "tex": plank_tex},
+			{"key": "brick", "name": "Piso de Tijolo", "price": inv.BRICK_PRICE, "count": inv.brick_floors, "tex": brick_tex},
+			{"key": "ladder", "name": "Escada", "price": inv.LADDER_PRICE, "count": inv.ladders, "tex": rope_tex}
 		]
 		
 		var has_any = false
@@ -1249,6 +1475,10 @@ func update_shop_ui() -> void:
 		var empty_lbl = find_child("SellEmptyLabel", true, false)
 		if empty_lbl:
 			empty_lbl.visible = not has_any
+		
+		var sell_all_btn = find_child("SellAllMineralsBtn", true, false)
+		if sell_all_btn:
+			sell_all_btn.disabled = not has_any
 
 func _create_shop_buy_row(def: Dictionary) -> PanelContainer:
 	var inv = _get_inv()
@@ -1302,7 +1532,7 @@ func _create_shop_buy_row(def: Dictionary) -> PanelContainer:
 	
 	var already_owned = false
 	if inv:
-		if item_id in inv.owned_helmets or item_id in inv.owned_pickaxes or item_id in inv.owned_armors or item_id in inv.owned_boots:
+		if item_id in inv.owned_helmets or item_id in inv.owned_pickaxes or item_id in inv.owned_armors or item_id in inv.owned_boots or item_id in inv.owned_gloves:
 			already_owned = true
 			
 	if already_owned:
@@ -1349,6 +1579,15 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 	hbox.add_theme_constant_override("separation", 10)
 	margin.add_child(hbox)
 	
+	if item.has("tex") and item.tex:
+		var sell_icon = TextureRect.new()
+		sell_icon.texture = item.tex
+		sell_icon.custom_minimum_size = Vector2(20, 20)
+		sell_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sell_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sell_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		hbox.add_child(sell_icon)
+	
 	var lbl = Label.new()
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.text = "%s (x%d) — Preço: %d moedas cada" % [item.name, item.count, item.price]
@@ -1356,8 +1595,14 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 	lbl.add_theme_color_override("font_color", Color(1.0, 0.94, 0.8, 1.0))
 	hbox.add_child(lbl)
 	
+	# Botões empilhados (um abaixo do outro), alinhados à direita
+	var margin_btns = MarginContainer.new()
+	var margin_vbox = VBoxContainer.new()
+	margin_vbox.add_theme_constant_override("separation", 4)
 	var btn_1 = Button.new()
 	btn_1.text = "Vender 1 (+%d)" % item.price
+	btn_1.custom_minimum_size = Vector2(160, 26)
+	btn_1.size_flags_horizontal = Control.SIZE_SHRINK_END
 	var item_key = item.key
 	btn_1.pressed.connect(func():
 		var inv = _get_inv()
@@ -1366,10 +1611,12 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 			update_shop_ui()
 			update_ui()
 	)
-	hbox.add_child(btn_1)
+	margin_vbox.add_child(btn_1)
 	
 	var btn_all = Button.new()
 	btn_all.text = "Vender Tudo (+%d)" % (item.price * item.count)
+	btn_all.custom_minimum_size = Vector2(160, 26)
+	btn_all.size_flags_horizontal = Control.SIZE_SHRINK_END
 	btn_all.pressed.connect(func():
 		var inv = _get_inv()
 		if inv:
@@ -1377,7 +1624,9 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 			update_shop_ui()
 			update_ui()
 	)
-	hbox.add_child(btn_all)
+	margin_vbox.add_child(btn_all)
+	margin_btns.add_child(margin_vbox)
+	hbox.add_child(margin_btns)
 	
 	return row
 
@@ -1388,7 +1637,7 @@ func setup_hotbar() -> void:
 		child.queue_free()
 		
 	var inv = _get_inv()
-	var h_slots = inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
+	var h_slots = inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank"]
 	
 	for i in range(h_slots.size()):
 		var key = h_slots[i]
@@ -1411,7 +1660,8 @@ func setup_chest_grid() -> void:
 
 func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	var panel = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(46, 46)
+	panel.custom_minimum_size = Vector2(44, 44)
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.16, 0.1, 0.05, 0.95)
@@ -1427,19 +1677,20 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	panel.add_theme_stylebox_override("panel", style)
 	
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 4)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_right", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	margin.add_theme_constant_override("margin_left", 2)
+	margin.add_theme_constant_override("margin_top", 3)
+	margin.add_theme_constant_override("margin_right", 2)
+	margin.add_theme_constant_override("margin_bottom", 2)
 	panel.add_child(margin)
 	
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 1)
 	margin.add_child(vbox)
 	
 	var icon = TextureRect.new()
 	icon.name = "SlotIcon"
-	icon.custom_minimum_size = Vector2(22, 22)
+	icon.custom_minimum_size = Vector2(20, 22)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -1465,6 +1716,7 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	var label = Label.new()
 	label.name = "CountLabel"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 10)
 	label.add_theme_color_override("font_color", Color(1, 0.9, 0.6, 1))
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
@@ -1537,7 +1789,7 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	var count_label = Label.new()
 	count_label.name = "SlotCount"
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_label.add_theme_font_size_override("font_size", 11)
+	count_label.add_theme_font_size_override("font_size", 10)
 	count_label.add_theme_color_override("font_color", Color(1, 0.92, 0.7, 1))
 	count_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	count_label.add_theme_constant_override("outline_size", 3)
@@ -1552,6 +1804,17 @@ func _on_slot_gui_input(event: InputEvent, idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				if idx >= 0 and idx < chest_items_def.size():
+					var def = chest_items_def[idx]
+					var item_k = def.get("key", "")
+					var inv = _get_inv()
+					if item_k != "" and selected_config_slot >= 0 and inv \
+							and "hotbar_slots" in inv and selected_config_slot < inv.hotbar_slots.size():
+						inv.set_hotbar_slot(selected_config_slot, item_k)
+						update_ui()
+						_refresh_inventory_hotbar_setup()
+						show_toast("Atalho %d: %s" % [selected_config_slot + 1, def.get("name", item_k)], item_k)
+						selected_config_slot = -1
 				select_slot(idx)
 				drag_start_idx = idx
 			else:
@@ -1590,7 +1853,7 @@ func select_slot(idx: int) -> void:
 			if def.key == "pickaxe" and inv:
 				item_desc.text = "%s
 
-Durabilidade: %d%% (%d/%d)" % [def.desc, inv.pickaxe_durability, inv.pickaxe_durability, inv.max_pickaxe_durability]
+Durabilidade: %d/%d" % [def.desc, inv.pickaxe_durability, inv.max_pickaxe_durability]
 			else:
 				item_desc.text = def.desc
 		if equip_button:
@@ -1668,7 +1931,7 @@ func update_ui() -> void:
 		exp_progress_bar.value = float(cur)
 	
 	# Update Hotbar Slots
-	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
+	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp", "ladder", "plank"]
 	if slots.size() != h_slots.size():
 		setup_hotbar()
 		
@@ -1676,6 +1939,28 @@ func update_ui() -> void:
 		var slot = slots[i]
 		var key = h_slots[i] if i < h_slots.size() else "pickaxe"
 		var count_lbl = slot.find_child("CountLabel", true, false)
+		var icon = slot.find_child("SlotIcon", true, false)
+		if icon:
+			if key == "ladder": icon.texture = rope_tex
+			elif key == "plank": icon.texture = plank_tex
+			elif key == "brick": icon.texture = brick_tex
+			elif key == "forge": icon.texture = stone_tex
+			elif key == "lamp":
+				var atlas = AtlasTexture.new()
+				atlas.atlas = lamp_tex
+				atlas.region = Rect2(0, 0, 16, 16)
+				icon.texture = atlas
+			elif key == "pickaxe":
+				var atlas = AtlasTexture.new()
+				atlas.atlas = extras_tex
+				atlas.region = Rect2(0, 0, 16, 16)
+				icon.texture = atlas
+			else:
+				var atlas = AtlasTexture.new()
+				atlas.atlas = extras_tex
+				atlas.region = Rect2(0, 0, 16, 16)
+				icon.texture = atlas
+
 		var style = slot.get_theme_stylebox("panel")
 		
 		var is_selected = (i == inv.active_slot)
@@ -1696,8 +1981,16 @@ func update_ui() -> void:
 			
 		if key == "pickaxe":
 			if inv.has_pickaxe:
-				count_lbl.text = "%d%%" % int((float(inv.pickaxe_durability) / float(inv.max_pickaxe_durability)) * 100.0)
-				slot.modulate = Color.WHITE
+				count_lbl.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability]
+				var pct = (float(inv.pickaxe_durability) / float(inv.max_pickaxe_durability)) * 100.0
+				if pct <= 10.0:
+					slot.modulate = Color(1.0, 0.35, 0.35, 1.0)
+					style.border_color = Color(1.0, 0.25, 0.25, 1.0)
+				elif pct <= 20.0:
+					slot.modulate = Color(1.0, 0.9, 0.2, 1.0)
+					style.border_color = Color(1.0, 0.8, 0.1, 1.0)
+				else:
+					slot.modulate = Color.WHITE
 			else:
 				count_lbl.text = "QUEBR."
 				slot.modulate = Color(1.0, 0.4, 0.4, 0.8)
@@ -1726,7 +2019,7 @@ func update_ui() -> void:
 			if count_label:
 				var c = _get_item_count(def.key)
 				if def.key == "pickaxe":
-					count_label.text = "%d%%" % int((float(inv.pickaxe_durability) / float(inv.max_pickaxe_durability)) * 100.0) if inv.has_pickaxe else "QUEBRADA"
+					count_label.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability] if inv.has_pickaxe else "QUEBRADA"
 				else:
 					count_label.text = "%d" % c
 				
@@ -1743,10 +2036,9 @@ func _update_capacity_badge() -> void:
 	if not inv: return
 	var max_cap = inv.get_max_capacity() if inv.has_method("get_max_capacity") else 60
 	var cur_load = inv.get_current_load() if inv.has_method("get_current_load") else (inv.iron + inv.gold + inv.coal)
-	var available = max(0, max_cap - cur_load)
 	
 	if capacity_badge_label:
-		capacity_badge_label.text = "🎒 Carga: %d / %d  |  Disponível: %d" % [cur_load, max_cap, available]
+		capacity_badge_label.text = "%d / %d" % [cur_load, max_cap]
 		if cur_load >= max_cap:
 			capacity_badge_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4, 1.0))
 		else:
@@ -1800,7 +2092,7 @@ func show_toast(text: String, icon_type: String = "") -> void:
 		elif icon_type == "helmet": icon.texture = helmet_tex
 		elif icon_type == "armor": icon.texture = armor_tex
 		elif icon_type == "boots": icon.texture = boots_tex
-		elif icon_type == "pickaxe": icon.texture = pickaxe_tex
+		elif icon_type == "pickaxe" or icon_type == "glove": icon.texture = pickaxe_tex
 		else:
 			var atlas = AtlasTexture.new()
 			atlas.atlas = ores_tex

@@ -57,8 +57,8 @@ func hit() -> void:
 	
 	var inv = _get_inv()
 	if inv:
-		inv.coal = min(inv.coal + 1, inv.MAX_CAPACITY)
-		inv.iron = min(inv.iron + 1, inv.MAX_CAPACITY)
+		inv.coal = min(inv.coal + 1, inv.get_max_capacity())
+		inv.iron = min(inv.iron + 1, inv.get_max_capacity())
 		inv.inventory_changed.emit()
 		inv.notify("+1 Carvão, +1 Ferro (Poste Desmontado)", "lamp")
 	

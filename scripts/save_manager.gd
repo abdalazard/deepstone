@@ -184,15 +184,17 @@ func save_game(show_notify: bool = false) -> void:
 			"pickaxe_durability": inv.pickaxe_durability if (inv and "pickaxe_durability" in inv) else 100,
 			"level": inv.level if (inv and "level" in inv) else 0,
 			"current_exp": inv.current_exp if (inv and "current_exp" in inv) else 0,
-			"hotbar_slots": inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"],
+			"hotbar_slots": inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank"],
 			"equipped_helmet": inv.equipped_helmet if (inv and "equipped_helmet" in inv) else "helmet_miner",
 			"equipped_pickaxe": inv.equipped_pickaxe if (inv and "equipped_pickaxe" in inv) else "pickaxe_copper",
 			"equipped_armor": inv.equipped_armor if (inv and "equipped_armor" in inv) else "armor_miner",
 			"equipped_boots": inv.equipped_boots if (inv and "equipped_boots" in inv) else "boots_mud",
+			"equipped_glove": inv.equipped_glove if (inv and "equipped_glove" in inv) else "glove_leather",
 			"owned_helmets": inv.owned_helmets if (inv and "owned_helmets" in inv) else ["helmet_miner"],
 			"owned_pickaxes": inv.owned_pickaxes if (inv and "owned_pickaxes" in inv) else ["pickaxe_copper"],
 			"owned_armors": inv.owned_armors if (inv and "owned_armors" in inv) else ["armor_miner"],
-			"owned_boots": inv.owned_boots if (inv and "owned_boots" in inv) else ["boots_mud"]
+			"owned_boots": inv.owned_boots if (inv and "owned_boots" in inv) else ["boots_mud"],
+			"owned_gloves": inv.owned_gloves if (inv and "owned_gloves" in inv) else ["glove_leather"]
 		},
 		"chest": chest_data,
 		"placed_torches": torches_list,
@@ -280,7 +282,11 @@ func load_game() -> bool:
 		if "current_exp" in inv:
 			inv.current_exp = inv_data.get("current_exp", 0)
 		if "hotbar_slots" in inv:
-			inv.hotbar_slots = inv_data.get("hotbar_slots", ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"])
+			var saved_slots: Array = inv_data.get("hotbar_slots", ["pickaxe", "lamp", "ladder", "plank"])
+			inv.hotbar_slots = []
+			for s in saved_slots:
+				if s not in ["brick", "forge"]:
+					inv.hotbar_slots.append(s)
 		if "equipped_helmet" in inv:
 			inv.equipped_helmet = inv_data.get("equipped_helmet", "helmet_miner")
 		if "equipped_pickaxe" in inv:
@@ -289,6 +295,8 @@ func load_game() -> bool:
 			inv.equipped_armor = inv_data.get("equipped_armor", "armor_miner")
 		if "equipped_boots" in inv:
 			inv.equipped_boots = inv_data.get("equipped_boots", "boots_mud")
+		if "equipped_glove" in inv:
+			inv.equipped_glove = inv_data.get("equipped_glove", "glove_leather")
 		if "owned_helmets" in inv:
 			inv.owned_helmets = inv_data.get("owned_helmets", ["helmet_miner"])
 		if "owned_pickaxes" in inv:
@@ -297,6 +305,8 @@ func load_game() -> bool:
 			inv.owned_armors = inv_data.get("owned_armors", ["armor_miner"])
 		if "owned_boots" in inv:
 			inv.owned_boots = inv_data.get("owned_boots", ["boots_mud"])
+		if "owned_gloves" in inv:
+			inv.owned_gloves = inv_data.get("owned_gloves", ["glove_leather"])
 	
 	var p_data = data.get("player", {})
 	if p_data.has("x") and p_data.has("y"):

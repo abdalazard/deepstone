@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cavebg000001"]
+
+[ext_resource type="Script" uid="uid://jn3lj3qlhj1b" path="res://scripts/cave_background.gd" id="1_bg"]
+
+[node name="CaveBackground" type="Node2D"]
+z_index = -7
+script = ExtResource("1_bg")

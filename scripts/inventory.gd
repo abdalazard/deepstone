@@ -18,31 +18,52 @@ var planks: int = 0 # Tábuas de madeira forjadas (1 tronco -> 5 tábuas)
 var dirt: int = 0 # Lama/Terra obtida de escavação
 var stone: int = 0 # Pedra obtida de escavação
 var brick_floors: int = 0 # Pisos de tijolo forjados (1 lama + 1 pedra)
-var portable_forges: int = 0 # Forjas portáteis (5 pedras + 3 ferros)
+var portable_forges: int = 0 # Forjas portáteis (5 lama + 4 pedra + 2 ferro)
+var bombs: int = 0 # Bombas de dinamite para escavação rápida
 
 # Picareta & Durabilidade
 var has_pickaxe: bool = true
 var pickaxe_durability: int = 100
 var max_pickaxe_durability: int = 100
+var _pickaxe_wear_accum: float = 0.0 # Desgaste fracionado (desgasta na metade da velocidade)
+
+# Níveis de Aprimoramento de Equipamentos na Forja (0 a UPGRADE_MAX_LEVEL)
+var pickaxe_upgrade_level: int = 0 # +2 dano por golpe e +10% durabilidade por nível
+var helmet_upgrade_level: int = 0 # +60 de luz por nível
+var boots_upgrade_level: int = 0 # +0.20 pulo e +0.15 velocidade por nível
+var armor_upgrade_level: int = 0 # +20 de carga por nível
+var glove_upgrade_level: int = 0 # +1 força e +1 dano de chute por nível
 
 # Nível e Progressão
 var level: int = 0 # Começa no nível zero
 var current_exp: int = 0 # EXP acumulada no nível atual
 
 # Hotbar e Atalhos customizáveis
-var active_slot: int = 0 # 0..5
-var hotbar_slots: Array = ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
+var active_slot: int = 0 # 0..4
+var hotbar_slots: Array = ["pickaxe", "lamp", "ladder", "plank", "bomb"]
+
+func _ready() -> void:
+	ensure_hotbar_slots()
+
+func ensure_hotbar_slots(count: int = 5) -> void:
+	var defaults = ["pickaxe", "lamp", "ladder", "plank", "bomb"]
+	while hotbar_slots.size() < count:
+		hotbar_slots.append(defaults[hotbar_slots.size() % defaults.size()])
+	if hotbar_slots.size() > count:
+		hotbar_slots = hotbar_slots.slice(0, count)
 
 # Equipamentos Ativos e Posse
 var equipped_helmet: String = "helmet_miner"
 var equipped_pickaxe: String = "pickaxe_copper"
 var equipped_armor: String = "armor_miner"
 var equipped_boots: String = "boots_mud"
+var equipped_glove: String = "glove_leather"
 
 var owned_helmets: Array = ["helmet_miner"]
 var owned_pickaxes: Array = ["pickaxe_copper"]
 var owned_armors: Array = ["armor_miner"]
 var owned_boots: Array = ["boots_mud"]
+var owned_gloves: Array = ["glove_leather"]
 
 const EQUIPMENT_DEFS = {
 	# CAPACETES
@@ -62,7 +83,7 @@ const EQUIPMENT_DEFS = {
 		"slot": "helmet",
 		"desc": "Possui foco luminoso frontal acoplado para iluminar o subsolo.",
 		"cost_coins": 40,
-		"level_req": 0,
+		"level_req": 3,
 		"light_radius": 170.0,
 		"icon": "helmet"
 	},
@@ -72,7 +93,7 @@ const EQUIPMENT_DEFS = {
 		"slot": "helmet",
 		"desc": "Lanterna de alto alcance e casco blindado forjado em ferro espesso.",
 		"cost_coins": 90,
-		"level_req": 2,
+		"level_req": 8,
 		"light_radius": 240.0,
 		"icon": "helmet"
 	},
@@ -94,8 +115,8 @@ const EQUIPMENT_DEFS = {
 		"name": "Picareta de Ferro Reforçada",
 		"slot": "pickaxe",
 		"desc": "+60% de resistência. Durabilidade: 160 HP e corte 25% mais rápido.",
-		"cost_coins": 0,
-		"level_req": 1,
+		"cost_coins": 80,
+		"level_req": 6,
 		"max_durability": 160,
 		"mine_speed_mult": 1.25,
 		"icon": "pickaxe"
@@ -105,8 +126,8 @@ const EQUIPMENT_DEFS = {
 		"name": "Picareta de Ouro Nobre",
 		"slot": "pickaxe",
 		"desc": "Super resistente (+150%) e veloz. Durabilidade: 250 HP e corte 60% mais rápido.",
-		"cost_coins": 0,
-		"level_req": 2,
+		"cost_coins": 200,
+		"level_req": 11,
 		"max_durability": 250,
 		"mine_speed_mult": 1.6,
 		"icon": "pickaxe"
@@ -129,7 +150,7 @@ const EQUIPMENT_DEFS = {
 		"slot": "armor",
 		"desc": "Costura reforçada com bolsos extras (+20 carga: total 80).",
 		"cost_coins": 60,
-		"level_req": 1,
+		"level_req": 5,
 		"capacity_bonus": 20,
 		"icon": "armor"
 	},
@@ -139,7 +160,7 @@ const EQUIPMENT_DEFS = {
 		"slot": "armor",
 		"desc": "Mochila integrada de alta resistência (+40 carga: total 100).",
 		"cost_coins": 120,
-		"level_req": 2,
+		"level_req": 10,
 		"capacity_bonus": 40,
 		"icon": "armor"
 	},
@@ -162,7 +183,7 @@ const EQUIPMENT_DEFS = {
 		"slot": "boots",
 		"desc": "+15% de velocidade de corrida e +15% de altura no salto.",
 		"cost_coins": 35,
-		"level_req": 0,
+		"level_req": 4,
 		"jump_mult": 1.15,
 		"speed_mult": 1.15,
 		"icon": "boots"
@@ -173,61 +194,128 @@ const EQUIPMENT_DEFS = {
 		"slot": "boots",
 		"desc": "+25% de velocidade e +30% de altura de salto extraordinário.",
 		"cost_coins": 85,
-		"level_req": 2,
+		"level_req": 9,
 		"jump_mult": 1.30,
 		"speed_mult": 1.25,
 		"icon": "boots"
+	},
+	
+	# LUVAS
+	"glove_leather": {
+		"id": "glove_leather",
+		"name": "Luva de Couro",
+		"slot": "glove",
+		"desc": "Aumenta a força (+1) e gera dano no chute (+1) ao apertar [X] em blocos.",
+		"cost_coins": 0,
+		"level_req": 0,
+		"strength_bonus": 1,
+		"kick_damage": 1,
+		"icon": "glove"
+	},
+	"glove_iron": {
+		"id": "glove_iron",
+		"name": "Luva de Ferro",
+		"slot": "glove",
+		"desc": "Manopla reforçada de ferro (+2 força, +2 dano de chute).",
+		"cost_coins": 50,
+		"level_req": 5,
+		"strength_bonus": 2,
+		"kick_damage": 2,
+		"icon": "glove"
+	},
+	"glove_gold": {
+		"id": "glove_gold",
+		"name": "Luva de Ouro Nobre",
+		"slot": "glove",
+		"desc": "Luva resiliente banhada a ouro (+3 força, +3 dano de chute).",
+		"cost_coins": 130,
+		"level_req": 8,
+		"strength_bonus": 3,
+		"kick_damage": 3,
+		"icon": "glove"
 	}
 }
 
-# Aprimoramentos da Forja
-const FORGE_UPGRADES = [
-	{
-		"key": "upgrade_pickaxe_iron",
-		"target_item": "pickaxe_iron",
-		"name": "Aprimorar Picareta para Ferro",
-		"desc": "Reforça a lâmina com liga de ferro (+60% Resistência: 160 HP e corte ágil).",
-		"cost": {"iron": 5, "coal": 3},
-		"level_req": 1,
-		"exp_gain": 40
-	},
-	{
-		"key": "upgrade_pickaxe_gold",
-		"target_item": "pickaxe_gold",
-		"name": "Aprimorar Picareta para Ouro",
-		"desc": "Lâmina polida com ouro maciço (+150% Resistência: 250 HP e corte instantâneo).",
-		"cost": {"gold": 4, "iron": 6},
-		"level_req": 2,
-		"exp_gain": 70
-	},
-	{
-		"key": "upgrade_boots_springs",
-		"target_item": "boots_steel",
-		"name": "Aprimorar Botas com Molas de Aço",
-		"desc": "Instala amortecedores de impacto (+30% Pulo e +25% Velocidade).",
-		"cost": {"iron": 4, "plank": 3},
-		"level_req": 1,
-		"exp_gain": 40
-	},
-	{
-		"key": "upgrade_armor_pockets",
-		"target_item": "armor_reinforced",
-		"name": "Aprimorar Traje com Bolsos Reforçados",
-		"desc": "Adiciona compartimentos de couro e madeira (+20 Carga na Mochila).",
-		"cost": {"wood": 5, "iron": 3},
-		"level_req": 1,
-		"exp_gain": 35
-	},
-	{
-		"key": "upgrade_helmet_lamp",
-		"target_item": "helmet_iron_lamp",
-		"name": "Aprimorar Capacete com Refletor de Ouro",
-		"desc": "Instala lente polida e suporte de ouro (+130% Raio de Luz contínua).",
-		"cost": {"gold": 2, "coal": 4},
-		"level_req": 2,
-		"exp_gain": 50
-	}
-]
+# Aprimoramentos de Equipamentos na Forja (Capacete, Picareta, Traje, Botas, Luvas)
+const UPGRADE_MAX_LEVEL: int = 5
+const UPGRADE_SLOTS: Array = ["helmet", "pickaxe", "armor", "boots", "glove"]
+
+func get_upgrade_level(slot: String) -> int:
+	match slot:
+		"helmet": return helmet_upgrade_level
+		"pickaxe": return pickaxe_upgrade_level
+		"armor": return armor_upgrade_level
+		"boots": return boots_upgrade_level
+		"glove": return glove_upgrade_level
+	return 0
+
+func get_upgrade_display_name(slot: String) -> String:
+	match slot:
+		"helmet": return EQUIPMENT_DEFS.get(equipped_helmet, {}).get("name", "Capacete")
+		"pickaxe": return EQUIPMENT_DEFS.get(equipped_pickaxe, {}).get("name", "Picareta")
+		"armor": return EQUIPMENT_DEFS.get(equipped_armor, {}).get("name", "Traje")
+		"boots": return EQUIPMENT_DEFS.get(equipped_boots, {}).get("name", "Botas")
+		"glove": return EQUIPMENT_DEFS.get(equipped_glove, {}).get("name", "Luvas")
+	return ""
+
+func get_upgrade_cost(slot: String, tier: int) -> Dictionary:
+	match slot:
+		"pickaxe": return {"iron": tier * 2 + 1, "coal": tier}
+		"helmet": return {"coal": tier * 2 + 1, "gold": tier}
+		"armor": return {"wood": tier * 2 + 2, "iron": tier + 1}
+		"boots": return {"iron": tier + 2, "plank": tier + 1}
+		"glove": return {"stone": tier + 2, "iron": tier + 1}
+		_: return {}
+
+func get_upgrade_desc(slot: String, tier: int) -> String:
+	match slot:
+		"pickaxe":
+			return "+1 Força (+2 de dano por golpe) e +10%% de Resistência (durabilidade). Nível %d" % tier
+		"helmet":
+			return "+60 de Alcance de Luz na escuridão. Nível %d" % tier
+		"armor":
+			return "+20 de Carga máxima na mochila. Nível %d" % tier
+		"boots":
+			return "+0.20 de Força de Pulo e +0.15 de Velocidade. Nível %d" % tier
+		"glove":
+			return "+1 de Força e +1 de Dano no Chute. Nível %d" % tier
+		_: return ""
+
+func build_forge_upgrade_rows() -> Array:
+	var rows: Array = []
+	for slot in UPGRADE_SLOTS:
+		var cur_level: int = get_upgrade_level(slot)
+		if cur_level >= UPGRADE_MAX_LEVEL:
+			rows.append({
+				"key": slot + "_max",
+				"target_slot": slot,
+				"tier": cur_level,
+				"name": get_upgrade_display_name(slot),
+				"desc": "Equipamento no nível máximo (%d/%d)." % [cur_level, UPGRADE_MAX_LEVEL],
+				"cost": {},
+				"level_req": 0,
+				"exp_gain": 0,
+				"maxed": true,
+				"current_level": cur_level,
+				"max_level": UPGRADE_MAX_LEVEL
+			})
+		else:
+			var next_level: int = cur_level + 1
+			var up_level_req: Array = [3, 5, 7, 9, 12]
+			rows.append({
+				"key": "%s_%d" % [slot, next_level],
+				"target_slot": slot,
+				"tier": next_level,
+				"name": get_upgrade_display_name(slot),
+				"desc": get_upgrade_desc(slot, next_level),
+				"cost": get_upgrade_cost(slot, next_level),
+				"level_req": up_level_req[next_level - 1] if next_level - 1 < up_level_req.size() else 12,
+				"exp_gain": next_level * 30,
+				"maxed": false,
+				"current_level": cur_level,
+				"max_level": UPGRADE_MAX_LEVEL
+			})
+	return rows
 
 # Preços de Venda na Loja
 const COAL_PRICE: int = 5
@@ -239,11 +327,12 @@ const DIRT_PRICE: int = 2
 const PLANK_PRICE: int = 10
 const BRICK_PRICE: int = 12
 const LADDER_PRICE: int = 8
+const BOMB_PRICE: int = 20
 
 func get_max_capacity() -> int:
 	var def = EQUIPMENT_DEFS.get(equipped_armor, {})
 	var bonus = def.get("capacity_bonus", 0)
-	return BASE_CAPACITY + bonus
+	return BASE_CAPACITY + bonus + (armor_upgrade_level * 20)
 
 func get_exp_required_for_level(lvl: int) -> int:
 	return 100 + lvl * 70
@@ -274,12 +363,16 @@ func add_coins(amount: int) -> void:
 
 func damage_pickaxe(amount: int = 1) -> void:
 	if not has_pickaxe: return
-	pickaxe_durability = max(0, pickaxe_durability - amount)
+	_pickaxe_wear_accum += amount * 0.5
+	var wear = int(_pickaxe_wear_accum)
+	_pickaxe_wear_accum -= wear
+	pickaxe_durability = max(0, pickaxe_durability - wear)
 	inventory_changed.emit()
 	if pickaxe_durability <= 0:
 		has_pickaxe = false
+		_pickaxe_wear_accum = 0.0
 		pickaxe_broken.emit()
-		notify("Sua picareta quebrou! Colete os materiais e forje uma nova.", "pickaxe")
+		notify("Sua picareta quebrou! Escave com as mãos ou forje uma nova.", "pickaxe")
 
 # Equipment Getters
 func get_equipped_def(slot: String) -> Dictionary:
@@ -289,23 +382,45 @@ func get_equipped_def(slot: String) -> Dictionary:
 		"pickaxe": id = equipped_pickaxe
 		"armor": id = equipped_armor
 		"boots": id = equipped_boots
+		"glove": id = equipped_glove
 	return EQUIPMENT_DEFS.get(id, {})
 
 func get_boots_speed_multiplier() -> float:
 	var def = EQUIPMENT_DEFS.get(equipped_boots, {})
-	return def.get("speed_mult", 1.0)
+	var base_m = def.get("speed_mult", 1.0)
+	return base_m + (boots_upgrade_level * 0.15)
 
 func get_boots_jump_multiplier() -> float:
 	var def = EQUIPMENT_DEFS.get(equipped_boots, {})
-	return def.get("jump_mult", 1.0)
+	var base_m = def.get("jump_mult", 1.0)
+	return base_m + (boots_upgrade_level * 0.20)
 
 func get_helmet_light_radius() -> float:
 	var def = EQUIPMENT_DEFS.get(equipped_helmet, {})
-	return def.get("light_radius", 110.0)
+	var base_r = def.get("light_radius", 110.0)
+	return base_r + (helmet_upgrade_level * 60.0)
 
 func get_pickaxe_speed_multiplier() -> float:
 	var def = EQUIPMENT_DEFS.get(equipped_pickaxe, {})
-	return def.get("mine_speed_mult", 1.0)
+	return def.get("mine_speed_mult", 1.0) * (1.0 + pickaxe_upgrade_level * 0.10)
+
+func get_pickaxe_damage() -> int:
+	if not has_pickaxe: return 1
+	return 1 + pickaxe_upgrade_level * 2
+
+func get_strength() -> int:
+	return get_pickaxe_damage() + get_glove_def().get("strength_bonus", 0) + glove_upgrade_level
+
+func get_glove_def() -> Dictionary:
+	return EQUIPMENT_DEFS.get(equipped_glove, {})
+
+func get_glove_kick_damage() -> int:
+	return int(get_glove_def().get("kick_damage", 0)) + glove_upgrade_level
+
+func get_pickaxe_max_durability() -> int:
+	var def = EQUIPMENT_DEFS.get(equipped_pickaxe, {})
+	var base_dur = def.get("max_durability", 100)
+	return int(base_dur * (1.0 + pickaxe_upgrade_level * 0.10))
 
 func equip_gear(item_id: String) -> bool:
 	if not EQUIPMENT_DEFS.has(item_id): return false
@@ -318,7 +433,7 @@ func equip_gear(item_id: String) -> bool:
 		"pickaxe":
 			if not item_id in owned_pickaxes: return false
 			equipped_pickaxe = item_id
-			max_pickaxe_durability = def.get("max_durability", 100)
+			max_pickaxe_durability = get_pickaxe_max_durability()
 			pickaxe_durability = max_pickaxe_durability
 			has_pickaxe = true
 		"armor":
@@ -327,6 +442,9 @@ func equip_gear(item_id: String) -> bool:
 		"boots":
 			if not item_id in owned_boots: return false
 			equipped_boots = item_id
+		"glove":
+			if not item_id in owned_gloves: return false
+			equipped_glove = item_id
 	inventory_changed.emit()
 	notify("Equipado: %s" % def.name, def.get("icon", "equip"))
 	if has_node("/root/SaveManager"):
@@ -334,6 +452,19 @@ func equip_gear(item_id: String) -> bool:
 	return true
 
 func buy_shop_item(item_id: String) -> bool:
+	if item_id == "bomb":
+		if coins < BOMB_PRICE:
+			notify("Moedas insuficientes!", "coin_gold")
+			return false
+		coins -= BOMB_PRICE
+		bombs += 1
+		add_exp(10)
+		inventory_changed.emit()
+		notify("+1 Bomba Adquirida!", "chest")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+
 	if not EQUIPMENT_DEFS.has(item_id): return false
 	var def = EQUIPMENT_DEFS[item_id]
 	var cost = def.get("cost_coins", 0)
@@ -358,6 +489,9 @@ func buy_shop_item(item_id: String) -> bool:
 		"boots":
 			if item_id in owned_boots: return false
 			owned_boots.append(item_id)
+		"glove":
+			if item_id in owned_gloves: return false
+			owned_gloves.append(item_id)
 	coins -= cost
 	add_exp(35)
 	equip_gear(item_id)
@@ -369,18 +503,14 @@ func buy_shop_item(item_id: String) -> bool:
 
 func can_forge_upgrade(upgrade: Dictionary) -> bool:
 	if level < upgrade.get("level_req", 0): return false
-	var target = upgrade.get("target_item", "")
-	var def = EQUIPMENT_DEFS.get(target, {})
-	var slot = def.get("slot", "")
-	match slot:
-		"helmet":
-			if target in owned_helmets and equipped_helmet == target: return false
-		"pickaxe":
-			if target in owned_pickaxes and equipped_pickaxe == target: return false
-		"armor":
-			if target in owned_armors and equipped_armor == target: return false
-		"boots":
-			if target in owned_boots and equipped_boots == target: return false
+	var slot = upgrade.get("target_slot", "")
+	var tier = upgrade.get("tier", 1)
+	
+	if slot == "pickaxe" and pickaxe_upgrade_level >= tier: return false
+	elif slot == "helmet" and helmet_upgrade_level >= tier: return false
+	elif slot == "boots" and boots_upgrade_level >= tier: return false
+	elif slot == "armor" and armor_upgrade_level >= tier: return false
+	elif slot == "glove" and glove_upgrade_level >= tier: return false
 			
 	var cost = upgrade.get("cost", {})
 	for rk in cost:
@@ -394,13 +524,7 @@ func can_forge_upgrade(upgrade: Dictionary) -> bool:
 		elif rk == "dirt" and dirt < req_amt: return false
 	return true
 
-func execute_forge_upgrade(upgrade_key: String) -> bool:
-	var up_def = null
-	for u in FORGE_UPGRADES:
-		if u.key == upgrade_key:
-			up_def = u
-			break
-	if not up_def: return false
+func execute_forge_upgrade_def(up_def: Dictionary) -> bool:
 	if not can_forge_upgrade(up_def): return false
 	
 	var cost = up_def.get("cost", {})
@@ -414,23 +538,25 @@ func execute_forge_upgrade(upgrade_key: String) -> bool:
 		elif rk == "plank": planks -= amt
 		elif rk == "dirt": dirt -= amt
 		
-	var target = up_def.get("target_item", "")
-	var def = EQUIPMENT_DEFS.get(target, {})
-	var slot = def.get("slot", "")
-	match slot:
-		"helmet":
-			if not target in owned_helmets: owned_helmets.append(target)
-		"pickaxe":
-			if not target in owned_pickaxes: owned_pickaxes.append(target)
-		"armor":
-			if not target in owned_armors: owned_armors.append(target)
-		"boots":
-			if not target in owned_boots: owned_boots.append(target)
+	var slot = up_def.get("target_slot", "")
+	var tier = up_def.get("tier", 1)
+	if slot == "pickaxe":
+		pickaxe_upgrade_level = max(pickaxe_upgrade_level, tier)
+		max_pickaxe_durability = get_pickaxe_max_durability()
+		pickaxe_durability = max_pickaxe_durability
+		has_pickaxe = true
+	elif slot == "helmet":
+		helmet_upgrade_level = max(helmet_upgrade_level, tier)
+	elif slot == "boots":
+		boots_upgrade_level = max(boots_upgrade_level, tier)
+	elif slot == "armor":
+		armor_upgrade_level = max(armor_upgrade_level, tier)
+	elif slot == "glove":
+		glove_upgrade_level = max(glove_upgrade_level, tier)
 			
-	equip_gear(target)
 	add_exp(up_def.get("exp_gain", 40))
 	inventory_changed.emit()
-	notify("Aprimorado: %s!" % def.name, def.get("icon", "equip"))
+	notify("Equipamento Aprimorado!", "equip")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 	return true
@@ -528,7 +654,7 @@ func consume_lamp() -> bool:
 		return true
 	return false
 
-# Receitas de Forja (Criar)
+# Receitas de Forja (Criar Itens)
 func can_craft_pickaxe() -> bool:
 	return iron >= 1 and wood_logs >= 2 and stone >= 1
 
@@ -537,13 +663,16 @@ func craft_pickaxe() -> bool:
 		iron -= 1
 		wood_logs -= 2
 		stone -= 1
-		has_pickaxe = true
-		var cur_def = EQUIPMENT_DEFS.get(equipped_pickaxe, {})
-		max_pickaxe_durability = cur_def.get("max_durability", 100)
-		pickaxe_durability = max_pickaxe_durability
+		max_pickaxe_durability = get_pickaxe_max_durability()
+		if has_pickaxe and pickaxe_durability > 0:
+			pickaxe_durability += max_pickaxe_durability
+			notify("Picareta reforçada! +%d de Resistência (%d/%d)" % [max_pickaxe_durability, pickaxe_durability, max_pickaxe_durability], "pickaxe")
+		else:
+			has_pickaxe = true
+			pickaxe_durability = max_pickaxe_durability
+			notify("Nova Picareta Forjada!", "pickaxe")
 		add_exp(20)
 		inventory_changed.emit()
-		notify("Nova Picareta Forjada!", "pickaxe")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -612,12 +741,13 @@ func craft_brick_floor() -> bool:
 	return false
 
 func can_craft_portable_forge() -> bool:
-	return stone >= 5 and iron >= 3
+	return dirt >= 5 and stone >= 4 and iron >= 2
 
 func craft_portable_forge() -> bool:
 	if can_craft_portable_forge():
-		stone -= 5
-		iron -= 3
+		dirt -= 5
+		stone -= 4
+		iron -= 2
 		portable_forges += 1
 		add_exp(30)
 		inventory_changed.emit()
@@ -719,7 +849,7 @@ func add_item(type: String, amount: int = 1) -> bool:
 		return true
 	elif type == "dirt":
 		dirt += amount
-		notify("+" + str(amount) + " Terra", "dirt")
+		notify("+" + str(amount) + " Lama", "dirt")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -731,6 +861,13 @@ func add_item(type: String, amount: int = 1) -> bool:
 	elif type == "forge":
 		portable_forges += amount
 		notify("Forja Portátil recuperada!", "forge")
+		inventory_changed.emit()
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	elif type == "bomb":
+		bombs += amount
+		notify("+%d Bomba!" % amount, "chest")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -837,19 +974,28 @@ func reset_inventory() -> void:
 	stone = 0
 	brick_floors = 0
 	portable_forges = 0
+	bombs = 0
 	has_pickaxe = true
 	pickaxe_durability = 100
 	max_pickaxe_durability = 100
+	_pickaxe_wear_accum = 0.0
+	pickaxe_upgrade_level = 0
+	helmet_upgrade_level = 0
+	boots_upgrade_level = 0
+	armor_upgrade_level = 0
+	glove_upgrade_level = 0
 	level = 0
 	current_exp = 0
 	active_slot = 0
-	hotbar_slots = ["pickaxe", "lamp", "ladder", "plank", "brick", "forge"]
+	hotbar_slots = ["pickaxe", "lamp", "ladder", "plank", "bomb"]
 	equipped_helmet = "helmet_miner"
 	equipped_pickaxe = "pickaxe_copper"
 	equipped_armor = "armor_miner"
 	equipped_boots = "boots_mud"
+	equipped_glove = "glove_leather"
 	owned_helmets = ["helmet_miner"]
 	owned_pickaxes = ["pickaxe_copper"]
 	owned_armors = ["armor_miner"]
 	owned_boots = ["boots_mud"]
+	owned_gloves = ["glove_leather"]
 	inventory_changed.emit()

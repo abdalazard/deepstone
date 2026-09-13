@@ -1,11 +1,11 @@
 [gd_scene load_steps=5 format=3 uid="uid://btreeuidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/tree.gd" id="1_tree"]
-[ext_resource type="Texture2D" path="res://assets/sprites/tree_large.png" id="2_tree_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tree.png" id="2_tree_tex"]
 [ext_resource type="Texture2D" path="res://assets/sprites/tree_stump.png" id="3_stump_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tree"]
-size = Vector2(36, 72)
+size = Vector2(40, 96)
 
 [node name="Tree" type="Area2D"]
 collision_layer = 1
@@ -13,13 +13,14 @@ collision_mask = 0
 script = ExtResource("1_tree")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -36)
+position = Vector2(0, -48)
 shape = SubResource("RectangleShape2D_tree")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture_filter = 1
-position = Vector2(0, -36)
+position = Vector2(0, -48)
 texture = ExtResource("2_tree_tex")
+hframes = 2
 
 [node name="StumpSprite" type="Sprite2D" parent="."]
 visible = false

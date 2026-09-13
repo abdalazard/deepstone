@@ -13,6 +13,7 @@ const PLANK_SCENE = preload("res://scenes/environment/plank.tscn")
 const STONE_SCENE = preload("res://scenes/cave/stone.tscn")
 const TREE_SCENE = preload("res://scenes/environment/tree.tscn")
 const FORGE_SCENE = preload("res://scenes/environment/forge.tscn")
+const BUSH_SCENE = preload("res://scenes/environment/bush.tscn")
 
 @onready var player = $Player
 
@@ -32,6 +33,7 @@ func _ready() -> void:
 	
 	generate_world()
 	restore_placed_items()
+	_setup_subsurface_shade()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):
@@ -50,9 +52,41 @@ func _process(delta: float) -> void:
 		if dir_light:
 			dir_light.visible = (py < 350.0)
 
+		# Na superfície o subsolo fica 100% oculto por uma camada escura.
+		var shade = get_node_or_null("SubsurfaceShade")
+		if shade:
+			shade.visible = py < 112.0
+
+		# Dinâmica de descoberta: na superfície a câmera sobe para mostrar mais
+		# céu e menos chão; ao descer para o primeiro andar do subsolo ela volta
+		# a centralizar o personagem no meio da tela.
+		var cam = player.get_node_or_null("Camera2D")
+		if cam:
+			var target_offset := Vector2.ZERO
+			if py < 112.0:
+				target_offset.y = -64.0
+			cam.offset = cam.offset.lerp(target_offset, minf(1.0, 6.0 * delta))
+
 		var current_color = RenderingServer.get_default_clear_color()
 		if not current_color.is_equal_approx(target_color):
 			RenderingServer.set_default_clear_color(current_color.lerp(target_color, 4.0 * delta))
+
+# Camada 100% escura que oculta todo o subsolo (y >= 112, abaixo da linha da
+# superfície) enquanto o player está na superfície. Fica acima do parallax e do
+# fundo da caverna (z = -6) e abaixo dos blocos (z = 0), que continuam visíveis.
+func _setup_subsurface_shade() -> void:
+	var shade := Polygon2D.new()
+	shade.name = "SubsurfaceShade"
+	shade.z_index = -6
+	shade.color = Color(0, 0, 0, 1)
+	shade.polygon = PackedVector2Array([
+		Vector2(-10000, 112),
+		Vector2(10000, 112),
+		Vector2(10000, 10000),
+		Vector2(-10000, 10000),
+	])
+	shade.visible = false
+	add_child(shade)
 
 func restore_placed_items() -> void:
 	if not has_node("/root/SaveManager"): return
@@ -266,3 +300,10 @@ func generate_world() -> void:
 		var tree = TREE_SCENE.instantiate()
 		tree.position = Vector2(tx, 112)
 		add_child(tree)
+
+	# Spawn decorative bushes on surface
+	var bush_positions = [80, 144, 208, 272, 336, 608, 704, 768, 832, 888]
+	for bx in bush_positions:
+		var bush = BUSH_SCENE.instantiate()
+		bush.position = Vector2(bx, 112)
+		add_child(bush)

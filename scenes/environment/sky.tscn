@@ -1,9 +1,9 @@
 [gd_scene load_steps=6 format=3 uid="uid://bskyuidxxxx"]
 
-[ext_resource type="Script" path="res://scripts/sky.gd" id="1_sky"]
-[ext_resource type="Texture2D" path="res://assets/environment/cloud1.png" id="2_cloud1"]
-[ext_resource type="Texture2D" path="res://assets/environment/cloud2.png" id="3_cloud2"]
-[ext_resource type="Texture2D" path="res://assets/environment/cloud3.png" id="4_cloud3"]
+[ext_resource type="Script" uid="uid://cjq73dw7xtv68" path="res://scripts/sky.gd" id="1_sky"]
+[ext_resource type="Texture2D" uid="uid://dl387bf5apvo5" path="res://assets/environment/cloud1.png" id="2_cloud1"]
+[ext_resource type="Texture2D" uid="uid://caees0a1jpmih" path="res://assets/environment/cloud2.png" id="3_cloud2"]
+[ext_resource type="Texture2D" uid="uid://dxeomr5qxhjos" path="res://assets/environment/cloud3.png" id="4_cloud3"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
 light_mode = 1
@@ -14,7 +14,6 @@ script = ExtResource("1_sky")
 
 [node name="SkyBackground" type="Polygon2D" parent="."]
 material = SubResource("CanvasItemMaterial_unshaded")
-color = Color(1, 1, 1, 1)
 polygon = PackedVector2Array(-500, -1500, 1500, -1500, 1500, 120, -500, 120)
 vertex_colors = PackedColorArray(0.2, 0.45, 0.85, 1, 0.2, 0.45, 0.85, 1, 0.65, 0.84, 0.98, 1, 0.65, 0.84, 0.98, 1)
 
