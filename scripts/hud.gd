@@ -102,7 +102,7 @@ func _get_column_tex() -> Texture2D:
 		for i in range(3):
 			var yy := 3 + i * (row_h + 2)
 			var ox := 4 if i % 2 == 0 else 7
-			var bh := min(row_h, h - yy)
+			var bh: int = min(row_h, h - yy)
 			img.blit_rect(brick, Rect2(0, 0, w - 7, bh), Vector2i(ox, yy))
 		column_tex = ImageTexture.create_from_image(img)
 	return column_tex
