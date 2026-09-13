@@ -804,22 +804,6 @@ func craft_column() -> bool:
 		return true
 	return false
 
-func can_craft_column() -> bool:
-	return dirt >= 3 and stone >= 3
-
-func craft_column() -> bool:
-	if can_craft_column():
-		dirt -= 3
-		stone -= 3
-		columns += 1
-		add_exp(8)
-		inventory_changed.emit()
-		notify("+1 Coluna de Suporte Forjada!", "plank")
-		if has_node("/root/SaveManager"):
-			get_node("/root/SaveManager").request_save()
-		return true
-	return false
-
 func can_craft_slab() -> bool:
 	return dirt >= 2 and stone >= 2
 
