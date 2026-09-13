@@ -577,6 +577,8 @@ func place_slab() -> void:
 	if inv: inv.notify("Laje Instalada!", "plank")
 	var sm = _get_save()
 	if sm: sm.request_save()
+
+func place_portable_forge() -> void:
 	var inv = _get_inv()
 	if not inv or inv.portable_forges <= 0:
 		if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 lama, 4 pedra e 2 ferro.", "forge")
