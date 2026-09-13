@@ -92,7 +92,7 @@ var column_tex: Texture2D = null
 func _get_column_tex() -> Texture2D:
 	if column_tex == null:
 		var img: Image = brick_tex.get_image()
-		img.rotate_90()
+		img.rotate_90(ClockDirection.CLOCKWISE)
 		column_tex = ImageTexture.create_from_image(img)
 	return column_tex
 
