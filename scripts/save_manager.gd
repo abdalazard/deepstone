@@ -178,7 +178,6 @@ func save_game(show_notify: bool = false) -> void:
 			"ladders": inv.ladders if (inv and "ladders" in inv) else 0,
 			"dirt": inv.dirt if (inv and "dirt" in inv) else 0,
 			"stone": inv.stone if (inv and "stone" in inv) else 0,
-			"brick_floors": inv.brick_floors if (inv and "brick_floors" in inv) else 0,
 			"columns": inv.columns if (inv and "columns" in inv) else 0,
 			"slabs": inv.slabs if (inv and "slabs" in inv) else 0,
 			"portable_forges": inv.portable_forges if (inv and "portable_forges" in inv) else 0,
@@ -271,8 +270,6 @@ func load_game() -> bool:
 			inv.dirt = inv_data.get("dirt", 0)
 		if "stone" in inv:
 			inv.stone = inv_data.get("stone", 0)
-		if "brick_floors" in inv:
-			inv.brick_floors = inv_data.get("brick_floors", 0)
 		if "columns" in inv:
 			inv.columns = inv_data.get("columns", 0)
 		if "slabs" in inv:
@@ -291,7 +288,7 @@ func load_game() -> bool:
 			var saved_slots: Array = inv_data.get("hotbar_slots", ["pickaxe", "lamp", "ladder", "plank"])
 			inv.hotbar_slots = []
 			for s in saved_slots:
-				if s not in ["brick", "forge"]:
+				if s not in ["forge"]:
 					inv.hotbar_slots.append(s)
 		if "equipped_helmet" in inv:
 			inv.equipped_helmet = inv_data.get("equipped_helmet", "helmet_miner")

@@ -17,7 +17,6 @@ var ladders: int = 0 # Escadas de madeira forjadas (1 tronco -> 5 escadas)
 var planks: int = 0 # Tábuas de madeira forjadas (1 tronco -> 5 tábuas)
 var dirt: int = 0 # Lama/Terra obtida de escavação
 var stone: int = 0 # Pedra obtida de escavação
-var brick_floors: int = 0 # Pisos de tijolo forjados (1 lama + 1 pedra)
 var columns: int = 0 # Colunas de suporte estrutural (3 lama + 3 pedra)
 var slabs: int = 0 # Lajes de tijolo estruturais (2 lama + 2 pedra)
 var portable_forges: int = 0 # Forjas portáteis (5 lama + 4 pedra + 2 ferro)
@@ -55,7 +54,6 @@ func die() -> void:
 	planks = 0
 	dirt = 0
 	stone = 0
-	brick_floors = 0
 	columns = 0
 	slabs = 0
 	portable_forges = 0
@@ -398,7 +396,6 @@ const WOOD_PRICE: int = 8
 const STONE_PRICE: int = 4
 const DIRT_PRICE: int = 2
 const PLANK_PRICE: int = 10
-const BRICK_PRICE: int = 12
 const LADDER_PRICE: int = 8
 const BOMB_PRICE: int = 20
 
@@ -665,10 +662,6 @@ func sell_resource(key: String, amount: int = 1) -> int:
 		planks -= amount
 		earned = amount * PLANK_PRICE
 		exp_gain = amount * 4
-	elif key == "brick" and brick_floors >= amount:
-		brick_floors -= amount
-		earned = amount * BRICK_PRICE
-		exp_gain = amount * 5
 	elif key == "ladder" and ladders >= amount:
 		ladders -= amount
 		earned = amount * LADDER_PRICE
@@ -693,7 +686,6 @@ func sell_all_resource(key: String) -> int:
 	elif key == "stone": count = stone
 	elif key == "dirt": count = dirt
 	elif key == "plank": count = planks
-	elif key == "brick": count = brick_floors
 	elif key == "ladder": count = ladders
 	if count > 0:
 		return sell_resource(key, count)
@@ -708,7 +700,6 @@ func sell_all_minerals() -> int:
 	total_earned += sell_all_resource("stone")
 	total_earned += sell_all_resource("dirt")
 	total_earned += sell_all_resource("plank")
-	total_earned += sell_all_resource("brick")
 	total_earned += sell_all_resource("ladder")
 	return total_earned
 
@@ -813,6 +804,22 @@ func craft_column() -> bool:
 		return true
 	return false
 
+func can_craft_column() -> bool:
+	return dirt >= 3 and stone >= 3
+
+func craft_column() -> bool:
+	if can_craft_column():
+		dirt -= 3
+		stone -= 3
+		columns += 1
+		add_exp(8)
+		inventory_changed.emit()
+		notify("+1 Coluna de Suporte Forjada!", "plank")
+		if has_node("/root/SaveManager"):
+			get_node("/root/SaveManager").request_save()
+		return true
+	return false
+
 func can_craft_slab() -> bool:
 	return dirt >= 2 and stone >= 2
 
@@ -824,22 +831,6 @@ func craft_slab() -> bool:
 		add_exp(8)
 		inventory_changed.emit()
 		notify("+1 Laje de Tijolos Forjada!", "plank")
-		if has_node("/root/SaveManager"):
-			get_node("/root/SaveManager").request_save()
-		return true
-	return false
-
-func can_craft_brick_floor() -> bool:
-	return dirt >= 1 and stone >= 1
-
-func craft_brick_floor() -> bool:
-	if can_craft_brick_floor():
-		dirt -= 1
-		stone -= 1
-		brick_floors += 1
-		add_exp(12)
-		inventory_changed.emit()
-		notify("+1 Piso de Tijolo Forjado!", "plank")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -1009,12 +1000,6 @@ func add_item(type: String, amount: int = 1) -> bool:
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
-	elif type == "brick":
-		brick_floors += amount
-		inventory_changed.emit()
-		if has_node("/root/SaveManager"):
-			get_node("/root/SaveManager").request_save()
-		return true
 	return false
 
 func drop_item(type: String, amount: int = 1) -> bool:
@@ -1051,9 +1036,6 @@ func drop_item(type: String, amount: int = 1) -> bool:
 	elif type == "plank" and planks >= amount:
 		planks -= amount
 		drop_res_type = 10 # PLANK
-	elif type == "brick" and brick_floors >= amount:
-		brick_floors -= amount
-		drop_res_type = 11 # BRICK
 	elif type == "forge" and portable_forges >= amount:
 		portable_forges -= amount
 		drop_res_type = 7 # FORGE
@@ -1091,7 +1073,6 @@ func reset_inventory() -> void:
 	planks = 0
 	dirt = 0
 	stone = 0
-	brick_floors = 0
 	columns = 0
 	slabs = 0
 	portable_forges = 0

@@ -417,11 +417,6 @@ func execute_active_item() -> void:
 				place_plank()
 			else:
 				if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
-		"brick":
-			if inv and inv.brick_floors > 0:
-				place_brick_floor()
-			else:
-				if inv: inv.notify("Sem pisos de tijolo! Crie na Forja usando lama e pedra.", "plank")
 		"forge":
 			if inv and inv.portable_forges > 0:
 				place_portable_forge()
@@ -495,29 +490,6 @@ func place_plank() -> void:
 	inv.inventory_changed.emit()
 	
 	var platform_scene = load("res://scenes/environment/plank.tscn")
-	if not platform_scene: return
-	var platform = platform_scene.instantiate()
-	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
-	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
-	if Input.is_action_pressed("ui_down"): grid_y += 1
-	elif Input.is_action_pressed("ui_up"): grid_y -= 1
-	var place_y = grid_y * 32.0 + 117.0
-	platform.position = Vector2(place_x, place_y)
-	platform.add_to_group("placed_planks")
-	get_tree().current_scene.add_child(platform)
-	var sm = _get_save()
-	if sm:
-		sm.request_save()
-
-func place_brick_floor() -> void:
-	var inv = _get_inv()
-	if not inv or inv.brick_floors <= 0:
-		if inv: inv.notify("Sem pisos de tijolo! Crie na Forja com lama e pedra.", "plank")
-		return
-	inv.brick_floors -= 1
-	inv.inventory_changed.emit()
-	
-	var platform_scene = load("res://scenes/environment/brick_floor.tscn")
 	if not platform_scene: return
 	var platform = platform_scene.instantiate()
 	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0

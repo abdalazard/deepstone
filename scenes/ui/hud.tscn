@@ -1739,52 +1739,6 @@ theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
 text = "Forjar 5 Tábuas"
 
-[node name="BrickFloorRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
-
-[node name="Margin" type="MarginContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 6
-
-[node name="HBox" type="HBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="Icon" type="TextureRect" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-texture = ExtResource("13_plank")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="InfoVBox" type="VBoxContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Title" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox/InfoVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
-theme_override_font_sizes/font_size = 12
-text = "Piso de Tijolo"
-
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox/InfoVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
-theme_override_font_sizes/font_size = 10
-text = "Custo: 1 Lama + 1 Pedra -> 1 Piso de Tijolo"
-
-[node name="CraftBrickFloorBtn" type="Button" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/BrickFloorRecipeRow/Margin/HBox"]
-custom_minimum_size = Vector2(130, 30)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("StyleBoxFlat_equip_btn")
-text = "Forjar 1 Piso"
-
 [node name="ColumnRecipeRow" type="PanelContainer" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")

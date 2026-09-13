@@ -768,18 +768,20 @@ func _ready() -> void:
 	air_player.queue_free()
 	print("[PASS] Test 39: Air control fall physics with smooth lateral impulse")
 
-	# Test 40: Forge crafting of Brick Floor (1 mud + 1 stone -> 1 brick floor + 15 EXP)
-	inv.dirt = 1
-	inv.stone = 1
-	inv.brick_floors = 0
-	var exp_before = inv.current_exp
-	assert(inv.can_craft_brick_floor() == true, "Must be able to craft brick floor with 1 mud + 1 stone")
-	var crafted_bf = inv.craft_brick_floor()
-	assert(crafted_bf == true, "Crafting brick floor should succeed")
-	assert(inv.dirt == 0 and inv.stone == 0, "1 mud and 1 stone must be deducted")
-	assert(inv.brick_floors == 1, "Must receive 1 brick floor")
-	assert(inv.current_exp == exp_before + 15, "Crafting brick floor must grant 15 EXP")
-	print("[PASS] Test 40: Forge crafting of Brick Floor (1 Mud + 1 Stone -> 1 Piso + 15 EXP)")
+	# Test 40: Forge crafting of Column and Slab (Lama + Pedra recipes)
+	inv.dirt = 5
+	inv.stone = 5
+	inv.columns = 0
+	inv.slabs = 0
+	assert(inv.can_craft_column() == true, "Must be able to craft column with 3 mud + 3 stone")
+	assert(inv.can_craft_slab() == true, "Must be able to craft slab with 2 mud + 2 stone")
+	var crafted_col = inv.craft_column()
+	assert(crafted_col == true and inv.columns == 1, "Crafting column should succeed")
+	assert(inv.dirt == 2 and inv.stone == 2, "3 mud and 3 stone must be deducted for column")
+	var crafted_slab = inv.craft_slab()
+	assert(crafted_slab == true and inv.slabs == 1, "Crafting slab should succeed")
+	assert(inv.dirt == 0 and inv.stone == 0, "2 mud and 2 stone must be deducted for slab")
+	print("[PASS] Test 40: Forge crafting of Column (3 Lama + 3 Pedra) and Slab (2 Lama + 2 Pedra)")
 
 	# Test 41: Brick Floor platform placement (collision layer 32, one-way)
 	var brick_scene = load("res://scenes/environment/brick_floor.tscn")

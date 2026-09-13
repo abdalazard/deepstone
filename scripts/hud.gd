@@ -87,6 +87,24 @@ var wood_tex = preload("res://assets/sprites/wood_log.png")
 var stone_tex = preload("res://assets/sprites/stone_drop.png")
 var dirt_tex = preload("res://assets/sprites/dirt_drop.png")
 var brick_tex = preload("res://assets/sprites/brick_platform.png")
+var column_tex: Texture2D = null
+
+func _get_column_tex() -> Texture2D:
+	if column_tex == null:
+		var img: Image = brick_tex.get_image()
+		img.rotate_90(Image.CLOCKWISE)
+		column_tex = ImageTexture.create_from_image(img)
+	return column_tex
+
+func _setup_forge_recipe_icons() -> void:
+	var col_row = find_child("ColumnRecipeRow", true, false)
+	if col_row:
+		var ic = col_row.find_child("Icon", true, false)
+		if ic: ic.texture = _get_column_tex()
+	var slab_row = find_child("SlabRecipeRow", true, false)
+	if slab_row:
+		var ic2 = slab_row.find_child("Icon", true, false)
+		if ic2: ic2.texture = brick_tex
 var broken_pickaxe_tex = preload("res://assets/sprites/broken_pickaxe.png")
 var helmet_tex = preload("res://assets/sprites/equip_helmet.png")
 var armor_tex = preload("res://assets/sprites/equip_armor.png")
@@ -117,7 +135,6 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var craft_lamp_btn = find_child("CraftLampBtn", true, false)
 @onready var craft_ladder_btn = find_child("CraftLadderBtn", true, false)
 @onready var craft_plank_btn = find_child("CraftPlankBtn", true, false)
-@onready var craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
 @onready var craft_column_btn = find_child("CraftColumnBtn", true, false)
 @onready var craft_slab_btn = find_child("CraftSlabBtn", true, false)
 @onready var craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
@@ -181,16 +198,6 @@ var chest_items_def = [
 		"shortcut": "4",
 		"is_tool": true,
 		"tool_slot": 3
-	},
-	{
-		"key": "brick",
-		"name": "Piso de Tijolo",
-		"desc": "Plataforma sólida forjada com lama e pedra. Cria passarelas firmes na mina.",
-		"icon_type": "direct",
-		"tex": "brick",
-		"shortcut": "5",
-		"is_tool": true,
-		"tool_slot": 4
 	},
 	{
 		"key": "forge",
@@ -383,8 +390,6 @@ func _ready() -> void:
 		craft_plank_btn.pressed.connect(_on_craft_plank)
 	if craft_pickaxe_btn and not craft_pickaxe_btn.pressed.is_connected(_on_craft_pickaxe):
 		craft_pickaxe_btn.pressed.connect(_on_craft_pickaxe)
-	if craft_brick_floor_btn and not craft_brick_floor_btn.pressed.is_connected(_on_craft_brick_floor):
-		craft_brick_floor_btn.pressed.connect(_on_craft_brick_floor)
 	if craft_column_btn and not craft_column_btn.pressed.is_connected(_on_craft_column):
 		craft_column_btn.pressed.connect(_on_craft_column)
 	if craft_slab_btn and not craft_slab_btn.pressed.is_connected(_on_craft_slab):
@@ -394,6 +399,7 @@ func _ready() -> void:
 		
 	_setup_forge_tabs()
 	_setup_equipment_slot_interactions()
+	_setup_forge_recipe_icons()
 	
 	update_ui()
 
@@ -496,8 +502,6 @@ func _unhandled_input(event: InputEvent) -> void:
 						_on_craft_lamp()
 					elif inv.can_craft_portable_forge():
 						_on_craft_portable_forge()
-					elif inv.can_craft_brick_floor():
-						_on_craft_brick_floor()
 					elif inv.can_craft_planks():
 						_on_craft_plank()
 					elif inv.can_craft_ladders():
@@ -951,15 +955,6 @@ func _on_craft_plank() -> void:
 		else:
 			show_toast("Sem madeira suficiente! Requer 1 Tronco de Madeira.", "wood")
 
-func _on_craft_brick_floor() -> void:
-	var inv = _get_inv()
-	if inv:
-		if inv.craft_brick_floor():
-			update_forge_ui()
-			update_ui()
-		else:
-			show_toast("Recursos insuficientes! Requer 1 Lama e 1 Pedra.", "plank")
-
 func _on_craft_column() -> void:
 	var inv = _get_inv()
 	if inv:
@@ -1024,9 +1019,6 @@ func update_forge_ui() -> void:
 		craft_ladder_btn.disabled = not inv.can_craft_ladders()
 	if craft_plank_btn:
 		craft_plank_btn.disabled = not inv.can_craft_planks()
-	if not craft_brick_floor_btn: craft_brick_floor_btn = find_child("CraftBrickFloorBtn", true, false)
-	if craft_brick_floor_btn:
-		craft_brick_floor_btn.disabled = not inv.can_craft_brick_floor()
 	if not craft_column_btn: craft_column_btn = find_child("CraftColumnBtn", true, false)
 	if craft_column_btn:
 		craft_column_btn.disabled = not inv.can_craft_column()
@@ -1074,7 +1066,8 @@ func _update_forge_materials() -> void:
 		{"tex": dirt_tex, "name": "Lamas", "count": inv.dirt},
 		{"tex": plank_tex, "name": "Tabuas", "count": inv.planks},
 		{"tex": rope_tex, "name": "Escadas", "count": inv.ladders},
-		{"tex": brick_tex, "name": "Pisos", "count": inv.brick_floors}
+		{"tex": _get_column_tex(), "name": "Colunas", "count": inv.columns},
+		{"tex": brick_tex, "name": "Lajes", "count": inv.slabs}
 	]
 	
 	var owned: Array = []
@@ -1381,7 +1374,8 @@ func _refresh_inventory_hotbar_setup() -> void:
 		
 		if key == "ladder": icon.texture = rope_tex
 		elif key == "plank": icon.texture = plank_tex
-		elif key == "brick" or key == "column" or key == "slab": icon.texture = brick_tex
+		elif key == "column": icon.texture = _get_column_tex()
+		elif key == "slab": icon.texture = brick_tex
 		elif key == "forge": icon.texture = stone_tex
 		elif key == "lamp":
 			var atlas = AtlasTexture.new()
@@ -1563,7 +1557,6 @@ func update_shop_ui() -> void:
 			{"key": "stone", "name": "Pedra", "price": inv.STONE_PRICE, "count": inv.stone, "tex": stone_tex},
 			{"key": "dirt", "name": "Lama", "price": inv.DIRT_PRICE, "count": inv.dirt, "tex": dirt_tex},
 			{"key": "plank", "name": "Tábua de Madeira", "price": inv.PLANK_PRICE, "count": inv.planks, "tex": plank_tex},
-			{"key": "brick", "name": "Piso de Tijolo", "price": inv.BRICK_PRICE, "count": inv.brick_floors, "tex": brick_tex},
 			{"key": "ladder", "name": "Escada", "price": inv.LADDER_PRICE, "count": inv.ladders, "tex": rope_tex}
 		]
 		
@@ -1809,7 +1802,8 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	var k = def.get("key", "")
 	if k == "ladder": icon.texture = rope_tex
 	elif k == "plank": icon.texture = plank_tex
-	elif k == "brick" or k == "column" or k == "slab": icon.texture = brick_tex
+	elif k == "column": icon.texture = _get_column_tex()
+	elif k == "slab": icon.texture = brick_tex
 	elif k == "forge": icon.texture = stone_tex
 	elif k == "lamp":
 		var atlas = AtlasTexture.new()
@@ -1876,7 +1870,8 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	var k = def.get("key", "")
 	if k == "ladder": icon.texture = rope_tex
 	elif k == "plank": icon.texture = plank_tex
-	elif k == "brick" or k == "column" or k == "slab": icon.texture = brick_tex
+	elif k == "column": icon.texture = _get_column_tex()
+	elif k == "slab": icon.texture = brick_tex
 	elif k == "wood": icon.texture = wood_tex
 	elif k == "stone" or k == "forge": icon.texture = stone_tex
 	elif k == "dirt": icon.texture = dirt_tex
@@ -1971,7 +1966,7 @@ Durabilidade: %d/%d" % [def.desc, inv.pickaxe_durability, inv.max_pickaxe_durabi
 			equip_button.visible = def.is_tool
 			equip_button.text = "Equipar [%s]" % def.shortcut
 		if drop_button:
-			drop_button.visible = not def.is_tool or (def.key in ["plank", "lamp", "brick", "forge"])
+			drop_button.visible = not def.is_tool or (def.key in ["plank", "lamp", "forge"])
 
 func _on_equip_pressed() -> void:
 	if selected_index < 0 or selected_index >= chest_items_def.size(): return
@@ -2009,7 +2004,6 @@ func _get_item_count(key: String) -> int:
 		"lamp": return inv.starter_lamps if "starter_lamps" in inv else 0
 		"ladder": return inv.ladders if "ladders" in inv else 0
 		"plank": return inv.planks
-		"brick": return inv.brick_floors if "brick_floors" in inv else 0
 		"column": return inv.columns if "columns" in inv else 0
 		"slab": return inv.slabs if "slabs" in inv else 0
 		"forge": return inv.portable_forges if "portable_forges" in inv else 0
@@ -2061,7 +2055,8 @@ func update_ui() -> void:
 		if icon:
 			if key == "ladder": icon.texture = rope_tex
 			elif key == "plank": icon.texture = plank_tex
-			elif key == "brick" or key == "column" or key == "slab": icon.texture = brick_tex
+			elif key == "column": icon.texture = _get_column_tex()
+			elif key == "slab": icon.texture = brick_tex
 			elif key == "forge": icon.texture = stone_tex
 			elif key == "lamp":
 				var atlas = AtlasTexture.new()
@@ -2124,9 +2119,6 @@ func update_ui() -> void:
 		elif key == "plank":
 			count_lbl.text = "%d" % inv.planks
 			slot.modulate = Color.WHITE if inv.planks > 0 else Color(1, 1, 1, 0.4)
-		elif key == "brick":
-			count_lbl.text = "%d" % inv.brick_floors
-			slot.modulate = Color.WHITE if inv.brick_floors > 0 else Color(1, 1, 1, 0.4)
 		elif key == "forge":
 			count_lbl.text = "%d" % inv.portable_forges
 			slot.modulate = Color.WHITE if inv.portable_forges > 0 else Color(1, 1, 1, 0.4)
