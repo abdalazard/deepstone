@@ -17,6 +17,11 @@ const BUSH_SCENE = preload("res://scenes/environment/bush.tscn")
 const RANDOM_ROCK_SCENE = preload("res://scenes/environment/random_rock.tscn")
 const DEATH_MARKER_SCENE = preload("res://scenes/markers/death_marker.tscn")
 
+# Músicas por ambiente
+const MUSIC_EARTH = preload("res://assets/sounds/Valley_of_Singing_Quartz.mp3")
+const MUSIC_ICE = preload("res://assets/sounds/Beneath_the_Frost.mp3")
+const MUSIC_LAVA = preload("res://assets/sounds/Molten_Ascent.mp3")
+
 @onready var player = $Player
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
@@ -37,11 +42,13 @@ func _ready() -> void:
 	restore_placed_items()
 	_setup_subsurface_shade()
 	_setup_surface_light()
+	_setup_music()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):
 		var target_color: Color
 		var py = player.global_position.y
+		_update_music(py)
 		if py < 120.0:
 			target_color = sky_color
 		elif py < 1280.0: # Rows 0 to 35: Terra
@@ -131,6 +138,64 @@ func _build_surface_light_texture() -> Texture2D:
 				ax = float(w - 1 - x) / 24.0
 			img.set_pixel(x, y, Color(1, 1, 1, a * ax))
 	return ImageTexture.create_from_image(img)
+
+# ---------------------------------------------------------------------------
+# Música por ambiente (fade suave + alerta com o nome da música)
+# ---------------------------------------------------------------------------
+var music_player: AudioStreamPlayer
+var _current_biome_music: int = -1 # -1 superficie, 0 terra, 1 gelo, 2 lava
+
+func _setup_music() -> void:
+	music_player = AudioStreamPlayer.new()
+	music_player.name = "MusicPlayer"
+	add_child(music_player)
+
+func _update_music(py: float) -> void:
+	var biome := -1
+	if py >= 2560.0:
+		biome = 2 # Lava
+	elif py >= 1280.0:
+		biome = 1 # Gelo
+	elif py >= 120.0:
+		biome = 0 # Terra/Caverna
+	if biome == _current_biome_music:
+		return
+	_current_biome_music = biome
+	if biome == -1:
+		_fade_music_to(null, "")
+		return
+	var stream: AudioStream = null
+	var label := ""
+	match biome:
+		0:
+			stream = MUSIC_EARTH
+			label = "Valley of Singing Quartz"
+		1:
+			stream = MUSIC_ICE
+			label = "Beneath the Frost"
+		2:
+			stream = MUSIC_LAVA
+			label = "Molten Ascent"
+	_fade_music_to(stream, label)
+
+func _fade_music_to(stream: AudioStream, label: String) -> void:
+	if not is_instance_valid(music_player):
+		return
+	var tween = create_tween()
+	tween.tween_property(music_player, "volume_db", -50.0, 1.1)
+	tween.tween_callback(func():
+		if stream == null:
+			music_player.stop()
+			return
+		stream.loop = true
+		music_player.stream = stream
+		music_player.volume_db = -40.0
+		music_player.play()
+		var hud = get_node_or_null("HUD")
+		if hud and hud.has_method("show_toast"):
+			hud.show_toast("🎵 " + label, "wood")
+	)
+	tween.tween_property(music_player, "volume_db", -8.0, 1.6)
 
 func restore_placed_items() -> void:
 	if not has_node("/root/SaveManager"): return
@@ -363,11 +428,11 @@ func generate_world() -> void:
 		bush.position = Vector2(bx, 112)
 		add_child(bush)
 	
-	# 3 pedras decorativas na superfície (no gramado, ondem árvores/forja/baú tocam)
+	# 3 pedras decorativas na superfície (na frente de árvores/arbustos)
 	for sx in [96.0, 448.0, 864.0]:
 		var srock = RANDOM_ROCK_SCENE.instantiate()
 		srock.position = Vector2(sx, 112.0)
-		srock.z_index = -1
+		srock.z_index = 1
 		add_child(srock)
 	
 	# Pedras decorativas em escavações/cavernas, apenas sobre blocos indestrutíveis
@@ -393,5 +458,5 @@ func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, see
 	seen_cols[below.x] = true
 	var rock = RANDOM_ROCK_SCENE.instantiate()
 	rock.position = Vector2(below.x * 32.0 + 16.0, below.y * 32.0 + 112.0) # base do nó = topo do bloco
-	rock.z_index = -1
+	rock.z_index = 1
 	add_child(rock)

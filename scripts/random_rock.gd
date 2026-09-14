@@ -5,11 +5,10 @@ func _ready() -> void:
 	if not sprite:
 		return
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var base := _load_or_build_rock_texture()
-	sprite.texture = _apply_border(base, Color(0.22, 0.21, 0.2, 1))
-	# Maior visibilidade no mapa (sprite 12x6 fica minúsculo)
+	sprite.texture = _load_or_build_rock_texture()
+	# Maior visibilidade no mapa
 	sprite.scale = Vector2(2.5, 2.5)
-	# Centraliza com a BASE tocando a origem do nó (considera escala)
+	# Centraliza o sprite sobre a origem do nó, com a BASE tocando o chão
 	var h := float(sprite.texture.get_height())
 	sprite.position = Vector2(0, -h * 0.5 * sprite.scale.y)
 
@@ -18,38 +17,6 @@ func _load_or_build_rock_texture() -> Texture2D:
 	if tex:
 		return tex
 	return _build_rock_texture()
-
-# Adiciona uma borda escura ao redor dos pixels opacos da pedra
-func _apply_border(base: Texture2D, border_color: Color) -> Texture2D:
-	var src := base.get_image()
-	if not src:
-		return base
-	var w := src.get_width()
-	var h := src.get_height()
-	var out := Image.create(w, h, false, src.get_format())
-	for y in range(h):
-		for x in range(w):
-			out.set_pixel(x, y, src.get_pixel(x, y))
-	for y in range(h):
-		for x in range(w):
-			if src.get_pixel(x, y).a > 0.1:
-				continue
-			var opaque := false
-			for dy in range(-1, 2):
-				for dx in range(-1, 2):
-					if dx == 0 and dy == 0:
-						continue
-					var nx := x + dx
-					var ny := y + dy
-					if nx >= 0 and nx < w and ny >= 0 and ny < h:
-						if src.get_pixel(nx, ny).a > 0.1:
-							opaque = true
-							break
-				if opaque:
-					break
-			if opaque:
-				out.set_pixel(x, y, border_color)
-	return ImageTexture.create_from_image(out)
 
 # Seixo decorativo 16x16 (fallback procedural, bem centrado)
 func _build_rock_texture() -> Texture2D:
