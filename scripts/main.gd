@@ -16,6 +16,7 @@ const FORGE_SCENE = preload("res://scenes/environment/forge.tscn")
 const BUSH_SCENE = preload("res://scenes/environment/bush.tscn")
 const RANDOM_ROCK_SCENE = preload("res://scenes/environment/random_rock.tscn")
 const DEATH_MARKER_SCENE = preload("res://scenes/markers/death_marker.tscn")
+const XP_ORB_SCRIPT: GDScript = preload("res://scripts/xp_orb.gd")
 
 # Músicas por ambiente
 var music_earth: AudioStreamMP3 = preload("res://assets/sounds/Valley_of_Singing_Quartz.mp3")
@@ -43,6 +44,7 @@ func _ready() -> void:
 	_setup_subsurface_shade()
 	_setup_surface_light()
 	_setup_music()
+	_connect_exp_gained()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):
@@ -201,6 +203,23 @@ func _fade_music_to(stream: AudioStream, label: String) -> void:
 			hud.show_toast("🎵 " + label, "wood")
 	)
 	tween.tween_property(music_player, "volume_db", -8.0, 1.6)
+
+# ---------------------------------------------------------------------------
+# Orbes de experiência: surgem após 0.5s e voam até o player
+# ---------------------------------------------------------------------------
+func _connect_exp_gained() -> void:
+	var inv = get_tree().root.get_node_or_null("Inventory")
+	if inv and inv.has_signal("exp_gained") and not inv.exp_gained.is_connected(_on_exp_gained):
+		inv.exp_gained.connect(_on_exp_gained)
+
+func _on_exp_gained(_amount: int) -> void:
+	if not is_instance_valid(player):
+		return
+	var orb := Node2D.new()
+	orb.set_script(XP_ORB_SCRIPT)
+	orb.target = player
+	orb.global_position = player.global_position + Vector2(randf_range(-48.0, 48.0), randf_range(-56.0, -8.0))
+	add_child(orb)
 
 func restore_placed_items() -> void:
 	if not has_node("/root/SaveManager"): return

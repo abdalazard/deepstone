@@ -69,6 +69,9 @@ var current_chest_node: Node = null
 @onready var save_btn = find_child("SaveBtn", true, false)
 @onready var restart_btn = find_child("RestartBtn", true, false)
 @onready var exit_btn = find_child("ExitBtn", true, false)
+@onready var config_btn = find_child("ConfigBtn", true, false)
+@onready var config_panel = find_child("ConfigPanel", true, false)
+@onready var config_close_btn = find_child("ConfigCloseBtn", true, false)
 
 var slots: Array = []
 var chest_slots: Array = []
@@ -412,6 +415,10 @@ func _ready() -> void:
 		restart_btn.pressed.connect(_on_restart_pressed)
 	if exit_btn and not exit_btn.pressed.is_connected(_on_exit_pressed):
 		exit_btn.pressed.connect(_on_exit_pressed)
+	if config_btn and not config_btn.pressed.is_connected(toggle_config):
+		config_btn.pressed.connect(toggle_config)
+	if config_close_btn and not config_close_btn.pressed.is_connected(close_config):
+		config_close_btn.pressed.connect(close_config)
 	if death_restart_btn and not death_restart_btn.pressed.is_connected(_on_death_restart):
 		death_restart_btn.pressed.connect(_on_death_restart)
 	if reset_mine_btn and not reset_mine_btn.pressed.is_connected(_on_reset_mine_pressed):
@@ -1757,12 +1764,32 @@ func toggle_pause() -> void:
 func open_pause() -> void:
 	if pause_panel:
 		pause_panel.visible = true
+		close_config()
 		if resume_btn:
 			_safe_grab_focus(resume_btn)
 
 func close_pause() -> void:
 	if pause_panel:
 		pause_panel.visible = false
+	close_config()
+
+func toggle_config() -> void:
+	if not config_panel: return
+	if config_panel.visible:
+		close_config()
+	else:
+		open_config()
+
+func open_config() -> void:
+	if config_panel:
+		config_panel.visible = true
+		update_ui()
+		if restart_btn:
+			_safe_grab_focus(restart_btn)
+
+func close_config() -> void:
+	if config_panel:
+		config_panel.visible = false
 
 func show_death_screen() -> void:
 	if death_panel:
@@ -1797,11 +1824,14 @@ func _on_save_pressed() -> void:
 func _on_restart_pressed() -> void:
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").restart_run_to_surface()
+	close_config()
 	close_pause()
 
 func _on_reset_mine_pressed() -> void:
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").reset_mine_completely()
+	close_config()
+	close_pause()
 
 func _on_exit_pressed() -> void:
 	if has_node("/root/SaveManager"):

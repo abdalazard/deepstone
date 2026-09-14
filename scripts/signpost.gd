@@ -7,7 +7,7 @@ func _ready() -> void:
 	if has_node("Sprite2D"):
 		$Sprite2D.flip_h = true
 	if prompt_label:
-		prompt_label.text = "[Z] Mina -> Cave à Esquerda!"
+		prompt_label.text = "Entrada da Mina"
 		prompt_label.modulate.a = 0.0
 		prompt_label.visible = false
 	body_entered.connect(_on_body_entered)

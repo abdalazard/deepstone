@@ -5,6 +5,7 @@ signal notification_triggered(text: String, icon_type: String)
 signal level_up(new_level: int, exp_needed_next: int)
 signal pickaxe_broken
 signal player_hurt
+signal exp_gained(amount: int)
 
 const BASE_CAPACITY: int = 60
 var iron: int = 0
@@ -538,6 +539,7 @@ func get_current_level_max_exp() -> int:
 func add_exp(amount: int) -> void:
 	if amount <= 0: return
 	current_exp += amount
+	exp_gained.emit(amount)
 	var req = get_exp_required_for_level(level)
 	while current_exp >= req:
 		current_exp -= req
@@ -655,7 +657,6 @@ func buy_shop_item(item_id: String) -> bool:
 			return false
 		coins -= BOMB_PRICE
 		bombs += 1
-		add_exp(10)
 		inventory_changed.emit()
 		notify("+1 Bomba Adquirida!", "chest")
 		if has_node("/root/SaveManager"):
@@ -690,7 +691,6 @@ func buy_shop_item(item_id: String) -> bool:
 			if item_id in owned_gloves: return false
 			owned_gloves.append(item_id)
 	coins -= cost
-	add_exp(35)
 	equip_gear(item_id)
 	inventory_changed.emit()
 	notify("Comprado: %s!" % def.name, def.get("icon", "equip"))
@@ -751,7 +751,6 @@ func execute_forge_upgrade_def(up_def: Dictionary) -> bool:
 	elif slot == "glove":
 		glove_upgrade_level = max(glove_upgrade_level, tier)
 			
-	add_exp(up_def.get("exp_gain", 40))
 	reset_resistance() # Novo teto de resistência com o upgrade
 	inventory_changed.emit()
 	notify("Equipamento Aprimorado!", "equip")
@@ -761,44 +760,33 @@ func execute_forge_upgrade_def(up_def: Dictionary) -> bool:
 
 func sell_resource(key: String, amount: int = 1) -> int:
 	var earned = 0
-	var exp_gain = 0
 	if key == "coal" and coal >= amount:
 		coal -= amount
 		earned = amount * COAL_PRICE
-		exp_gain = amount * 2
 	elif key == "iron" and iron >= amount:
 		iron -= amount
 		earned = amount * IRON_PRICE
-		exp_gain = amount * 5
 	elif key == "gold" and gold >= amount:
 		gold -= amount
 		earned = amount * GOLD_PRICE
-		exp_gain = amount * 15
 	elif key == "wood" and wood_logs >= amount:
 		wood_logs -= amount
 		earned = amount * WOOD_PRICE
-		exp_gain = amount * 3
 	elif key == "stone" and stone >= amount:
 		stone -= amount
 		earned = amount * STONE_PRICE
-		exp_gain = amount * 2
 	elif key == "dirt" and dirt >= amount:
 		dirt -= amount
 		earned = amount * DIRT_PRICE
-		exp_gain = amount * 1
 	elif key == "plank" and planks >= amount:
 		planks -= amount
 		earned = amount * PLANK_PRICE
-		exp_gain = amount * 4
 	elif key == "ladder" and ladders >= amount:
 		ladders -= amount
 		earned = amount * LADDER_PRICE
-		exp_gain = amount * 3
 		
 	if earned > 0:
 		coins += earned
-		if exp_gain > 0:
-			add_exp(exp_gain)
 		inventory_changed.emit()
 		notify("+%d Moedas de Ouro!" % earned, "coin_gold")
 		if has_node("/root/SaveManager"):
@@ -863,7 +851,6 @@ func craft_pickaxe() -> bool:
 			has_pickaxe = true
 			pickaxe_durability = max_pickaxe_durability
 			notify("Nova Picareta Forjada!", "pickaxe")
-		add_exp(20)
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -878,7 +865,6 @@ func craft_lamp() -> bool:
 		coal -= 3
 		iron -= 2
 		starter_lamps += 1
-		add_exp(15)
 		inventory_changed.emit()
 		_auto_add_hotbar("lamp")
 		notify("Poste de Luz Forjado!", "lamp")
@@ -894,7 +880,6 @@ func craft_ladders() -> bool:
 	if can_craft_ladders():
 		wood_logs -= 1
 		ladders += 5
-		add_exp(10)
 		inventory_changed.emit()
 		_auto_add_hotbar("ladder")
 		notify("+5 Escadas Forjadas!", "wood")
@@ -910,7 +895,6 @@ func craft_planks() -> bool:
 	if can_craft_planks():
 		wood_logs -= 1
 		planks += 5
-		add_exp(10)
 		inventory_changed.emit()
 		_auto_add_hotbar("plank")
 		notify("+5 Tábuas Forjadas!", "wood")
@@ -927,7 +911,6 @@ func craft_column() -> bool:
 		dirt -= 3
 		stone -= 3
 		columns += 1
-		add_exp(8)
 		inventory_changed.emit()
 		_auto_add_hotbar("column")
 		notify("+1 Coluna de Suporte Forjada!", "plank")
@@ -944,7 +927,6 @@ func craft_slab() -> bool:
 		dirt -= 2
 		stone -= 2
 		slabs += 1
-		add_exp(8)
 		inventory_changed.emit()
 		_auto_add_hotbar("slab")
 		notify("+1 Laje de Tijolos Forjada!", "plank")
@@ -962,7 +944,6 @@ func craft_portable_forge() -> bool:
 		stone -= 4
 		iron -= 2
 		portable_forges += 1
-		add_exp(30)
 		inventory_changed.emit()
 		_auto_add_hotbar("forge")
 		notify("Forja Portátil Forjada!", "forge")
