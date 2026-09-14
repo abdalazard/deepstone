@@ -918,17 +918,24 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
 
-[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge"]
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/Margin"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="HealthIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/HBox"]
+[node name="HealthIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/Margin/HBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "❤️"
 
-[node name="HealthText" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/HBox"]
+[node name="HealthText" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/Margin/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.95, 0.6, 0.5, 1)
@@ -943,17 +950,24 @@ vertical_alignment = 1
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
 
-[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge"]
+[node name="Margin" type="MarginContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/Margin"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="ResIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/HBox"]
+[node name="ResIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/Margin/HBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "🛡️"
 
-[node name="ResText" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/HBox"]
+[node name="ResText" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/Margin/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.6, 0.8, 0.95, 1)
