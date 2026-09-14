@@ -12,7 +12,7 @@ func _ready() -> void:
 	if prompt_label:
 		prompt_label.modulate.a = 0.0
 		prompt_label.visible = false
-		prompt_label.text = "[Z/X] Usar Forja"
+		prompt_label.text = "[X] Usar Forja"
 	if interact_area:
 		if not interact_area.body_entered.is_connected(_on_body_entered):
 			interact_area.body_entered.connect(_on_body_entered)
@@ -34,27 +34,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if hud and hud.has_method("toggle_forge"):
 			hud.toggle_forge(self)
 			if get_viewport(): get_viewport().set_input_as_handled()
-
-func hit() -> void:
-	_break_forge()
-
-func _break_forge() -> void:
-	var hud = _get_hud()
-	if hud and hud.has_method("close_forge"):
-		hud.close_forge()
-	
-	var inv = _get_inv()
-	if inv:
-		inv.stone = min(inv.stone + 2, inv.get_max_capacity())
-		inv.dirt = min(inv.dirt + 2, inv.get_max_capacity())
-		inv.iron = min(inv.iron + 1, inv.get_max_capacity())
-		inv.inventory_changed.emit()
-		inv.notify("+2 Pedra, +2 Lama, +1 Ferro (Forja Desmontada)", "forge")
-	
-	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("SaveManager"):
-		get_tree().root.get_node("SaveManager").request_save()
-	
-	queue_free()
 
 func _get_inv() -> Node:
 	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
