@@ -399,13 +399,77 @@ theme_override_font_sizes/font_size = 12
 text = "0 / 60"
 vertical_alignment = 1
 
+[node name="HealthResRow" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HudHealthBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_profile_badge")
+
+[node name="HudHealthMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudHealthBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 3
+
+[node name="HudHealthHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudHealthBadge/HudHealthMargin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="HudHeartIcon" type="Label" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudHealthBadge/HudHealthMargin/HudHealthHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "❤"
+
+[node name="HudHealthLabel" type="Label" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudHealthBadge/HudHealthMargin/HudHealthHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.6, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "30/30"
+vertical_alignment = 1
+
+[node name="HudResBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_profile_badge")
+
+[node name="HudResMargin" type="MarginContainer" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudResBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 3
+
+[node name="HudResHBox" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudResBadge/HudResMargin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="HudShieldIcon" type="Label" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudResBadge/HudResMargin/HudResHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "🛡"
+
+[node name="HudResLabel" type="Label" parent="TopContainer/TopHBox/ProfileColumn/HealthResRow/HudResBadge/HudResMargin/HudResHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.8, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+text = "3"
+vertical_alignment = 1
+
 [node name="ProfileSecondRow" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="CoinsBadgeContainer" type="HBoxContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow"]
-visible = false
 layout_mode = 2
+visible = false
 
 [node name="CoinsBadge" type="PanelContainer" parent="TopContainer/TopHBox/ProfileColumn/ProfileSecondRow/CoinsBadgeContainer"]
 layout_mode = 2

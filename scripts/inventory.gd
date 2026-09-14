@@ -22,10 +22,10 @@ var slabs: int = 0 # Lajes de tijolo estruturais (2 lama + 2 pedra)
 var portable_forges: int = 0 # Forjas portáteis (5 lama + 4 pedra + 2 ferro)
 
 # Saúde e Resistência do jogador
-var current_health: float = 100.0
+var current_health: float = 30.0
 
 func get_max_health() -> int:
-	return 100 + level * 20
+	return 30 + level * 5
 
 func get_resistance() -> int:
 	var armor_def = get_equipped_def("armor")

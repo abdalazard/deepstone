@@ -125,6 +125,8 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var level_badge_label = find_child("LevelBadgeLabel", true, false)
 @onready var exp_progress_bar = find_child("ExpProgressBar", true, false)
 @onready var health_bar = find_child("HealthBar", true, false)
+@onready var hud_health_label = find_child("HudHealthLabel", true, false)
+@onready var hud_res_label = find_child("HudResLabel", true, false)
 @onready var death_panel = find_child("DeathPanel", true, false)
 @onready var death_restart_btn = find_child("RestartBtn", true, false)
 @onready var level_up_panel = find_child("LevelUpPanel", true, false)
@@ -2059,6 +2061,12 @@ func update_ui() -> void:
 		var max_hp = inv.get_max_health() if inv.has_method("get_max_health") else 100
 		health_bar.max_value = float(max_hp)
 		health_bar.value = float(inv.current_health if "current_health" in inv else max_hp)
+
+	if hud_health_label:
+		var max_hp2 = inv.get_max_health() if inv.has_method("get_max_health") else 30
+		hud_health_label.text = "%d/%d" % [int(inv.current_health if "current_health" in inv else max_hp2), max_hp2]
+	if hud_res_label:
+		hud_res_label.text = "%d" % (inv.get_resistance() if inv.has_method("get_resistance") else 0)
 	
 	# Update Hotbar Slots
 	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp", "ladder", "plank"]
