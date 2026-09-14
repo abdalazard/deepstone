@@ -18,9 +18,9 @@ const RANDOM_ROCK_SCENE = preload("res://scenes/environment/random_rock.tscn")
 const DEATH_MARKER_SCENE = preload("res://scenes/markers/death_marker.tscn")
 
 # Músicas por ambiente
-const MUSIC_EARTH = preload("res://assets/sounds/Valley_of_Singing_Quartz.mp3")
-const MUSIC_ICE = preload("res://assets/sounds/Beneath_the_Frost.mp3")
-const MUSIC_LAVA = preload("res://assets/sounds/Molten_Ascent.mp3")
+var music_earth: AudioStreamMP3 = preload("res://assets/sounds/Valley_of_Singing_Quartz.mp3")
+var music_ice: AudioStreamMP3 = preload("res://assets/sounds/Beneath_the_Frost.mp3")
+var music_lava: AudioStreamMP3 = preload("res://assets/sounds/Molten_Ascent.mp3")
 
 @onready var player = $Player
 
@@ -149,9 +149,11 @@ func _setup_music() -> void:
 	music_player = AudioStreamPlayer.new()
 	music_player.name = "MusicPlayer"
 	add_child(music_player)
-	# A primeira música (Valley of Singing Quartz) inicia assim que o jogo abre
-	MUSIC_EARTH.loop = true
-	music_player.stream = MUSIC_EARTH
+	# Loop em todas as músicas (Beneath the Frost e Molten Ascent também)
+	music_earth.loop = true
+	music_ice.loop = true
+	music_lava.loop = true
+	music_player.stream = music_earth
 	music_player.volume_db = -40.0
 	music_player.play()
 	var tween = create_tween()
@@ -171,13 +173,13 @@ func _update_music(py: float) -> void:
 	var label := ""
 	match biome:
 		1:
-			stream = MUSIC_ICE
+			stream = music_ice
 			label = "Beneath the Frost"
 		2:
-			stream = MUSIC_LAVA
+			stream = music_lava
 			label = "Molten Ascent"
 		_:
-			stream = MUSIC_EARTH
+			stream = music_earth
 			label = "Valley of Singing Quartz"
 	# Transição suave ao trocar de música/ambiente
 	_fade_music_to(stream, label)
@@ -191,7 +193,6 @@ func _fade_music_to(stream: AudioStream, label: String) -> void:
 		if stream == null:
 			music_player.stop()
 			return
-		stream.loop = true
 		music_player.stream = stream
 		music_player.volume_db = -40.0
 		music_player.play()
