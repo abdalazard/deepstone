@@ -228,12 +228,12 @@ func _hurt_player(player: Node2D) -> void:
 		inv = get_tree().root.get_node("Inventory")
 	if inv and inv.has_method("take_damage"):
 		inv.take_damage(get_impact_damage())
-	# Empurra o player para a LATERAL, para fora do caminho do bloco
+	# Empurra o player para a LATERAL, para fora do caminho do bloco (~1 bloco)
 	var push_dir := 1.0
 	if player.global_position.x < global_position.x:
 		push_dir = -1.0
 	if player.has_method("apply_knockback"):
-		player.apply_knockback(Vector2(push_dir * 380.0, -70.0))
+		player.apply_knockback(Vector2(push_dir * 180.0, -40.0))
 
 func _has_support_below() -> bool:
 	var space = get_world_2d().direct_space_state
