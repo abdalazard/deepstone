@@ -552,8 +552,11 @@ func place_slab() -> void:
 	var platform = platform_scene.instantiate()
 	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
 	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
-	if Input.is_action_pressed("ui_down"): grid_y += 1
-	elif Input.is_action_pressed("ui_up"): grid_y -= 1
+	# Laje posiciona no TOPO do personagem (2 células acima do chão = acima da cabeça),
+	# atuando como teto para segurar blocos que caem. Direcional permite ajustar.
+	if Input.is_action_pressed("ui_up"): grid_y -= 3
+	elif Input.is_action_pressed("ui_down"): grid_y -= 1
+	else: grid_y -= 2
 	var place_y = grid_y * 32.0 + 117.0
 	platform.position = Vector2(place_x, place_y)
 	platform.add_to_group("placed_planks")
