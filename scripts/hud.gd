@@ -72,6 +72,7 @@ var current_chest_node: Node = null
 
 var slots: Array = []
 var chest_slots: Array = []
+var _chest_visible_keys: Array = []
 var selected_index: int = 0
 var drag_start_idx: int = -1
 
@@ -1786,12 +1787,17 @@ func setup_chest_grid() -> void:
 	if not chest_grid: return
 	for child in chest_grid.get_children():
 		child.queue_free()
-		
+	_chest_visible_keys.clear()
+	var inv = _get_inv()
+	if not inv: return
+	# Só lista os itens que o player realmente possui (lootou/comprou/forjou)
 	for i in range(chest_items_def.size()):
 		var def = chest_items_def[i]
-		var slot_card = _create_chest_slot_card(def, i)
-		chest_grid.add_child(slot_card)
-		chest_slots.append(slot_card)
+		if _get_item_count(def.key) > 0:
+			var slot_card = _create_chest_slot_card(def, i)
+			chest_grid.add_child(slot_card)
+			chest_slots.append(slot_card)
+			_chest_visible_keys.append(def.key)
 
 func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	var panel = PanelContainer.new()
@@ -1865,6 +1871,7 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 
 func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	var card = PanelContainer.new()
+	card.set_meta("def_index", idx)
 	card.custom_minimum_size = Vector2(80, 75)
 	
 	var style = StyleBoxFlat.new()
@@ -1964,10 +1971,10 @@ func _on_slot_gui_input(event: InputEvent, idx: int) -> void:
 func select_slot(idx: int) -> void:
 	selected_index = idx
 	
-	for i in range(chest_slots.size()):
-		var card = chest_slots[i]
+	for card in chest_slots:
+		var cidx: int = card.get_meta("def_index", -1)
 		var style = card.get_theme_stylebox("panel")
-		if i == selected_index:
+		if cidx == selected_index:
 			style.border_color = Color(1.0, 0.85, 0.3, 1.0)
 			style.border_width_left = 3
 			style.border_width_top = 3
@@ -2167,22 +2174,30 @@ func update_ui() -> void:
 			slot.modulate = Color.WHITE if inv.slabs > 0 else Color(1, 1, 1, 0.4)
 
 	# Update Chest Grid slots counts
-	for i in range(chest_slots.size()):
-		if i < chest_items_def.size():
-			var card = chest_slots[i]
-			var def = chest_items_def[i]
-			var count_label = card.find_child("SlotCount", true, false)
-			if count_label:
-				var c = _get_item_count(def.key)
-				if def.key == "pickaxe":
-					count_label.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability] if inv.has_pickaxe else "QUEBRADA"
-				else:
-					count_label.text = "%d" % c
-				
-				if c == 0 and def.key != "pickaxe":
-					card.modulate = Color(1, 1, 1, 0.4)
-				else:
-					card.modulate = Color(1, 1, 1, 1.0)
+	# Update Chest Grid slots counts (rebuild quando o conjunto de itens possui muda)
+	var cur_keys: Array = []
+	for def_c in chest_items_def:
+		if _get_item_count(def_c.key) > 0:
+			cur_keys.append(def_c.key)
+	if cur_keys != _chest_visible_keys:
+		setup_chest_grid()
+	for card in chest_slots:
+		var cidx: int = card.get_meta("def_index", -1)
+		if cidx < 0 or cidx >= chest_items_def.size():
+			continue
+		var def = chest_items_def[cidx]
+		var count_label = card.find_child("SlotCount", true, false)
+		if count_label:
+			var c = _get_item_count(def.key)
+			if def.key == "pickaxe":
+				count_label.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability] if inv.has_pickaxe else "QUEBRADA"
+			else:
+				count_label.text = "%d" % c
+			
+			if c == 0 and def.key != "pickaxe":
+				card.modulate = Color(1, 1, 1, 0.4)
+			else:
+				card.modulate = Color(1, 1, 1, 1.0)
 					
 	_update_capacity_badge()
 	update_equipment_ui()
