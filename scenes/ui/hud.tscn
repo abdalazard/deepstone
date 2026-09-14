@@ -1759,7 +1759,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Poste de Luz (Lampião Portátil)"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LampRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
@@ -1806,7 +1806,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Escadas de Madeira"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/LadderRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
@@ -1853,7 +1853,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Tábuas de Madeira"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PlankRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
@@ -1900,7 +1900,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Coluna de Suporte"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/ColumnRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
@@ -1946,7 +1946,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Laje de Tijolos"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/SlabRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
@@ -1992,7 +1992,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Nova Picareta"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PickaxeRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10
@@ -2038,7 +2038,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
 theme_override_font_sizes/font_size = 12
 text = "Forja Portátil"
 
-[node name="Cost" type="Label" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox/InfoVBox"]
+[node name="Cost" type="RichTextLabel" parent="ForgePanel/VBoxContainer/ContentMargin/InnerVBox/RecipesVBox/PortableForgeRecipeRow/Margin/HBox/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.6, 1)
 theme_override_font_sizes/font_size = 10

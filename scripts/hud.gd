@@ -1088,7 +1088,11 @@ func update_forge_ui() -> void:
 			var cost_lbl = row.find_child("Cost", true, false)
 			if cost_lbl:
 				cost_lbl.bbcode_enabled = true
-				cost_lbl.text = "Custo: " + _colored_cost(recipe_costs[row_name])
+				cost_lbl.fit_content = true
+				cost_lbl.scroll_active = false
+				cost_lbl.add_theme_font_size_override("normal_font_size", 10)
+				cost_lbl.add_theme_color_override("default_color", Color(0.8, 0.75, 0.6, 1))
+				cost_lbl.text = "[color=#cfc7b0]Custo:[/color] " + _colored_cost(recipe_costs[row_name])
 		
 	# Update Forge Upgrade View rows
 	var up_rows = find_child("UpgradeRowsContainer", true, false)
@@ -1220,15 +1224,17 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.4, 1.0))
 	vbox.add_child(title_lbl)
 	
-	var desc_lbl = Label.new()
+	var desc_lbl = RichTextLabel.new()
 	var cost = up.get("cost", {})
+	desc_lbl.bbcode_enabled = true
+	desc_lbl.fit_content = true
+	desc_lbl.scroll_active = false
+	desc_lbl.add_theme_font_size_override("normal_font_size", 10)
+	desc_lbl.add_theme_color_override("default_color", Color(0.8, 0.75, 0.7, 1.0))
 	if not cost.is_empty():
-		desc_lbl.bbcode_enabled = true
-		desc_lbl.text = up.get("desc", "") + "\nCusto: [color=#9b6]Requer:[/color] " + _colored_cost(cost)
+		desc_lbl.text = up.get("desc", "") + "\n[color=#9b6]Requer:[/color] " + _colored_cost(cost)
 	else:
 		desc_lbl.text = up.get("desc", "")
-	desc_lbl.add_theme_font_size_override("font_size", 10)
-	desc_lbl.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
 	vbox.add_child(desc_lbl)
 	
 	var btn = Button.new()
