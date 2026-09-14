@@ -5,6 +5,10 @@ func _ready() -> void:
 	if sprite:
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		sprite.texture = _load_or_build_rock_texture()
+		# Centraliza o sprite sobre a origem do nó, com a BASE tocando o chão,
+		# independentemente do tamanho da sprite.
+		var h := float(sprite.texture.get_height())
+		sprite.position = Vector2(0, -h * 0.5)
 
 func _load_or_build_rock_texture() -> Texture2D:
 	var tex: Texture2D = load("res://assets/sprites/decorations/random_rock.png")

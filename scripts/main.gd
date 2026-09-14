@@ -325,21 +325,24 @@ func generate_world() -> void:
 	_spawn_cave_rocks(cave_cells, excavated_cells, unbreakable_blocks)
 
 func _spawn_cave_rocks(cave_cells: Dictionary, excavated_cells: Dictionary, unbreakable_blocks: Dictionary) -> void:
-	var seen := {}
+	var seen_cols := {}
 	for coord in cave_cells:
-		_place_rock_on_bedrock(coord, unbreakable_blocks, seen)
+		_place_rock_on_bedrock(coord, unbreakable_blocks, seen_cols)
 	for coord in excavated_cells:
-		_place_rock_on_bedrock(coord, unbreakable_blocks, seen)
+		_place_rock_on_bedrock(coord, unbreakable_blocks, seen_cols)
 
-func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, seen: Dictionary) -> void:
+func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, seen_cols: Dictionary) -> void:
 	var below = Vector2i(coord.x, coord.y + 1)
 	if not unbreakable_blocks.has(below):
 		return
-	if seen.has(below):
-		return # só uma pedra por bloco indestrutível
-	seen[below] = true
-	var base_y: float = below.y * 32.0 + 112.0 # topo do bloco indestrutível
+	# Equilíbrio: apenas ~30% dos pontos elegíveis recebem pedra (não lotar)
+	if randf() > 0.30:
+		return
+	# Espaçamento: não colocar pedras coladas umas às outras (pelo menos 1 coluna de folga)
+	if seen_cols.has(below.x - 1) or seen_cols.has(below.x) or seen_cols.has(below.x + 1):
+		return
+	seen_cols[below.x] = true
 	var rock = RANDOM_ROCK_SCENE.instantiate()
-	rock.position = Vector2(below.x * 32.0 + 16.0, base_y - 8.0) # base da pedra (16px) assenta
+	rock.position = Vector2(below.x * 32.0 + 16.0, below.y * 32.0 + 112.0) # base do nó = topo do bloco
 	rock.z_index = -1
 	add_child(rock)
