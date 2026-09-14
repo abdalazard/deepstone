@@ -18,11 +18,6 @@ const RANDOM_ROCK_SCENE = preload("res://scenes/environment/random_rock.tscn")
 const DEATH_MARKER_SCENE = preload("res://scenes/markers/death_marker.tscn")
 const XP_ORB_SCRIPT: GDScript = preload("res://scripts/xp_orb.gd")
 
-# Músicas por ambiente
-var music_earth: AudioStreamMP3 = preload("res://assets/sounds/Valley_of_Singing_Quartz.mp3")
-var music_ice: AudioStreamMP3 = preload("res://assets/sounds/Beneath_the_Frost.mp3")
-var music_lava: AudioStreamMP3 = preload("res://assets/sounds/Molten_Ascent.mp3")
-
 @onready var player = $Player
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
@@ -43,14 +38,13 @@ func _ready() -> void:
 	restore_placed_items()
 	_setup_subsurface_shade()
 	_setup_surface_light()
-	_setup_music()
 	_connect_exp_gained()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):
 		var target_color: Color
 		var py = player.global_position.y
-		_update_music(py)
+		Music.update_biome(py)
 		if py < 120.0:
 			target_color = sky_color
 		elif py < 1280.0: # Rows 0 to 35: Terra
@@ -140,69 +134,6 @@ func _build_surface_light_texture() -> Texture2D:
 				ax = float(w - 1 - x) / 24.0
 			img.set_pixel(x, y, Color(1, 1, 1, a * ax))
 	return ImageTexture.create_from_image(img)
-
-# ---------------------------------------------------------------------------
-# Música por ambiente (fade suave + alerta com o nome da música)
-# ---------------------------------------------------------------------------
-var music_player: AudioStreamPlayer
-var _current_biome_music: int = 0 # 0 terra/superfície, 1 gelo, 2 lava
-
-func _setup_music() -> void:
-	music_player = AudioStreamPlayer.new()
-	music_player.name = "MusicPlayer"
-	add_child(music_player)
-	# Loop em todas as músicas (Beneath the Frost e Molten Ascent também)
-	music_earth.loop = true
-	music_ice.loop = true
-	music_lava.loop = true
-	music_player.stream = music_earth
-	music_player.volume_db = -40.0
-	music_player.play()
-	var tween = create_tween()
-	tween.tween_property(music_player, "volume_db", -8.0, 1.8)
-
-func _update_music(py: float) -> void:
-	var biome := 0
-	if py >= 2560.0:
-		biome = 2 # Lava
-	elif py >= 1280.0:
-		biome = 1 # Gelo
-	# Superfície e caverna de terra compartilham a mesma música (Valley)
-	if biome == _current_biome_music:
-		return
-	_current_biome_music = biome
-	var stream: AudioStream = null
-	var label := ""
-	match biome:
-		1:
-			stream = music_ice
-			label = "Beneath the Frost"
-		2:
-			stream = music_lava
-			label = "Molten Ascent"
-		_:
-			stream = music_earth
-			label = "Valley of Singing Quartz"
-	# Transição suave ao trocar de música/ambiente
-	_fade_music_to(stream, label)
-
-func _fade_music_to(stream: AudioStream, label: String) -> void:
-	if not is_instance_valid(music_player):
-		return
-	var tween = create_tween()
-	tween.tween_property(music_player, "volume_db", -50.0, 1.1)
-	tween.tween_callback(func():
-		if stream == null:
-			music_player.stop()
-			return
-		music_player.stream = stream
-		music_player.volume_db = -40.0
-		music_player.play()
-		var hud = get_node_or_null("HUD")
-		if hud and hud.has_method("show_toast"):
-			hud.show_toast("🎵 " + label, "wood")
-	)
-	tween.tween_property(music_player, "volume_db", -8.0, 1.6)
 
 # ---------------------------------------------------------------------------
 # Orbes de experiência: surgem após 0.5s e voam até o player
