@@ -531,7 +531,9 @@ func place_column() -> void:
 	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
 	if Input.is_action_pressed("ui_down"): grid_y += 1
 	elif Input.is_action_pressed("ui_up"): grid_y -= 1
-	var place_y = grid_y * 32.0 + 117.0
+	# Coluna de 32px apoiada sobre o topo do chão (topo do bloco = y*32+112),
+	# centro de 16px → +96. Assim a coluna NÃO fica enterrada no chão.
+	var place_y = grid_y * 32.0 + 96.0
 	column.position = Vector2(place_x, place_y)
 	column.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(column)
@@ -579,19 +581,19 @@ func place_slab() -> void:
 	platform.position = Vector2(place_x, place_y)
 	platform.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(platform)
-	# Coluna ilustrativa filha da laje (some junto quando a laje é quebrada)
-	_spawn_decorative_columns(platform)
+	# Barra de apoio ilustrativa filha da laje (some junto quando a laje é quebrada)
+	_spawn_slab_bar(platform)
 	if inv: inv.notify("Laje Instalada!", "plank")
 	var sm = _get_save()
 	if sm: sm.request_save()
 
-func _spawn_decorative_columns(parent: Node) -> void:
+func _spawn_slab_bar(parent: Node) -> void:
 	if not is_instance_valid(parent): return
 	var slab_pos: Vector2 = parent.global_position
 	var space = get_world_2d().direct_space_state
 	if not space: return
 	# Raycast para achar a superfície sólida mais próxima abaixo da laje
-	var from := Vector2(slab_pos.x, slab_pos.y + 8.0)
+	var from := Vector2(slab_pos.x, slab_pos.y + 2.0)
 	var to := Vector2(slab_pos.x, slab_pos.y + 400.0)
 	var query := PhysicsRayQueryParameters2D.create(from, to)
 	query.collision_mask = 1 | 32 | 16
@@ -599,9 +601,11 @@ func _spawn_decorative_columns(parent: Node) -> void:
 	query.collide_with_areas = false
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
-		return # Túnel aberto abaixo: sem chão, não cria coluna flutuante
+		return # Túnel aberto abaixo: sem chão, não cria barra flutuante
 	var floor_y: float = hit.position.y
-	var top_y: float = slab_pos.y + 8.0
+	# A laje tem 8px de altura, centro em slab_pos.y → base em +4. A barra começa
+	# rente à base (top_y = +2, leve sobreposição para não deixar gap).
+	var top_y: float = slab_pos.y + 2.0
 	var gap: float = floor_y - top_y
 	if gap < 6.0:
 		return # Laje praticamente encostada no chão
