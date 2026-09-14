@@ -544,12 +544,9 @@ func place_slab() -> void:
 	if not inv or inv.slabs <= 0:
 		if inv: inv.notify("Sem lajes de tijolos!", "plank")
 		return
-	inv.slabs -= 1
-	inv.inventory_changed.emit()
 	
 	var platform_scene = load("res://scenes/environment/brick_floor.tscn")
 	if not platform_scene: return
-	var platform = platform_scene.instantiate()
 	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
 	var grid_y = round((global_position.y + 11.0 - 112.0) / 32.0)
 	# Laje posiciona no TOPO do personagem (1 bloco acima), atuando como teto para
@@ -558,22 +555,44 @@ func place_slab() -> void:
 	elif Input.is_action_pressed("ui_down"): grid_y -= 0
 	else: grid_y -= 1
 	var place_y = grid_y * 32.0 + 117.0
+	
+	# A laje precisa de um bloco logo abaixo (base de apoio da coluna). Sem chão,
+	# a laje não pode existir.
+	var space = get_world_2d().direct_space_state
+	var has_support := false
+	if space:
+		var s_from := Vector2(place_x, place_y + 8.0)
+		var s_to := Vector2(place_x, place_y + 48.0)
+		var s_query := PhysicsRayQueryParameters2D.create(s_from, s_to)
+		s_query.collide_with_bodies = true
+		s_query.collide_with_areas = false
+		s_query.collision_mask = 1 | 32 | 16
+		has_support = not space.intersect_ray(s_query).is_empty()
+	if not has_support:
+		if inv: inv.notify("Sem chão para manter a laje", "plank")
+		return
+		
+	inv.slabs -= 1
+	inv.inventory_changed.emit()
+	
+	var platform = platform_scene.instantiate()
 	platform.position = Vector2(place_x, place_y)
 	platform.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(platform)
-	# Coluna ilustrativa conectando a laje ao chão
-	_spawn_decorative_columns(place_x, place_y)
+	# Coluna ilustrativa filha da laje (some junto quando a laje é quebrada)
+	_spawn_decorative_columns(platform)
 	if inv: inv.notify("Laje Instalada!", "plank")
 	var sm = _get_save()
 	if sm: sm.request_save()
 
-func _spawn_decorative_columns(x: float, slab_y: float) -> void:
-	var tex = preload("res://assets/sprites/brick_platform.png")
+func _spawn_decorative_columns(parent: Node) -> void:
+	if not is_instance_valid(parent): return
+	var slab_pos: Vector2 = parent.global_position
 	var space = get_world_2d().direct_space_state
 	if not space: return
 	# Raycast para achar a superfície sólida mais próxima abaixo da laje
-	var from := Vector2(x, slab_y + 8.0)
-	var to := Vector2(x, slab_y + 400.0)
+	var from := Vector2(slab_pos.x, slab_pos.y + 8.0)
+	var to := Vector2(slab_pos.x, slab_pos.y + 400.0)
 	var query := PhysicsRayQueryParameters2D.create(from, to)
 	query.collision_mask = 1 | 32 | 16
 	query.collide_with_bodies = true
@@ -582,18 +601,22 @@ func _spawn_decorative_columns(x: float, slab_y: float) -> void:
 	if hit.is_empty():
 		return # Túnel aberto abaixo: sem chão, não cria coluna flutuante
 	var floor_y: float = hit.position.y
-	var top_y: float = slab_y + 8.0
+	var top_y: float = slab_pos.y + 8.0
 	if floor_y - top_y < 24.0:
 		return # Laje praticamente encostada no chão: sem espaço para coluna
+	# Textura sólida branca 1x1 para desenhar uma linha fina de concreto
+	var white := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	white.set_pixel(0, 0, Color.WHITE)
+	var line_tex: Texture2D = ImageTexture.create_from_image(white)
 	var y := top_y + 4.0
 	while y < floor_y - 16.0:
 		var sprite := Sprite2D.new()
-		sprite.texture = tex
+		sprite.texture = line_tex
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.position = Vector2(x, y)
-		sprite.scale = Vector2(0.5, 4)
-		sprite.modulate = Color(0.85, 0.75, 0.6, 0.6)
-		get_tree().current_scene.add_child(sprite)
+		sprite.position = Vector2(0, y - slab_pos.y)
+		sprite.scale = Vector2(3, 32)
+		sprite.modulate = Color(0.55, 0.6, 0.62, 0.9)
+		parent.add_child(sprite)
 		y += 32.0
 
 func place_portable_forge() -> void:
