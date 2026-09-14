@@ -7,7 +7,7 @@
 size = Vector2(16, 32)
 
 [node name="Column" type="StaticBody2D"]
-collision_layer = 16
+collision_layer = 1
 collision_mask = 0
 script = ExtResource("1_script")
 
