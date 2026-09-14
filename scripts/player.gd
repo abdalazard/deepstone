@@ -569,10 +569,25 @@ func place_slab() -> void:
 
 func _spawn_decorative_columns(x: float, slab_y: float) -> void:
 	var tex = preload("res://assets/sprites/brick_platform.png")
-	var ground_y = round((global_position.y + 11.0 - 112.0) / 32.0) * 32.0 + 117.0
-	var y = slab_y + 16.0
-	while y <= ground_y + 4.0:
-		var sprite = Sprite2D.new()
+	var space = get_world_2d().direct_space_state
+	if not space: return
+	# Raycast para achar a superfície sólida mais próxima abaixo da laje
+	var from := Vector2(x, slab_y + 8.0)
+	var to := Vector2(x, slab_y + 400.0)
+	var query := PhysicsRayQueryParameters2D.create(from, to)
+	query.collision_mask = 1 | 32 | 16
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return # Túnel aberto abaixo: sem chão, não cria coluna flutuante
+	var floor_y: float = hit.position.y
+	var top_y: float = slab_y + 8.0
+	if floor_y - top_y < 24.0:
+		return # Laje praticamente encostada no chão: sem espaço para coluna
+	var y := top_y + 4.0
+	while y < floor_y - 16.0:
+		var sprite := Sprite2D.new()
 		sprite.texture = tex
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		sprite.position = Vector2(x, y)
