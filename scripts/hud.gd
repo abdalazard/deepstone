@@ -1773,7 +1773,7 @@ func setup_hotbar() -> void:
 		child.queue_free()
 		
 	var inv = _get_inv()
-	var h_slots = inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank"]
+	var h_slots = inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp"]
 	
 	for i in range(h_slots.size()):
 		var key = h_slots[i]
@@ -2087,7 +2087,7 @@ func update_ui() -> void:
 		hud_res_label.text = "%d" % (inv.get_resistance() if inv.has_method("get_resistance") else 0)
 	
 	# Update Hotbar Slots
-	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp", "ladder", "plank"]
+	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp"]
 	if slots.size() != h_slots.size():
 		setup_hotbar()
 		

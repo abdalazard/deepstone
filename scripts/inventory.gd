@@ -94,17 +94,27 @@ var current_exp: int = 0 # EXP acumulada no nível atual
 
 # Hotbar e Atalhos customizáveis
 var active_slot: int = 0 # 0..4
-var hotbar_slots: Array = ["pickaxe", "lamp", "ladder", "plank", "bomb"]
+var hotbar_slots: Array = ["pickaxe", "lamp"]
 
 func _ready() -> void:
 	ensure_hotbar_slots()
 
 func ensure_hotbar_slots(count: int = 5) -> void:
-	var defaults = ["pickaxe", "lamp", "ladder", "plank", "bomb"]
-	while hotbar_slots.size() < count:
+	# Garante pelo menos 2 slots iniciais (picareta + poste)
+	while hotbar_slots.size() < 2:
+		var defaults = ["pickaxe", "lamp"]
 		hotbar_slots.append(defaults[hotbar_slots.size() % defaults.size()])
 	if hotbar_slots.size() > count:
 		hotbar_slots = hotbar_slots.slice(0, count)
+
+# Adiciona automaticamente um item forjado ao atalho se ainda não estiver lá
+func _auto_add_hotbar(item_key: String) -> void:
+	if item_key in hotbar_slots:
+		return # Já está no atalho
+	if hotbar_slots.size() >= 5:
+		return # Atalho cheio (máx 5)
+	hotbar_slots.append(item_key)
+	inventory_changed.emit()
 
 # Equipamentos Ativos e Posse
 var equipped_helmet: String = "helmet_miner"
@@ -750,6 +760,7 @@ func craft_lamp() -> bool:
 		starter_lamps += 1
 		add_exp(15)
 		inventory_changed.emit()
+		_auto_add_hotbar("lamp")
 		notify("Poste de Luz Forjado!", "lamp")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -765,6 +776,7 @@ func craft_ladders() -> bool:
 		ladders += 5
 		add_exp(10)
 		inventory_changed.emit()
+		_auto_add_hotbar("ladder")
 		notify("+5 Escadas Forjadas!", "wood")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -780,6 +792,7 @@ func craft_planks() -> bool:
 		planks += 5
 		add_exp(10)
 		inventory_changed.emit()
+		_auto_add_hotbar("plank")
 		notify("+5 Tábuas Forjadas!", "wood")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -796,6 +809,7 @@ func craft_column() -> bool:
 		columns += 1
 		add_exp(8)
 		inventory_changed.emit()
+		_auto_add_hotbar("column")
 		notify("+1 Coluna de Suporte Forjada!", "plank")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -812,6 +826,7 @@ func craft_slab() -> bool:
 		slabs += 1
 		add_exp(8)
 		inventory_changed.emit()
+		_auto_add_hotbar("slab")
 		notify("+1 Laje de Tijolos Forjada!", "plank")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -829,6 +844,7 @@ func craft_portable_forge() -> bool:
 		portable_forges += 1
 		add_exp(30)
 		inventory_changed.emit()
+		_auto_add_hotbar("forge")
 		notify("Forja Portátil Forjada!", "forge")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -1071,7 +1087,7 @@ func reset_inventory() -> void:
 	level = 0
 	current_exp = 0
 	active_slot = 0
-	hotbar_slots = ["pickaxe", "lamp", "ladder", "plank", "bomb"]
+	hotbar_slots = ["pickaxe", "lamp"]
 	equipped_helmet = "helmet_miner"
 	equipped_pickaxe = "pickaxe_copper"
 	equipped_armor = "armor_miner"

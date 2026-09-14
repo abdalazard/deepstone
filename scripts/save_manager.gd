@@ -185,7 +185,7 @@ func save_game(show_notify: bool = false) -> void:
 			"pickaxe_durability": inv.pickaxe_durability if (inv and "pickaxe_durability" in inv) else 100,
 			"level": inv.level if (inv and "level" in inv) else 0,
 			"current_exp": inv.current_exp if (inv and "current_exp" in inv) else 0,
-			"hotbar_slots": inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp", "ladder", "plank"],
+			"hotbar_slots": inv.hotbar_slots if (inv and "hotbar_slots" in inv) else ["pickaxe", "lamp"],
 			"equipped_helmet": inv.equipped_helmet if (inv and "equipped_helmet" in inv) else "helmet_miner",
 			"equipped_pickaxe": inv.equipped_pickaxe if (inv and "equipped_pickaxe" in inv) else "pickaxe_copper",
 			"equipped_armor": inv.equipped_armor if (inv and "equipped_armor" in inv) else "armor_miner",
@@ -285,7 +285,7 @@ func load_game() -> bool:
 		if "current_exp" in inv:
 			inv.current_exp = inv_data.get("current_exp", 0)
 		if "hotbar_slots" in inv:
-			var saved_slots: Array = inv_data.get("hotbar_slots", ["pickaxe", "lamp", "ladder", "plank"])
+			var saved_slots: Array = inv_data.get("hotbar_slots", ["pickaxe", "lamp"])
 			inv.hotbar_slots = []
 			for s in saved_slots:
 				if s not in ["forge"]:
