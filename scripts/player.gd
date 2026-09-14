@@ -23,6 +23,13 @@ const DOUBLE_TAP_MAX_DELAY: float = 0.28
 var down_dash_timer: float = 0.0
 var plank_drop_timer: float = 0.0
 
+# Knockback: empurrão externo (blocos despencando) aplicado antes de move_and_slide
+var knockback_vel: Vector2 = Vector2.ZERO
+const KNOCKBACK_DECAY: float = 500.0
+
+func apply_knockback(force: Vector2) -> void:
+	knockback_vel = force
+
 var tex_idle = preload("res://assets/sprites/Idle.png")
 var tex_walk = preload("res://assets/sprites/Walk.png")
 var tex_jump = preload("res://assets/sprites/Jump.png")
@@ -344,6 +351,11 @@ func _physics_process(delta: float) -> void:
 	# Clamp velocity so external impulses never catapult or bury the character
 	velocity.x = clamp(velocity.x, -effective_speed, effective_speed)
 	velocity.y = clamp(velocity.y, -380.0, 340.0)
+
+	# Knockback (ex.: bloco despencando empurra o personagem para o lado)
+	if knockback_vel != Vector2.ZERO:
+		velocity += knockback_vel
+		knockback_vel = knockback_vel.move_toward(Vector2.ZERO, KNOCKBACK_DECAY * delta)
 
 	move_and_slide()
 

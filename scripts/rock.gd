@@ -220,6 +220,12 @@ func _deal_impact_damage() -> void:
 	for body in get_colliding_bodies():
 		if body is CharacterBody2D and body.name == "Player":
 			inv.take_damage(get_impact_damage())
+			# Empurra o personagem para a lateral (para longe do centro do bloco)
+			var push_dir := 1.0
+			if body.global_position.x < global_position.x:
+				push_dir = -1.0
+			if body.has_method("apply_knockback"):
+				body.apply_knockback(Vector2(push_dir * 230.0, -70.0))
 			return
 
 # Atualiza a posição de grade após a queda do bloco (para persistência futura)
