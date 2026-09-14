@@ -40,49 +40,49 @@ func _ready() -> void:
 			sprite.scale = Vector2(1.2, 1.2)
 			sprite.modulate = Color(1, 1, 1, 1)
 		elif type == ResourceType.PLANK:
-			sprite.texture = load("res://assets/sprites/plank.png")
+			sprite.texture = load("res://assets/sprites/world/plank.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(0.8, 0.8)
 		elif type == ResourceType.LAMP:
-			sprite.texture = load("res://assets/sprites/lamp_post.png")
+			sprite.texture = load("res://assets/sprites/world/lamp_post.png")
 			sprite.hframes = 4
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.2, 1.2)
 		elif type == ResourceType.WOOD:
-			sprite.texture = load("res://assets/sprites/wood_log.png")
+			sprite.texture = load("res://assets/sprites/items/wood_log.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.2, 1.2)
 		elif type == ResourceType.LADDER:
-			sprite.texture = load("res://assets/sprites/rope_tile.png")
+			sprite.texture = load("res://assets/sprites/world/rope_tile.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.0, 1.0)
 		elif type == ResourceType.STONE:
-			sprite.texture = load("res://assets/sprites/stone_drop.png")
+			sprite.texture = load("res://assets/sprites/blocks/stone_drop.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.0, 1.0)
 		elif type == ResourceType.DIRT:
-			sprite.texture = load("res://assets/sprites/dirt_drop.png")
+			sprite.texture = load("res://assets/sprites/blocks/dirt_drop.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.0, 1.0)
 		elif type == ResourceType.BROKEN_PICKAXE:
-			sprite.texture = load("res://assets/sprites/broken_pickaxe.png")
+			sprite.texture = load("res://assets/sprites/items/broken_pickaxe.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0
 			sprite.scale = Vector2(1.2, 1.2)
 		elif type == ResourceType.FORGE:
-			sprite.texture = load("res://assets/sprites/stone_block.png")
+			sprite.texture = load("res://assets/sprites/blocks/stone_block.png")
 			sprite.hframes = 1
 			sprite.vframes = 1
 			sprite.frame = 0

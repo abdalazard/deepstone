@@ -40,11 +40,11 @@ func can_take_fall_damage() -> bool:
 func apply_knockback(force: Vector2) -> void:
 	knockback_vel = force
 
-var tex_idle = preload("res://assets/sprites/Idle.png")
-var tex_walk = preload("res://assets/sprites/Walk.png")
-var tex_jump = preload("res://assets/sprites/Jump.png")
-var tex_mine = preload("res://assets/sprites/Minering.png")
-var tex_climb = preload("res://assets/sprites/Rope.png")
+var tex_idle = preload("res://assets/sprites/character/Idle.png")
+var tex_walk = preload("res://assets/sprites/character/Walk.png")
+var tex_jump = preload("res://assets/sprites/character/Jump.png")
+var tex_mine = preload("res://assets/sprites/character/Minering.png")
+var tex_climb = preload("res://assets/sprites/character/Rope.png")
 
 var inventory_override: Node = null
 

@@ -14,6 +14,7 @@ const STONE_SCENE = preload("res://scenes/cave/stone.tscn")
 const TREE_SCENE = preload("res://scenes/environment/tree.tscn")
 const FORGE_SCENE = preload("res://scenes/environment/forge.tscn")
 const BUSH_SCENE = preload("res://scenes/environment/bush.tscn")
+const RANDOM_ROCK_SCENE = preload("res://scenes/environment/random_rock.tscn")
 const DEATH_MARKER_SCENE = preload("res://scenes/markers/death_marker.tscn")
 
 @onready var player = $Player
@@ -314,3 +315,12 @@ func generate_world() -> void:
 		var bush = BUSH_SCENE.instantiate()
 		bush.position = Vector2(bx, 112)
 		add_child(bush)
+	
+	# Pedras decorativas espalhadas (random_rock) — sem colisão, só visual
+	for i in range(18):
+		var rx: float = randf_range(32.0, 928.0)
+		var ry: float = randf_range(100.0, 112.0)
+		var rock = RANDOM_ROCK_SCENE.instantiate()
+		rock.position = Vector2(rx, ry)
+		rock.z_index = -1
+		add_child(rock)

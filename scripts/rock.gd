@@ -82,7 +82,7 @@ func _ready() -> void:
 		max_hp = 2
 		hp = 2
 		if sprite_2d:
-			sprite_2d.texture = load("res://assets/sprites/dirt_roots.png")
+			sprite_2d.texture = load("res://assets/sprites/blocks/dirt_roots.png")
 			sprite_2d.hframes = 1
 			sprite_2d.vframes = 1
 			sprite_2d.frame = 0

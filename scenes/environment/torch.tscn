@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://btorchuidxxx"]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/lamp_post.png" id="1_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/lamp_post.png" id="1_tex"]
 [ext_resource type="Script" path="res://scripts/torch.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_torch"]

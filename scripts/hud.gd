@@ -78,16 +78,16 @@ var drag_start_idx: int = -1
 
 var extras_tex = preload("res://assets/Caves and Mines/extras.png")
 var ores_tex = preload("res://assets/Caves and Mines/ores.png")
-var rope_tex = preload("res://assets/sprites/rope_tile.png")
-var lamp_tex = preload("res://assets/sprites/lamp_post.png")
-var plank_tex = preload("res://assets/sprites/plank.png")
-var coin_gold_tex = preload("res://assets/sprites/coin_gold.png")
-var coin_silver_tex = preload("res://assets/sprites/coin_silver.png")
-var coin_copper_tex = preload("res://assets/sprites/coin_copper.png")
-var wood_tex = preload("res://assets/sprites/wood_log.png")
-var stone_tex = preload("res://assets/sprites/stone_drop.png")
-var dirt_tex = preload("res://assets/sprites/dirt_drop.png")
-var brick_tex = preload("res://assets/sprites/brick_platform.png")
+var rope_tex = preload("res://assets/sprites/world/rope_tile.png")
+var lamp_tex = preload("res://assets/sprites/world/lamp_post.png")
+var plank_tex = preload("res://assets/sprites/world/plank.png")
+var coin_gold_tex = preload("res://assets/sprites/items/coin_gold.png")
+var coin_silver_tex = preload("res://assets/sprites/items/coin_silver.png")
+var coin_copper_tex = preload("res://assets/sprites/items/coin_copper.png")
+var wood_tex = preload("res://assets/sprites/items/wood_log.png")
+var stone_tex = preload("res://assets/sprites/blocks/stone_drop.png")
+var dirt_tex = preload("res://assets/sprites/blocks/dirt_drop.png")
+var brick_tex = preload("res://assets/sprites/blocks/brick_platform.png")
 var column_tex: Texture2D = null
 var forge_tex: Texture2D = null
 
@@ -147,11 +147,11 @@ func _setup_forge_recipe_icons() -> void:
 	if forge_row:
 		var ic3 = forge_row.find_child("Icon", true, false)
 		if ic3: ic3.texture = _get_forge_tex()
-var broken_pickaxe_tex = preload("res://assets/sprites/broken_pickaxe.png")
-var helmet_tex = preload("res://assets/sprites/equip_helmet.png")
-var armor_tex = preload("res://assets/sprites/equip_armor.png")
-var boots_tex = preload("res://assets/sprites/equip_boots.png")
-var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
+var broken_pickaxe_tex = preload("res://assets/sprites/items/broken_pickaxe.png")
+var helmet_tex = preload("res://assets/sprites/equipment/equip_helmet.png")
+var armor_tex = preload("res://assets/sprites/equipment/equip_armor.png")
+var boots_tex = preload("res://assets/sprites/equipment/equip_boots.png")
+var pickaxe_tex = preload("res://assets/sprites/equipment/equip_pickaxe.png")
 
 # Coins HUD
 @onready var coins_badge_container = find_child("CoinsBadgeContainer", true, false)

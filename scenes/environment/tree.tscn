@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://btreeuidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/tree.gd" id="1_tree"]
-[ext_resource type="Texture2D" path="res://assets/sprites/tree.png" id="2_tree_tex"]
-[ext_resource type="Texture2D" path="res://assets/sprites/tree_stump.png" id="3_stump_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/tree.png" id="2_tree_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/tree_stump.png" id="3_stump_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tree"]
 size = Vector2(40, 96)

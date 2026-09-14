@@ -79,7 +79,7 @@ func explode() -> void:
 	var light = PointLight2D.new()
 	light.color = Color(1.0, 0.7, 0.2, 1.0)
 	light.energy = 3.0
-	light.texture = preload("res://assets/sprites/lamp_post.png")
+	light.texture = preload("res://assets/sprites/world/lamp_post.png")
 	light.texture_scale = 8.0
 	light.global_position = center
 	if is_instance_valid(cur_scene):

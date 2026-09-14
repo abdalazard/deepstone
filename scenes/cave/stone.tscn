@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://bstoneuidxxxx"]
 
 [ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assets/sprites/stone_block.png" id="2_stone_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/blocks/stone_block.png" id="2_stone_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_stone"]
 size = Vector2(32, 32)
