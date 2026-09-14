@@ -143,39 +143,43 @@ func _build_surface_light_texture() -> Texture2D:
 # Música por ambiente (fade suave + alerta com o nome da música)
 # ---------------------------------------------------------------------------
 var music_player: AudioStreamPlayer
-var _current_biome_music: int = -1 # -1 superficie, 0 terra, 1 gelo, 2 lava
+var _current_biome_music: int = 0 # 0 terra/superfície, 1 gelo, 2 lava
 
 func _setup_music() -> void:
 	music_player = AudioStreamPlayer.new()
 	music_player.name = "MusicPlayer"
 	add_child(music_player)
+	# A primeira música (Valley of Singing Quartz) inicia assim que o jogo abre
+	MUSIC_EARTH.loop = true
+	music_player.stream = MUSIC_EARTH
+	music_player.volume_db = -40.0
+	music_player.play()
+	var tween = create_tween()
+	tween.tween_property(music_player, "volume_db", -8.0, 1.8)
 
 func _update_music(py: float) -> void:
-	var biome := -1
+	var biome := 0
 	if py >= 2560.0:
 		biome = 2 # Lava
 	elif py >= 1280.0:
 		biome = 1 # Gelo
-	elif py >= 120.0:
-		biome = 0 # Terra/Caverna
+	# Superfície e caverna de terra compartilham a mesma música (Valley)
 	if biome == _current_biome_music:
 		return
 	_current_biome_music = biome
-	if biome == -1:
-		_fade_music_to(null, "")
-		return
 	var stream: AudioStream = null
 	var label := ""
 	match biome:
-		0:
-			stream = MUSIC_EARTH
-			label = "Valley of Singing Quartz"
 		1:
 			stream = MUSIC_ICE
 			label = "Beneath the Frost"
 		2:
 			stream = MUSIC_LAVA
 			label = "Molten Ascent"
+		_:
+			stream = MUSIC_EARTH
+			label = "Valley of Singing Quartz"
+	# Transição suave ao trocar de música/ambiente
 	_fade_music_to(stream, label)
 
 func _fade_music_to(stream: AudioStream, label: String) -> void:
