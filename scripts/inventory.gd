@@ -48,20 +48,15 @@ func take_damage(amount: int) -> bool:
 	return false
 
 func die() -> void:
-	# Perde os recursos que NÃO foram guardados no baú, mas mantém os equipamentos
+	# Ao morrer perde-se SOMENTE os recursos brutos que não foram guardados no baú.
+	# Itens forjados/colocáveis (escadas, tábuas, colunas, lajes, forjas, bombas,
+	# lampiões) e equipamentos NÃO são perdidos.
 	iron = 0
 	gold = 0
 	coal = 0
 	wood_logs = 0
-	ladders = 0
-	planks = 0
 	dirt = 0
 	stone = 0
-	columns = 0
-	slabs = 0
-	portable_forges = 0
-	bombs = 0
-	starter_lamps = 0
 	notify("Você morreu! Os recursos coletados foram perdidos.", "pickaxe")
 	inventory_changed.emit()
 	if has_node("/root/SaveManager"):
