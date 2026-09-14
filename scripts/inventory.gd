@@ -32,7 +32,7 @@ func get_resistance() -> int:
 	var armor_def = get_equipped_def("armor")
 	var helmet_def = get_equipped_def("helmet")
 	var armor_res = armor_def.get("capacity_bonus", 0) / 4 + armor_upgrade_level * 5
-	var helmet_res = int(helmet_def.get("light_radius", 110.0) / 30.0) + helmet_upgrade_level * 5
+	var helmet_res = int(helmet_def.get("light_radius", 110.0) / 40.0) + helmet_upgrade_level * 5
 	return armor_res + helmet_res
 
 func take_damage(amount: int) -> bool:

@@ -259,28 +259,25 @@ func _hurt_player(player: Node2D) -> void:
 		player.apply_knockback(Vector2(push_dir * 180.0, -40.0))
 
 # Conta quantos blocos estão despencando em sequência logo acima deste bloco,
-# para multiplicar o dano pelo tamanho do desabamento.
+# para multiplicar o dano pelo tamanho do desabamento (peso da pilha).
 func _count_falling_blocks_above() -> int:
 	var space = get_world_2d().direct_space_state
 	if not space: return 0
 	var count := 0
-	var y := 32.0
-	while y <= 192.0:
+	var seen := {}
+	var y := 12.0
+	while y <= 232.0:
 		var q := PhysicsPointQueryParameters2D.new()
 		q.position = global_position + Vector2(0, -y)
 		q.collision_mask = FALLING_LAYER
 		q.collide_with_bodies = true
 		q.collide_with_areas = false
-		var found := false
 		for r in space.intersect_point(q):
 			var col = r.collider
-			if is_instance_valid(col) and col != self and col.get("gravity_falling"):
+			if is_instance_valid(col) and col != self and col.get("gravity_falling") and not seen.has(col):
 				count += 1
-				found = true
-				break
-		if not found:
-			break
-		y += 32.0
+				seen[col] = true
+		y += 12.0
 	return count
 
 func _has_support_below() -> bool:
