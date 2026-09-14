@@ -561,9 +561,25 @@ func place_slab() -> void:
 	platform.position = Vector2(place_x, place_y)
 	platform.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(platform)
+	# Coluna ilustrativa conectando a laje ao chão
+	_spawn_decorative_columns(place_x, place_y)
 	if inv: inv.notify("Laje Instalada!", "plank")
 	var sm = _get_save()
 	if sm: sm.request_save()
+
+func _spawn_decorative_columns(x: float, slab_y: float) -> void:
+	var tex = preload("res://assets/sprites/brick_platform.png")
+	var ground_y = round((global_position.y + 11.0 - 112.0) / 32.0) * 32.0 + 117.0
+	var y = slab_y + 16.0
+	while y <= ground_y + 4.0:
+		var sprite = Sprite2D.new()
+		sprite.texture = tex
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.position = Vector2(x, y)
+		sprite.scale = Vector2(0.5, 4)
+		sprite.modulate = Color(0.85, 0.75, 0.6, 0.6)
+		get_tree().current_scene.add_child(sprite)
+		y += 32.0
 
 func place_portable_forge() -> void:
 	var inv = _get_inv()
