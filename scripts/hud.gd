@@ -91,19 +91,13 @@ var column_tex: Texture2D = null
 
 func _get_column_tex() -> Texture2D:
 	if column_tex == null:
-		var img := Image.create(18, 52, false, Image.FORMAT_RGBA8)
-		img.fill(Color(0.12, 0.09, 0.05, 1))
 		var base: Image = brick_tex.get_image()
 		if base and not base.is_empty():
-			var tile := base.duplicate()
-			tile.resize(18, 16, Image.INTERPOLATE_NEAREST)
-			for i in range(3):
-				var yy := 4 + i * 16
-				var ox := 3 if i % 2 == 0 else 5
-				img.blit_rect(tile, Rect2(0, 0, 18, 16), Vector2i(ox, yy))
+			var col_img := base.duplicate()
+			col_img.resize(16, 48, Image.INTERPOLATE_NEAREST)
+			column_tex = ImageTexture.create_from_image(col_img)
 		else:
-			img.fill(Color(0.6, 0.45, 0.28, 1))
-		column_tex = ImageTexture.create_from_image(img)
+			column_tex = brick_tex
 	return column_tex
 
 func _setup_forge_recipe_icons() -> void:

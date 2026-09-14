@@ -207,7 +207,7 @@ func unfreeze_if_unsupported() -> void:
 	# Durante a queda o bloco não colide com o player (camada 8 não está na máscara
 	# do player) e continua descendo pela gravidade até achar suporte sólido.
 	collision_layer = FALLING_LAYER
-	collision_mask = 1 | 32
+	collision_mask = 1 | 32 | 16
 	set_physics_process(true)
 	# Cascata: o bloco acima também percebe que suportes se moveram e começa a cair.
 	_wake_block_above()
@@ -240,7 +240,7 @@ func _has_support_below() -> bool:
 	if not space: return true
 	var query = PhysicsPointQueryParameters2D.new()
 	query.position = global_position + Vector2(0, 34)
-	query.collision_mask = 1 | 32 # Blocos sólidos + tábuas/lajes/colunas
+	query.collision_mask = 1 | 32 | 16 # Blocos sólidos + tábuas/lajes (32) + colunas (16)
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
 	var results = space.intersect_point(query)
@@ -317,7 +317,7 @@ func _physics_process(delta: float) -> void:
 			freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 			# Bloco assenta: volta a ser bloco sólido normal (colide com o player)
 			collision_layer = 1
-			collision_mask = 1 | 2 | 32
+			collision_mask = 1 | 2 | 32 | 16
 			# Snap gently to nearest tile column
 			global_position.x = round((global_position.x - 16.0) / 32.0) * 32.0 + 16.0
 			set_physics_process(false)
