@@ -12,26 +12,36 @@ func _load_or_build_rock_texture() -> Texture2D:
 		return tex
 	return _build_rock_texture()
 
+# Seixo decorativo 16x16 bem centrado (margens transparentes) para não parecer
+# mal cortado. Assenta o visual na base do sprite.
 func _build_rock_texture() -> Texture2D:
-	var img := Image.create(16, 12, false, Image.FORMAT_RGBA8)
 	var rows := [
 		"................",
-		"....XXXXXXXX....",
-		"...XXXXXXXXXX...",
-		"..XXXXXXXXXXXX..",
-		"..XXXXXXXXXXXX..",
-		"..XXXXXXXXXXXX..",
-		"..XXXXXXXXXXXX..",
-		"..XXXXXXXXXXXX..",
-		"...XXXXXXXXXX...",
-		"....XXXXXXXX....",
 		"................",
+		"....XXXXXXX.....",
+		"...XXXXXXXXX....",
+		"..XXXXXXXXXXX...",
+		"..XXXXXXXXXXXX..",
+		".XXXXXXXXXXXXXX.",
+		".XXgXXXXXXXXXXXX",
+		".XXXXXXXXXXXXXX.",
+		".XXXXXXXXXXXXXX.",
+		".XXXXXXXXXXXXXX.",
+		"..XXXXXXXXXXXX..",
+		"..XXXXXXXXXXXX..",
+		"...XXXXXXXXXX...",
+		"....XXXXXXXX....",
 		"................",
 	]
-	for y in range(12):
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for y in range(16):
 		var line: String = rows[y]
 		for x in range(16):
 			match line[x]:
-				"X": img.set_pixel(x, y, Color(0.48, 0.46, 0.43, 1))
-				_: img.set_pixel(x, y, Color(0, 0, 0, 0))
+				"X":
+					img.set_pixel(x, y, Color(0.50, 0.48, 0.45, 1))
+				"g":
+					img.set_pixel(x, y, Color(0.74, 0.72, 0.67, 1))
+				_:
+					img.set_pixel(x, y, Color(0, 0, 0, 0))
 	return ImageTexture.create_from_image(img)

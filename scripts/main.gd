@@ -157,6 +157,9 @@ func generate_world() -> void:
 	
 	# Dicionário de blocos inquebráveis do labirinto
 	var unbreakable_blocks = {}
+	# Células vazias por caverna natural / escavação (para decorar sobre bedrock)
+	var cave_cells := {}
+	var excavated_cells := {}
 	
 	# Prateleiras de transição e barreiras estruturais
 	var shelves = [6, 11, 16, 21, 26, 31, 35, 41, 46, 51, 56, 61, 66, 71, 75, 81, 86, 91, 96, 101, 106, 111, 116]
@@ -207,6 +210,7 @@ func generate_world() -> void:
 				current_biome = 1 # Gelo
 			
 			if has_node("/root/SaveManager") and SaveManager.is_block_mined(grid_coord):
+				excavated_cells[grid_coord] = true
 				continue
 			
 			# Cavernas naturais escuras
@@ -222,6 +226,7 @@ func generate_world() -> void:
 						break
 			
 			if in_natural_cave:
+				cave_cells[grid_coord] = true
 				continue
 			
 			var tile_pos = Vector2(x * 32 + 16, y * 32 + 128)
@@ -316,11 +321,25 @@ func generate_world() -> void:
 		bush.position = Vector2(bx, 112)
 		add_child(bush)
 	
-	# Pedras decorativas espalhadas (random_rock) — sem colisão, só visual
-	for i in range(18):
-		var rx: float = randf_range(32.0, 928.0)
-		var ry: float = randf_range(100.0, 112.0)
-		var rock = RANDOM_ROCK_SCENE.instantiate()
-		rock.position = Vector2(rx, ry)
-		rock.z_index = -1
-		add_child(rock)
+	# Pedras decorativas em escavações/cavernas, apenas sobre blocos indestrutíveis
+	_spawn_cave_rocks(cave_cells, excavated_cells, unbreakable_blocks)
+
+func _spawn_cave_rocks(cave_cells: Dictionary, excavated_cells: Dictionary, unbreakable_blocks: Dictionary) -> void:
+	var seen := {}
+	for coord in cave_cells:
+		_place_rock_on_bedrock(coord, unbreakable_blocks, seen)
+	for coord in excavated_cells:
+		_place_rock_on_bedrock(coord, unbreakable_blocks, seen)
+
+func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, seen: Dictionary) -> void:
+	var below = Vector2i(coord.x, coord.y + 1)
+	if not unbreakable_blocks.has(below):
+		return
+	if seen.has(below):
+		return # só uma pedra por bloco indestrutível
+	seen[below] = true
+	var base_y: float = below.y * 32.0 + 112.0 # topo do bloco indestrutível
+	var rock = RANDOM_ROCK_SCENE.instantiate()
+	rock.position = Vector2(below.x * 32.0 + 16.0, base_y - 8.0) # base da pedra (16px) assenta
+	rock.z_index = -1
+	add_child(rock)

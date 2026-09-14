@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://huduidxxxx" path="res://scenes/ui/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" uid="uid://h7blsdptmv4t" path="res://scenes/ui/start_screen.tscn" id="6_start"]
 [ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="7_chest"]
-[ext_resource type="PackedScene" path="res://scenes/environment/forge.tscn" id="8_forge"]
+[ext_resource type="PackedScene" uid="uid://bforgeuidxxxx" path="res://scenes/environment/forge.tscn" id="8_forge"]
 [ext_resource type="PackedScene" uid="uid://cavebg000001" path="res://scenes/environment/cave_background.tscn" id="9_cavebg"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
