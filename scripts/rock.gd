@@ -219,11 +219,28 @@ func _check_fall_hit_player() -> void:
 	for body in ha.get_overlapping_bodies():
 		if body is CharacterBody2D and body.name == "Player":
 			_hit_cd = 0.4
-			# Só o primeiro bloco do desabamento aplica o dano (multiplicado pelo
-			# tamanho da pilha); os demais, dentro da janela, não re-cobram.
+			# Só o bloco MAIS BAIXO da pilha aplica o dano. Se houver outro bloco
+			# despencando logo abaixo deste, ele ainda não é o primeiro a atingir.
+			if _has_falling_block_below():
+				return
+			# O multiplicador conta o bloco que atinge + os blocos da pilha acima.
 			if not body.has_method("can_take_fall_damage") or body.can_take_fall_damage():
 				_hurt_player(body)
 			return
+
+func _has_falling_block_below() -> bool:
+	var space = get_world_2d().direct_space_state
+	if not space: return false
+	var q := PhysicsPointQueryParameters2D.new()
+	q.position = global_position + Vector2(0, 32)
+	q.collision_mask = FALLING_LAYER
+	q.collide_with_bodies = true
+	q.collide_with_areas = false
+	for r in space.intersect_point(q):
+		var col = r.collider
+		if is_instance_valid(col) and col != self and col.get("gravity_falling"):
+			return true
+	return false
 
 func _hurt_player(player: Node2D) -> void:
 	var inv = null

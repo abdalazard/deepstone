@@ -27,9 +27,8 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if player_in_range and (
-		event.is_action_pressed("action_drag") 
-		or event.is_action_pressed("action_mine") 
-		or (event is InputEventKey and event.pressed and not event.echo and (event.physical_keycode == KEY_X or event.physical_keycode == KEY_Z))
+		event.is_action_pressed("action_drag")
+		or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_X)
 	):
 		var hud = _get_hud()
 		if hud and hud.has_method("toggle_forge"):
