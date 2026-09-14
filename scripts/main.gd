@@ -36,6 +36,7 @@ func _ready() -> void:
 	generate_world()
 	restore_placed_items()
 	_setup_subsurface_shade()
+	_setup_surface_light()
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):
@@ -52,7 +53,14 @@ func _process(delta: float) -> void:
 			
 		var dir_light = get_node_or_null("DirectionalLight2D")
 		if dir_light:
-			dir_light.visible = (py < 350.0)
+			# Efeito luz/sombra: acima da superfície há luz; ao entrar no túnel fica escuro
+			dir_light.visible = (py < 150.0)
+
+		# Banda de luz que ilumina o gramado da superfície (onde árvores/forja/baú
+		# tocam o chão). Só acende enquanto o player está na superfície.
+		var surface_light = get_node_or_null("SurfaceLight")
+		if surface_light:
+			surface_light.visible = (py < 150.0)
 
 		# Na superfície o subsolo fica 100% oculto por uma camada escura.
 		var shade = get_node_or_null("SubsurfaceShade")
@@ -89,6 +97,38 @@ func _setup_subsurface_shade() -> void:
 	])
 	shade.visible = false
 	add_child(shade)
+
+# Luz em banda que ilumina o gramado da superfície (a linha onde árvores,
+# forja e baú tocam o chão). Acende na superfície e apaga ao entrar no túnel.
+func _setup_surface_light() -> void:
+	var light := PointLight2D.new()
+	light.name = "SurfaceLight"
+	light.texture = _build_surface_light_texture()
+	light.texture_scale = 2.0
+	light.position = Vector2(480, 128)
+	light.energy = 1.15
+	light.color = Color(1.0, 0.99, 0.93)
+	light.visible = false
+	add_child(light)
+
+func _build_surface_light_texture() -> Texture2D:
+	var w := 512
+	var h := 96
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in range(h):
+		var a := 1.0
+		if y < 16:
+			a = float(y) / 16.0
+		elif y > h - 17:
+			a = float(h - 1 - y) / 16.0
+		for x in range(w):
+			var ax := 1.0
+			if x < 24:
+				ax = float(x) / 24.0
+			elif x > w - 25:
+				ax = float(w - 1 - x) / 24.0
+			img.set_pixel(x, y, Color(1, 1, 1, a * ax))
+	return ImageTexture.create_from_image(img)
 
 func restore_placed_items() -> void:
 	if not has_node("/root/SaveManager"): return
@@ -320,6 +360,13 @@ func generate_world() -> void:
 		var bush = BUSH_SCENE.instantiate()
 		bush.position = Vector2(bx, 112)
 		add_child(bush)
+	
+	# 3 pedras decorativas na superfície (no gramado, ondem árvores/forja/baú tocam)
+	for sx in [96.0, 448.0, 864.0]:
+		var srock = RANDOM_ROCK_SCENE.instantiate()
+		srock.position = Vector2(sx, 112.0)
+		srock.z_index = -1
+		add_child(srock)
 	
 	# Pedras decorativas em escavações/cavernas, apenas sobre blocos indestrutíveis
 	_spawn_cave_rocks(cave_cells, excavated_cells, unbreakable_blocks)
