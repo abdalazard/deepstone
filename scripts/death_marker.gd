@@ -12,7 +12,7 @@ func _ready() -> void:
 		sprite.texture = _load_or_build_texture()
 	var lbl = get_node_or_null("LevelLabel")
 	if lbl:
-		lbl.text = "Caveira Nv. %d" % death_level
+		lbl.text = tr("Caveira Nv. %d") % death_level
 	var la = get_node_or_null("CollectArea")
 	if la and not la.body_entered.is_connected(_on_collected):
 		la.body_entered.connect(_on_collected)
@@ -34,7 +34,7 @@ func _on_collected(body: Node2D) -> void:
 		if inv.has_method("heal_amount"):
 			inv.heal_amount(death_level)
 		if inv.has_method("notify"):
-			inv.notify("+%d de Vida (Caveira Nv.%d)" % [death_level, death_level], "pickaxe")
+			inv.notify(tr("+%d de Vida (Caveira Nv.%d)") % [death_level, death_level], "pickaxe")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").remove_death_marker(global_position)
 	queue_free()

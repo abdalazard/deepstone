@@ -92,7 +92,7 @@ func deposit_resources() -> int:
 		
 	if count > 0:
 		inv.inventory_changed.emit()
-		inv.notify("Guardou %d minérios no Baú!" % count, "chest")
+		inv.notify(tr("Guardou %d minérios no Baú!") % count, "chest")
 		if has_node("/root/SaveManager"):
 			SaveManager.request_save()
 	else:
@@ -126,7 +126,7 @@ func retrieve_resources() -> int:
 		
 	if retrieved > 0:
 		inv.inventory_changed.emit()
-		inv.notify("Retirou %d minérios do Baú!" % retrieved, "chest")
+		inv.notify(tr("Retirou %d minérios do Baú!") % retrieved, "chest")
 		if has_node("/root/SaveManager"):
 			SaveManager.request_save()
 	else:

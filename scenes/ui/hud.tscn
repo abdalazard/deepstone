@@ -569,6 +569,21 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 text = "?"
 
+[node name="LangButton" type="Button" parent="TopRightContainer/TopRightHBox"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Idioma: EN"
+theme_override_colors/font_hover_color = Color(1, 1, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
+text = "EN"
+
 [node name="ToastContainer" type="MarginContainer" parent="."]
 anchors_preset = 3
 anchor_left = 1.0

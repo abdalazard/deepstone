@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 Inventory="*res://scripts/inventory.gd"
 SaveManager="*res://scripts/save_manager.gd"
 Music="*res://scripts/music.gd"
+Lang="*res://scripts/language_manager.gd"
 
 [display]
 

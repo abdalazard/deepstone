@@ -169,7 +169,7 @@ func _spawn_level_up_aura(lvl: int) -> void:
 	
 	# Floating label over player
 	var lbl = Label.new()
-	lbl.text = "★ LEVEL UP! NÍVEL %d! ★" % lvl
+	lbl.text = tr("★ LEVEL UP! NÍVEL %d! ★") % lvl
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.modulate = Color(1.0, 0.9, 0.3, 1.0)
@@ -300,7 +300,7 @@ func _physics_process(delta: float) -> void:
 			down_dash_timer = 0.35
 			velocity.y = 380.0
 			var inv = _get_inv()
-			if inv: inv.notify("Descida Rápida!", "dash")
+			if inv: inv.notify(tr("Descida Rápida!"), "dash")
 		last_down_press_time = now
 
 	if down_dash_timer > 0:
@@ -403,7 +403,7 @@ func _physics_process(delta: float) -> void:
 						var kick_dmg = inv_n.get_glove_kick_damage()
 						if kick_dmg > 0:
 							collider.hit(kick_dmg)
-					if inv_n: inv_n.notify("Chute no bloco!", "dash")
+					if inv_n: inv_n.notify(tr("Chute no bloco!"), "dash")
 					break
 				elif is_dragging and direction != 0:
 					velocity.x = clamp(velocity.x, -40.0, 40.0)
@@ -442,32 +442,32 @@ func execute_active_item() -> void:
 			if inv and inv.can_place_lamp():
 				place_torch()
 			else:
-				if inv: inv.notify("Sem postes disponíveis! Crie na Forja com carvão e ferro.", "lamp")
+				if inv: inv.notify(tr("Sem postes disponíveis! Crie na Forja com carvão e ferro."), "lamp")
 		"ladder":
 			if inv and inv.ladders > 0:
 				place_rope()
 			else:
-				if inv: inv.notify("Sem escadas! Crie na Forja usando madeira.", "ladder")
+				if inv: inv.notify(tr("Sem escadas! Crie na Forja usando madeira."), "ladder")
 		"plank":
 			if inv and inv.planks > 0:
 				place_plank()
 			else:
-				if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
+				if inv: inv.notify(tr("Sem tábuas! Crie na Forja usando madeira."), "plank")
 		"forge":
 			if inv and inv.portable_forges > 0:
 				place_portable_forge()
 			else:
-				if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 terra, 4 pedra e 2 ferro.", "forge")
+				if inv: inv.notify(tr("Sem forjas portáteis! Crie na Forja com 5 terra, 4 pedra e 2 ferro."), "forge")
 		"column":
 			if inv and inv.columns > 0:
 				place_column()
 			else:
-				if inv: inv.notify("Sem colunas de suporte! Forje na Forja.", "plank")
+				if inv: inv.notify(tr("Sem colunas de suporte! Forje na Forja."), "plank")
 		"slab":
 			if inv and inv.slabs > 0:
 				place_slab()
 			else:
-				if inv: inv.notify("Sem lajes de tijolos! Forje na Forja.", "plank")
+				if inv: inv.notify(tr("Sem lajes de tijolos! Forje na Forja."), "plank")
 		_:
 			try_mine()
 
@@ -482,7 +482,7 @@ func set_slot(slot: int) -> void:
 func place_torch() -> void:
 	var inv = _get_inv()
 	if not inv or not inv.can_place_lamp():
-		if inv: inv.notify("Sem postes disponíveis! Crie na Forja.", "lamp")
+		if inv: inv.notify(tr("Sem postes disponíveis! Crie na Forja."), "lamp")
 		return
 	inv.consume_lamp()
 	
@@ -500,7 +500,7 @@ func place_torch() -> void:
 func place_rope() -> void:
 	var inv = _get_inv()
 	if not inv or inv.ladders <= 0:
-		if inv: inv.notify("Sem escadas! Crie na Forja usando madeira.", "ladder")
+		if inv: inv.notify(tr("Sem escadas! Crie na Forja usando madeira."), "ladder")
 		return
 	inv.ladders -= 1
 	inv.inventory_changed.emit()
@@ -520,7 +520,7 @@ func place_rope() -> void:
 func place_plank() -> void:
 	var inv = _get_inv()
 	if not inv or inv.planks <= 0:
-		if inv: inv.notify("Sem tábuas! Crie na Forja usando madeira.", "plank")
+		if inv: inv.notify(tr("Sem tábuas! Crie na Forja usando madeira."), "plank")
 		return
 	inv.planks -= 1
 	inv.inventory_changed.emit()
@@ -543,7 +543,7 @@ func place_plank() -> void:
 func place_column() -> void:
 	var inv = _get_inv()
 	if not inv or inv.columns <= 0:
-		if inv: inv.notify("Sem colunas de suporte!", "plank")
+		if inv: inv.notify(tr("Sem colunas de suporte!"), "plank")
 		return
 	inv.columns -= 1
 	inv.inventory_changed.emit()
@@ -561,14 +561,14 @@ func place_column() -> void:
 	column.position = Vector2(place_x, place_y)
 	column.add_to_group("placed_planks")
 	get_tree().current_scene.add_child(column)
-	if inv: inv.notify("Coluna Instalada!", "plank")
+	if inv: inv.notify(tr("Coluna Instalada!"), "plank")
 	var sm = _get_save()
 	if sm: sm.request_save()
 
 func place_slab() -> void:
 	var inv = _get_inv()
 	if not inv or inv.slabs <= 0:
-		if inv: inv.notify("Sem lajes de tijolos!", "plank")
+		if inv: inv.notify(tr("Sem lajes de tijolos!"), "plank")
 		return
 	
 	var platform_scene = load("res://scenes/environment/brick_floor.tscn")
@@ -595,7 +595,7 @@ func place_slab() -> void:
 		s_query.collision_mask = 1 | 32 | 16
 		has_support = not space.intersect_ray(s_query).is_empty()
 	if not has_support:
-		if inv: inv.notify("Sem chão para manter a laje", "plank")
+		if inv: inv.notify(tr("Sem chão para manter a laje"), "plank")
 		return
 		
 	inv.slabs -= 1
@@ -607,7 +607,7 @@ func place_slab() -> void:
 	get_tree().current_scene.add_child(platform)
 	# Barra de apoio ilustrativa filha da laje (some junto quando a laje é quebrada)
 	_spawn_slab_bar(platform)
-	if inv: inv.notify("Laje Instalada!", "plank")
+	if inv: inv.notify(tr("Laje Instalada!"), "plank")
 	var sm = _get_save()
 	if sm: sm.request_save()
 
@@ -648,7 +648,7 @@ func _spawn_slab_bar(parent: Node) -> void:
 func place_portable_forge() -> void:
 	var inv = _get_inv()
 	if not inv or inv.portable_forges <= 0:
-		if inv: inv.notify("Sem forjas portáteis! Crie na Forja com 5 lama, 4 pedra e 2 ferro.", "forge")
+		if inv: inv.notify(tr("Sem forjas portáteis! Crie na Forja com 5 lama, 4 pedra e 2 ferro."), "forge")
 		return
 	inv.portable_forges -= 1
 	inv.inventory_changed.emit()
@@ -661,7 +661,7 @@ func place_portable_forge() -> void:
 	forge.position = Vector2(place_x, place_y)
 	forge.add_to_group("placed_forges")
 	get_tree().current_scene.add_child(forge)
-	inv.notify("Forja Portátil Instalada!", "forge")
+	inv.notify(tr("Forja Portátil Instalada!"), "forge")
 	var sm = _get_save()
 	if sm:
 		sm.request_save()
@@ -721,7 +721,7 @@ func _break_block_above() -> void:
 func try_mine() -> void:
 	var inv = _get_inv()
 	if inv and not inv.has_pickaxe:
-		inv.notify("Sua picareta está quebrada! Forje uma nova na forja.", "pickaxe")
+		inv.notify(tr("Sua picareta está quebrada! Forje uma nova na forja."), "pickaxe")
 		return
 
 	# Determine mining aim: if no directional keys held, mine horizontally in current facing direction
@@ -756,7 +756,7 @@ func try_mine() -> void:
 		velocity.y = -140.0 # Small jackhammer hop
 		global_position.y -= 4.0 # Gradually pops player upward out of the block
 		_break_block_above() # Breaks block above to clear overhead space!
-		if inv: inv.notify("Britadeira!", "pickaxe")
+		if inv: inv.notify(tr("Britadeira!"), "pickaxe")
 	
 	var world_2d = get_world_2d()
 	if not world_2d and is_inside_tree() and get_viewport():

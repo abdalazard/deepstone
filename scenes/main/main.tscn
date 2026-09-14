@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://b8mainuidxxxx"]
+[gd_scene load_steps=13 format=3 uid="uid://b8mainuidxxxx"]
 
 [ext_resource type="Script" uid="uid://bhxfm7hvwfny7" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://b0nhxf5kvw22x" path="res://scenes/player/player.tscn" id="2_player"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="7_chest"]
 [ext_resource type="PackedScene" uid="uid://bforgeuidxxxx" path="res://scenes/environment/forge.tscn" id="8_forge"]
 [ext_resource type="PackedScene" uid="uid://cavebg000001" path="res://scenes/environment/cave_background.tscn" id="9_cavebg"]
+[ext_resource type="PackedScene" path="res://scenes/environment/cave1_background.tscn" id="10_cave1bg"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
 light_mode = 1
@@ -30,6 +31,8 @@ color = Color(0.005, 0.105, 0.21, 1)
 polygon = PackedVector2Array(-300, 112, 1300, 112, 1300, 4200, -300, 4200)
 
 [node name="CaveParallax" parent="." instance=ExtResource("9_cavebg")]
+
+[node name="Cave1Background" parent="." instance=ExtResource("10_cave1bg")]
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
 rotation = 1.5708

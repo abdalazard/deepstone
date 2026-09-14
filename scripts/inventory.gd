@@ -58,7 +58,7 @@ func take_damage(amount: int) -> bool:
 	var absorbed := minf(current_resistance, hit)
 	current_resistance = maxf(0.0, current_resistance - absorbed)
 	hit -= absorbed
-	notify("-%d de Dano (Recebido %d, Absorvido %d)" % [int(round(hit)), amount, int(absorbed)], "pickaxe")
+	notify(tr("-%d de Dano (Recebido %d, Absorvido %d)") % [int(round(hit)), amount, int(absorbed)], "pickaxe")
 	player_hurt.emit()
 	inventory_changed.emit()
 	if hit > 0.0:
@@ -98,13 +98,13 @@ func repair_pickaxe() -> bool:
 	var cost = get_pickaxe_repair_cost()
 	if cost <= 0: return true
 	if coins < cost:
-		notify("Moedas insuficientes para reparar (%d necessárias)!" % cost, "coin_gold")
+		notify(tr("Moedas insuficientes para reparar (%d necessárias)!") % cost, "coin_gold")
 		return false
 	coins -= cost
 	has_pickaxe = true
 	pickaxe_durability = max_pickaxe_durability
 	inventory_changed.emit()
-	notify("Picareta reparada!", "pickaxe")
+	notify(tr("Picareta reparada!"), "pickaxe")
 	_request_save_req()
 	return true
 
@@ -112,13 +112,13 @@ func repair_helmet() -> bool:
 	var cost = get_helmet_repair_cost()
 	if cost <= 0: return true
 	if coins < cost:
-		notify("Moedas insuficientes para reparar (%d necessárias)!" % cost, "coin_gold")
+		notify(tr("Moedas insuficientes para reparar (%d necessárias)!") % cost, "coin_gold")
 		return false
 	coins -= cost
 	helmet_wear = 0
 	reset_resistance()
 	inventory_changed.emit()
-	notify("Capacete reparado!", "helmet")
+	notify(tr("Capacete reparado!"), "helmet")
 	_request_save_req()
 	return true
 
@@ -126,7 +126,7 @@ func repair_all() -> bool:
 	var cost = get_repair_all_cost()
 	if cost <= 0: return true
 	if coins < cost:
-		notify("Moedas insuficientes (%d necessárias)!" % cost, "coin_gold")
+		notify(tr("Moedas insuficientes (%d necessárias)!") % cost, "coin_gold")
 		return false
 	coins -= cost
 	has_pickaxe = true
@@ -134,7 +134,7 @@ func repair_all() -> bool:
 	helmet_wear = 0
 	reset_resistance()
 	inventory_changed.emit()
-	notify("Todos os equipamentos reparados!", "equip")
+	notify(tr("Todos os equipamentos reparados!"), "equip")
 	_request_save_req()
 	return true
 
@@ -148,7 +148,7 @@ func die() -> void:
 	wood_logs = 0
 	dirt = 0
 	stone = 0
-	notify("Você morreu! Os recursos coletados foram perdidos.", "pickaxe")
+	notify(tr("Você morreu! Os recursos coletados foram perdidos."), "pickaxe")
 	inventory_changed.emit()
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
@@ -448,11 +448,11 @@ func get_upgrade_level(slot: String) -> int:
 
 func get_upgrade_display_name(slot: String) -> String:
 	match slot:
-		"helmet": return EQUIPMENT_DEFS.get(equipped_helmet, {}).get("name", "Capacete")
-		"pickaxe": return EQUIPMENT_DEFS.get(equipped_pickaxe, {}).get("name", "Picareta")
-		"armor": return EQUIPMENT_DEFS.get(equipped_armor, {}).get("name", "Traje")
-		"boots": return EQUIPMENT_DEFS.get(equipped_boots, {}).get("name", "Botas")
-		"glove": return EQUIPMENT_DEFS.get(equipped_glove, {}).get("name", "Luvas")
+		"helmet": return tr(EQUIPMENT_DEFS.get(equipped_helmet, {}).get("name", "Capacete"))
+		"pickaxe": return tr(EQUIPMENT_DEFS.get(equipped_pickaxe, {}).get("name", "Picareta"))
+		"armor": return tr(EQUIPMENT_DEFS.get(equipped_armor, {}).get("name", "Traje"))
+		"boots": return tr(EQUIPMENT_DEFS.get(equipped_boots, {}).get("name", "Botas"))
+		"glove": return tr(EQUIPMENT_DEFS.get(equipped_glove, {}).get("name", "Luvas"))
 	return ""
 
 func get_upgrade_cost(slot: String, tier: int) -> Dictionary:
@@ -467,15 +467,15 @@ func get_upgrade_cost(slot: String, tier: int) -> Dictionary:
 func get_upgrade_desc(slot: String, tier: int) -> String:
 	match slot:
 		"pickaxe":
-			return "+1 Força (+2 de dano por golpe) e +10%% de Resistência (durabilidade). Nível %d" % tier
+			return tr("+1 Força (+2 de dano por golpe) e +10%% de Resistência (durabilidade). Nível %d") % tier
 		"helmet":
-			return "+60 de Alcance de Luz na escuridão. Nível %d" % tier
+			return tr("+60 de Alcance de Luz na escuridão. Nível %d") % tier
 		"armor":
-			return "+20 de Carga máxima na mochila. Nível %d" % tier
+			return tr("+20 de Carga máxima na mochila. Nível %d") % tier
 		"boots":
-			return "+0.20 de Força de Pulo e +0.15 de Velocidade. Nível %d" % tier
+			return tr("+0.20 de Força de Pulo e +0.15 de Velocidade. Nível %d") % tier
 		"glove":
-			return "+1 de Força e +1 de Dano no Chute. Nível %d" % tier
+			return tr("+1 de Força e +1 de Dano no Chute. Nível %d") % tier
 		_: return ""
 
 func build_forge_upgrade_rows() -> Array:
@@ -488,7 +488,7 @@ func build_forge_upgrade_rows() -> Array:
 				"target_slot": slot,
 				"tier": cur_level,
 				"name": get_upgrade_display_name(slot),
-				"desc": "Equipamento no nível máximo (%d/%d)." % [cur_level, UPGRADE_MAX_LEVEL],
+				"desc": tr("Equipamento no nível máximo (%d/%d).") % [cur_level, UPGRADE_MAX_LEVEL],
 				"cost": {},
 				"level_req": 0,
 				"exp_gain": 0,
@@ -546,7 +546,7 @@ func add_exp(amount: int) -> void:
 		level += 1
 		req = get_exp_required_for_level(level)
 		level_up.emit(level, req)
-		notify("Nível %d Alcançado!" % level, "coin_gold")
+		notify(tr("Nível %d Alcançado!") % level, "coin_gold")
 		heal_full() # Vida (e escudo) recuperados ao subir de nível
 	inventory_changed.emit()
 	if has_node("/root/SaveManager"):
@@ -555,7 +555,7 @@ func add_exp(amount: int) -> void:
 func add_coins(amount: int) -> void:
 	coins += amount
 	inventory_changed.emit()
-	notify("+%d Moedas de Ouro!" % amount, "coin_gold")
+	notify(tr("+%d Moedas de Ouro!") % amount, "coin_gold")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 
@@ -570,7 +570,7 @@ func damage_pickaxe(amount: int = 1) -> void:
 		has_pickaxe = false
 		_pickaxe_wear_accum = 0.0
 		pickaxe_broken.emit()
-		notify("Sua picareta quebrou! Escave com as mãos ou forje uma nova.", "pickaxe")
+		notify(tr("Sua picareta quebrou! Escave com as mãos ou forje uma nova."), "pickaxe")
 
 # Equipment Getters
 func get_equipped_def(slot: String) -> Dictionary:
@@ -656,7 +656,7 @@ func equip_gear(item_id: String) -> bool:
 			if not item_id in owned_gloves: return false
 			equipped_glove = item_id
 	inventory_changed.emit()
-	notify("Equipado: %s" % def.name, def.get("icon", "equip"))
+	notify(tr("Equipado: %s") % tr(def.name), def.get("icon", "equip"))
 	reset_resistance()
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
@@ -665,12 +665,12 @@ func equip_gear(item_id: String) -> bool:
 func buy_shop_item(item_id: String) -> bool:
 	if item_id == "bomb":
 		if coins < BOMB_PRICE:
-			notify("Moedas insuficientes!", "coin_gold")
+			notify(tr("Moedas insuficientes!"), "coin_gold")
 			return false
 		coins -= BOMB_PRICE
 		bombs += 1
 		inventory_changed.emit()
-		notify("+1 Bomba Adquirida!", "chest")
+		notify(tr("+1 Bomba Adquirida!"), "chest")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -680,10 +680,10 @@ func buy_shop_item(item_id: String) -> bool:
 	var cost = def.get("cost_coins", 0)
 	var req_lvl = def.get("level_req", 0)
 	if coins < cost:
-		notify("Moedas insuficientes!", "coin_gold")
+		notify(tr("Moedas insuficientes!"), "coin_gold")
 		return false
 	if level < req_lvl:
-		notify("Requer Nível %d!" % req_lvl, "coin_gold")
+		notify(tr("Requer Nível %d!") % req_lvl, "coin_gold")
 		return false
 	var slot = def.get("slot", "")
 	match slot:
@@ -705,7 +705,7 @@ func buy_shop_item(item_id: String) -> bool:
 	coins -= cost
 	equip_gear(item_id)
 	inventory_changed.emit()
-	notify("Comprado: %s!" % def.name, def.get("icon", "equip"))
+	notify(tr("Comprado: %s!") % tr(def.name), def.get("icon", "equip"))
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 	return true
@@ -765,7 +765,7 @@ func execute_forge_upgrade_def(up_def: Dictionary) -> bool:
 			
 	reset_resistance() # Novo teto de resistência com o upgrade
 	inventory_changed.emit()
-	notify("Equipamento Aprimorado!", "equip")
+	notify(tr("Equipamento Aprimorado!"), "equip")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 	return true
@@ -800,7 +800,7 @@ func sell_resource(key: String, amount: int = 1) -> int:
 	if earned > 0:
 		coins += earned
 		inventory_changed.emit()
-		notify("+%d Moedas de Ouro!" % earned, "coin_gold")
+		notify(tr("+%d Moedas de Ouro!") % earned, "coin_gold")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 	return earned
@@ -858,11 +858,11 @@ func craft_pickaxe() -> bool:
 		max_pickaxe_durability = get_pickaxe_max_durability()
 		if has_pickaxe and pickaxe_durability > 0:
 			pickaxe_durability += max_pickaxe_durability
-			notify("Picareta reforçada! +%d de Resistência (%d/%d)" % [max_pickaxe_durability, pickaxe_durability, max_pickaxe_durability], "pickaxe")
+			notify(tr("Picareta reforçada! +%d de Resistência (%d/%d)") % [max_pickaxe_durability, pickaxe_durability, max_pickaxe_durability], "pickaxe")
 		else:
 			has_pickaxe = true
 			pickaxe_durability = max_pickaxe_durability
-			notify("Nova Picareta Forjada!", "pickaxe")
+			notify(tr("Nova Picareta Forjada!"), "pickaxe")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -879,7 +879,7 @@ func craft_lamp() -> bool:
 		starter_lamps += 1
 		inventory_changed.emit()
 		_auto_add_hotbar("lamp")
-		notify("Poste de Luz Forjado!", "lamp")
+		notify(tr("Poste de Luz Forjado!"), "lamp")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -894,7 +894,7 @@ func craft_ladders() -> bool:
 		ladders += 5
 		inventory_changed.emit()
 		_auto_add_hotbar("ladder")
-		notify("+5 Escadas Forjadas!", "wood")
+		notify(tr("+5 Escadas Forjadas!"), "wood")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -909,7 +909,7 @@ func craft_planks() -> bool:
 		planks += 5
 		inventory_changed.emit()
 		_auto_add_hotbar("plank")
-		notify("+5 Tábuas Forjadas!", "wood")
+		notify(tr("+5 Tábuas Forjadas!"), "wood")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -925,7 +925,7 @@ func craft_column() -> bool:
 		columns += 1
 		inventory_changed.emit()
 		_auto_add_hotbar("column")
-		notify("+1 Coluna de Suporte Forjada!", "plank")
+		notify(tr("+1 Coluna de Suporte Forjada!"), "plank")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -941,7 +941,7 @@ func craft_slab() -> bool:
 		slabs += 1
 		inventory_changed.emit()
 		_auto_add_hotbar("slab")
-		notify("+1 Laje de Tijolos Forjada!", "plank")
+		notify(tr("+1 Laje de Tijolos Forjada!"), "plank")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -958,7 +958,7 @@ func craft_portable_forge() -> bool:
 		portable_forges += 1
 		inventory_changed.emit()
 		_auto_add_hotbar("forge")
-		notify("Forja Portátil Forjada!", "forge")
+		notify(tr("Forja Portátil Forjada!"), "forge")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
@@ -1018,21 +1018,21 @@ func add_starter_lamp(amount: int = 1) -> void:
 func add_item(type: String, amount: int = 1) -> bool:
 	if type in ["iron", "gold", "coal"]:
 		if is_full():
-			notify("Mochila Cheia! (" + str(get_current_load()) + "/" + str(get_max_capacity()) + ")", "chest")
+			notify(tr("Mochila Cheia! (%d/%d)") % [get_current_load(), get_max_capacity()], "chest")
 			return false
 		var space = get_max_capacity() - get_current_load()
 		var to_add = min(amount, space)
 		if type == "iron":
 			iron += to_add
-			notify("+" + str(to_add) + " Ferro", "iron")
+			notify(tr("+%d Ferro") % to_add, "iron")
 			add_exp(to_add * 2)
 		elif type == "gold":
 			gold += to_add
-			notify("+" + str(to_add) + " Ouro", "gold")
+			notify(tr("+%d Ouro") % to_add, "gold")
 			add_exp(to_add * 5)
 		elif type == "coal":
 			coal += to_add
-			notify("+" + str(to_add) + " Carvão", "coal")
+			notify(tr("+%d Carvão") % to_add, "coal")
 			add_exp(to_add * 1)
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
@@ -1040,7 +1040,7 @@ func add_item(type: String, amount: int = 1) -> bool:
 		return true
 	elif type == "wood":
 		wood_logs += amount
-		notify("+" + str(amount) + " Madeira", "wood")
+		notify(tr("+%d Madeira") % amount, "wood")
 		add_exp(amount * 1)
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
@@ -1048,7 +1048,7 @@ func add_item(type: String, amount: int = 1) -> bool:
 		return true
 	elif type == "stone":
 		stone += amount
-		notify("+" + str(amount) + " Pedra", "stone")
+		notify(tr("+%d Pedra") % amount, "stone")
 		add_exp(amount * 1)
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
@@ -1056,39 +1056,39 @@ func add_item(type: String, amount: int = 1) -> bool:
 		return true
 	elif type == "dirt":
 		dirt += amount
-		notify("+" + str(amount) + " Lama", "dirt")
+		notify(tr("+%d Lama") % amount, "dirt")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
 	elif type == "broken_pickaxe":
-		notify("Picareta quebrada recuperada! Forje uma nova.", "pickaxe")
+		notify(tr("Picareta quebrada recuperada! Forje uma nova."), "pickaxe")
 		inventory_changed.emit()
 		return true
 	elif type == "forge":
 		portable_forges += amount
-		notify("Forja Portátil recuperada!", "forge")
+		notify(tr("Forja Portátil recuperada!"), "forge")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
 	elif type == "column":
 		columns += amount
-		notify("+" + str(amount) + " Coluna de Suporte", "plank")
+		notify(tr("+%d Coluna de Suporte") % amount, "plank")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
 	elif type == "slab":
 		slabs += amount
-		notify("+" + str(amount) + " Laje de Tijolos", "plank")
+		notify(tr("+%d Laje de Tijolos") % amount, "plank")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		return true
 	elif type == "bomb":
 		bombs += amount
-		notify("+%d Bomba!" % amount, "chest")
+		notify(tr("+%d Bomba!") % amount, "chest")
 		inventory_changed.emit()
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
@@ -1156,7 +1156,7 @@ func drop_item(type: String, amount: int = 1) -> bool:
 
 	if drop_res_type != -1:
 		inventory_changed.emit()
-		notify("Item solto no chão!", "chest")
+		notify(tr("Item solto no chão!"), "chest")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 		if is_instance_valid(current) and drop_pos != Vector2.ZERO:

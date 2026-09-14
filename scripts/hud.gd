@@ -35,6 +35,7 @@ func is_some_panel_open() -> bool:
 @onready var pause_button = find_child("PauseButton", true, false)
 @onready var toast_list = find_child("ToastList", true, false)
 @onready var tutorial_button = find_child("TutorialButton", true, false)
+@onready var lang_button = find_child("LangButton", true, false)
 
 # Equipment Menu nodes
 @onready var equipment_panel = find_child("EquipmentPanel", true, false)
@@ -397,6 +398,9 @@ func _ready() -> void:
 		shop_button.pressed.connect(_on_shop_pressed)
 	if tutorial_button and not tutorial_button.pressed.is_connected(toggle_tutorial):
 		tutorial_button.pressed.connect(toggle_tutorial)
+	if lang_button and not lang_button.pressed.is_connected(_on_lang_toggled):
+		lang_button.pressed.connect(_on_lang_toggled)
+	_refresh_lang_button()
 	if shop_close_btn and not shop_close_btn.pressed.is_connected(close_shop):
 		shop_close_btn.pressed.connect(close_shop)
 	if shop_tab_buy_btn and not shop_tab_buy_btn.pressed.is_connected(_on_shop_tab_buy):
@@ -622,14 +626,14 @@ func _build_hotbar_config_panel() -> void:
 	margin.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = "⚙ CONFIGURAR ATALHOS DA HOTBAR (1-6)"
+	title.text = tr("⚙ CONFIGURAR ATALHOS DA HOTBAR (1-6)")
 	title.add_theme_font_size_override("font_size", 14)
 	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 	
 	var desc = Label.new()
-	desc.text = "Clique em um slot (1-6) e depois selecione o item desejado:"
+	desc.text = tr("Clique em um slot (1-6) e depois selecione o item desejado:")
 	desc.add_theme_font_size_override("font_size", 11)
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(desc)
@@ -648,7 +652,7 @@ func _build_hotbar_config_panel() -> void:
 	vbox.add_child(items_grid)
 	
 	var close_b = Button.new()
-	close_b.text = "Fechar [X]"
+	close_b.text = tr("Fechar [X]")
 	close_b.pressed.connect(func(): hotbar_config_panel.visible = false)
 	vbox.add_child(close_b)
 	
@@ -666,7 +670,7 @@ func _update_hotbar_config_ui() -> void:
 			var s_key = inv.hotbar_slots[i]
 			var btn = Button.new()
 			btn.custom_minimum_size = Vector2(50, 32)
-			btn.text = "[%d] %s" % [i + 1, s_key.capitalize()]
+			btn.text = tr("[%d] %s") % [i + 1, s_key.capitalize()]
 			if i == selected_config_slot:
 				btn.modulate = Color(1.3, 1.3, 0.8, 1.0)
 			var slot_i = i
@@ -687,13 +691,13 @@ func _update_hotbar_config_ui() -> void:
 		]
 		for it in available:
 			var ibtn = Button.new()
-			ibtn.text = it.label
+			ibtn.text = tr(it.label)
 			var item_k = it.key
 			ibtn.pressed.connect(func():
 				inv.set_hotbar_slot(selected_config_slot, item_k)
 				_update_hotbar_config_ui()
 				update_ui()
-				show_toast("Slot %d atribuído: %s" % [selected_config_slot + 1, it.label], item_k)
+				show_toast(tr("Slot %d atribuído: %s") % [selected_config_slot + 1, tr(it.label)], item_k)
 			)
 			items_grid.add_child(ibtn)
 
@@ -708,9 +712,9 @@ func show_level_up_vfx(new_lvl: int, exp_req: int) -> void:
 		level_up_panel.modulate.a = 0.0
 		level_up_panel.scale = Vector2(0.8, 0.8)
 		if is_instance_valid(level_up_title):
-			level_up_title.text = "★ NÍVEL %d ALCANÇADO! ★" % new_lvl
+			level_up_title.text = tr("★ NÍVEL %d ALCANÇADO! ★") % new_lvl
 		if is_instance_valid(level_up_subtitle):
-			level_up_subtitle.text = "EXP Necessária para Nível %d: %d EXP" % [new_lvl + 1, exp_req]
+			level_up_subtitle.text = tr("EXP Necessária para Nível %d: %d EXP") % [new_lvl + 1, exp_req]
 		
 		var tween = create_tween()
 		tween.set_parallel(true)
@@ -747,7 +751,7 @@ func _setup_forge_tabs() -> void:
 		inner_vbox.move_child(tab_bar, 0)
 		
 		forge_tab_create_btn = Button.new()
-		forge_tab_create_btn.text = "⚒ CRIAR ITENS"
+		forge_tab_create_btn.text = tr("⚒ CRIAR ITENS")
 		forge_tab_create_btn.custom_minimum_size = Vector2(0, 32)
 		forge_tab_create_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		forge_tab_create_btn.add_theme_font_size_override("font_size", 13)
@@ -759,7 +763,7 @@ func _setup_forge_tabs() -> void:
 		tab_bar.add_child(forge_tab_create_btn)
 		
 		forge_tab_upgrade_btn = Button.new()
-		forge_tab_upgrade_btn.text = "⭐ APRIMORAR EQUIPES"
+		forge_tab_upgrade_btn.text = tr("⭐ APRIMORAR EQUIPES")
 		forge_tab_upgrade_btn.custom_minimum_size = Vector2(0, 32)
 		forge_tab_upgrade_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		forge_tab_upgrade_btn.add_theme_font_size_override("font_size", 13)
@@ -771,7 +775,7 @@ func _setup_forge_tabs() -> void:
 		tab_bar.add_child(forge_tab_upgrade_btn)
 
 		forge_tab_repair_btn = Button.new()
-		forge_tab_repair_btn.text = "🔧 REPARAR"
+		forge_tab_repair_btn.text = tr("🔧 REPARAR")
 		forge_tab_repair_btn.custom_minimum_size = Vector2(0, 32)
 		forge_tab_repair_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		forge_tab_repair_btn.add_theme_font_size_override("font_size", 13)
@@ -825,7 +829,7 @@ func _setup_forge_tabs() -> void:
 		
 		var repair_all_btn = Button.new()
 		repair_all_btn.name = "RepairAllBtn"
-		repair_all_btn.text = "Reparar Tudo (0 moedas)"
+		repair_all_btn.text = tr("Reparar Tudo (0 moedas)")
 		repair_all_btn.custom_minimum_size = Vector2(0, 34)
 		repair_all_btn.add_theme_font_size_override("font_size", 12)
 		repair_all_btn.pressed.connect(func():
@@ -894,7 +898,7 @@ func _setup_equipment_slot_interactions() -> void:
 			if hbox and not hbox.has_node("SwapBtn"):
 				var swap_btn = Button.new()
 				swap_btn.name = "SwapBtn"
-				swap_btn.text = "Substituir [Z]"
+				swap_btn.text = tr("Substituir [Z]")
 				swap_btn.custom_minimum_size = Vector2(100, 28)
 				swap_btn.pressed.connect(func(): _open_equipment_swap(slot_type))
 				hbox.add_child(swap_btn)
@@ -967,7 +971,7 @@ func _open_equipment_swap(slot_type: String) -> void:
 		cur_equipped = inv.equipped_glove
 		
 	var tlabel = Label.new()
-	tlabel.text = "SUBSTITUIR %s:" % slot_title
+	tlabel.text = tr("SUBSTITUIR %s:") % tr(slot_title)
 	tlabel.add_theme_font_size_override("font_size", 13)
 	tlabel.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
 	vbox.add_child(tlabel)
@@ -1011,17 +1015,17 @@ func _open_equipment_swap(slot_type: String) -> void:
 		
 		var ilbl = Label.new()
 		ilbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		ilbl.text = "%s
-%s" % [def.get("name", item_id), def.get("desc", "")]
+		ilbl.text = tr("%s
+%s") % [tr(def.get("name", item_id)), tr(def.get("desc", ""))]
 		ilbl.add_theme_font_size_override("font_size", 11)
 		rhbox.add_child(ilbl)
 		
 		var ebtn = Button.new()
 		if item_id == cur_equipped:
-			ebtn.text = "✓ Em Uso"
+			ebtn.text = tr("✓ Em Uso")
 			ebtn.disabled = true
 		else:
-			ebtn.text = "Equipar"
+			ebtn.text = tr("Equipar")
 			var i_key = item_id
 			ebtn.pressed.connect(func():
 				inv.equip_gear(i_key)
@@ -1033,7 +1037,7 @@ func _open_equipment_swap(slot_type: String) -> void:
 		list_vbox.add_child(row)
 		
 	var close_b = Button.new()
-	close_b.text = "Fechar [X]"
+	close_b.text = tr("Fechar [X]")
 	close_b.pressed.connect(func(): modal.queue_free())
 	vbox.add_child(close_b)
 	
@@ -1047,7 +1051,7 @@ func _on_craft_pickaxe() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Recursos insuficientes! Requer 1 Ferro, 2 Madeiras e 1 Pedra.", "pickaxe")
+			show_toast(tr("Recursos insuficientes! Requer 1 Ferro, 2 Madeiras e 1 Pedra."), "pickaxe")
 
 func _on_craft_lamp() -> void:
 	var inv = _get_inv()
@@ -1056,7 +1060,7 @@ func _on_craft_lamp() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Recursos insuficientes! Requer 3 Carvões e 2 Ferros.", "lamp")
+			show_toast(tr("Recursos insuficientes! Requer 3 Carvões e 2 Ferros."), "lamp")
 
 func _on_craft_ladder() -> void:
 	var inv = _get_inv()
@@ -1065,7 +1069,7 @@ func _on_craft_ladder() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Sem madeira suficiente! Requer 1 Tronco de Madeira.", "wood")
+			show_toast(tr("Sem madeira suficiente! Requer 1 Tronco de Madeira."), "wood")
 
 func _on_craft_plank() -> void:
 	var inv = _get_inv()
@@ -1074,7 +1078,7 @@ func _on_craft_plank() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Sem madeira suficiente! Requer 1 Tronco de Madeira.", "wood")
+			show_toast(tr("Sem madeira suficiente! Requer 1 Tronco de Madeira."), "wood")
 
 func _on_craft_column() -> void:
 	var inv = _get_inv()
@@ -1083,7 +1087,7 @@ func _on_craft_column() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Recursos insuficientes! Requer 3 Lamas e 3 Pedras.", "plank")
+			show_toast(tr("Recursos insuficientes! Requer 3 Lamas e 3 Pedras."), "plank")
 
 func _on_craft_slab() -> void:
 	var inv = _get_inv()
@@ -1092,7 +1096,7 @@ func _on_craft_slab() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Recursos insuficientes! Requer 2 Lamas e 2 Pedras.", "plank")
+			show_toast(tr("Recursos insuficientes! Requer 2 Lamas e 2 Pedras."), "plank")
 
 func _on_craft_portable_forge() -> void:
 	var inv = _get_inv()
@@ -1101,7 +1105,7 @@ func _on_craft_portable_forge() -> void:
 			update_forge_ui()
 			update_ui()
 		else:
-			show_toast("Recursos insuficientes! Requer 5 Pedras e 3 Ferros.", "forge")
+			show_toast(tr("Recursos insuficientes! Requer 5 Pedras e 3 Ferros."), "forge")
 
 func toggle_forge(forge_node: Node = null) -> void:
 	if not forge_panel: return
@@ -1163,7 +1167,7 @@ func _colored_cost(cost: Dictionary) -> String:
 		var amt = cost[rk]
 		var have = _resource_amount(rk)
 		var color = "#8ade8a" if have >= amt else "#ff6b6b"
-		parts.append("[color=%s]%d %s[/color]" % [color, amt, _resource_name(rk)])
+		parts.append("[color=%s]%d %s[/color]" % [color, amt, tr(_resource_name(rk))])
 	return ", ".join(parts)
 
 func update_forge_ui() -> void:
@@ -1212,7 +1216,7 @@ func update_forge_ui() -> void:
 				cost_lbl.scroll_active = false
 				cost_lbl.add_theme_font_size_override("normal_font_size", 10)
 				cost_lbl.add_theme_color_override("default_color", Color(0.8, 0.75, 0.6, 1))
-				cost_lbl.text = "[color=#cfc7b0]Custo:[/color] " + _colored_cost(recipe_costs[row_name])
+				cost_lbl.text = tr("[color=#cfc7b0]Custo:[/color]") + " " + _colored_cost(recipe_costs[row_name])
 		
 	# Update Forge Upgrade View rows
 	var up_rows = find_child("UpgradeRowsContainer", true, false)
@@ -1253,7 +1257,7 @@ func update_repair_ui() -> void:
 	
 	if repairable.is_empty():
 		var empty_lbl = Label.new()
-		empty_lbl.text = "Nenhum equipamento precisa de reparo."
+		empty_lbl.text = tr("Nenhum equipamento precisa de reparo.")
 		empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty_lbl.add_theme_font_size_override("font_size", 12)
 		empty_lbl.add_theme_color_override("font_color", Color(0.8, 0.85, 0.7, 1))
@@ -1270,7 +1274,7 @@ func _update_repair_all_button(inv: Node) -> void:
 	if not btn: return
 	var cost: int = inv.get_repair_all_cost() if inv.has_method("get_repair_all_cost") else 0
 	var needs: bool = (inv.pickaxe_needs_repair() if inv.has_method("pickaxe_needs_repair") else false) or (inv.helmet_needs_repair() if inv.has_method("helmet_needs_repair") else false)
-	btn.text = "🔧 Reparar Tudo (%d moedas)" % cost
+	btn.text = tr("🔧 Reparar Tudo (%d moedas)") % cost
 	if not needs or cost <= 0:
 		btn.disabled = true
 		btn.add_theme_color_override("font_color", Color(0.8, 0.85, 0.7, 1.0))
@@ -1321,14 +1325,14 @@ func _create_repair_row(item: Dictionary) -> PanelContainer:
 	hbox.add_child(vbox)
 	
 	var title_lbl = Label.new()
-	title_lbl.text = "%s  (%s)" % [item.name, item.state]
+	title_lbl.text = tr("%s  (%s)") % [tr(item.name), tr(item.state)]
 	title_lbl.add_theme_font_size_override("font_size", 12)
 	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.4, 1.0))
 	vbox.add_child(title_lbl)
 	
 	var btn = Button.new()
 	btn.custom_minimum_size = Vector2(170, 32)
-	btn.text = "🛠 Reparar (%d moedas)" % item.cost
+	btn.text = tr("🛠 Reparar (%d moedas)") % item.cost
 	if inv.coins < item.cost:
 		btn.disabled = true
 		btn.add_theme_color_override("font_color", Color(1, 0.3, 0.3, 1)) # vermelho
@@ -1395,7 +1399,7 @@ func _update_forge_materials() -> void:
 	empty_lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.7, 1))
 	
 	if owned.is_empty():
-		empty_lbl.text = "Nenhum material util"
+		empty_lbl.text = tr("Nenhum material util")
 		margin.add_child(empty_lbl)
 		return
 	
@@ -1417,7 +1421,7 @@ func _update_forge_materials() -> void:
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		chip.add_child(icon)
 		var count_lbl = Label.new()
-		count_lbl.text = "%d %s" % [m.count, m.name]
+		count_lbl.text = tr("%d %s") % [m.count, tr(m.name)]
 		count_lbl.add_theme_font_size_override("font_size", 11)
 		count_lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.7, 1))
 		chip.add_child(count_lbl)
@@ -1467,7 +1471,7 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	hbox.add_child(vbox)
 	
 	var title_lbl = Label.new()
-	title_lbl.text = "%s  (%d/%d)" % [up.get("name", ""), up.get("current_level", 0), up.get("max_level", 5)]
+	title_lbl.text = tr("%s  (%d/%d)") % [tr(up.get("name", "")), up.get("current_level", 0), up.get("max_level", 5)]
 	title_lbl.add_theme_font_size_override("font_size", 12)
 	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.4, 1.0))
 	vbox.add_child(title_lbl)
@@ -1480,9 +1484,9 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	desc_lbl.add_theme_font_size_override("normal_font_size", 10)
 	desc_lbl.add_theme_color_override("default_color", Color(0.8, 0.75, 0.7, 1.0))
 	if not cost.is_empty():
-		desc_lbl.text = up.get("desc", "") + "\n[color=#9b6]Requer:[/color] " + _colored_cost(cost)
+		desc_lbl.text = tr(up.get("desc", "")) + "\n" + tr("[color=#9b6]Requer:[/color]") + " " + _colored_cost(cost)
 	else:
-		desc_lbl.text = up.get("desc", "")
+		desc_lbl.text = tr(up.get("desc", ""))
 	vbox.add_child(desc_lbl)
 	
 	var btn = Button.new()
@@ -1490,14 +1494,14 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	var req_lvl = up.get("level_req", 0)
 	
 	if up.get("maxed", false):
-		btn.text = "✓ Nível Máximo"
+		btn.text = tr("✓ Nível Máximo")
 		btn.disabled = true
 	elif inv and inv.level < req_lvl:
-		btn.text = "🔒 Nível %d" % req_lvl
+		btn.text = tr("🔒 Nível %d") % req_lvl
 		btn.disabled = true
 	else:
 		var can_up = inv.can_forge_upgrade(up) if inv else false
-		btn.text = "Aprimorar"
+		btn.text = tr("Aprimorar")
 		btn.disabled = not can_up
 		var up_def = up
 		btn.pressed.connect(func():
@@ -1520,7 +1524,7 @@ func _format_upgrade_cost(cost: Dictionary) -> String:
 		elif k == "stone": name_str = "Pedra"
 		elif k == "plank": name_str = "Tábua"
 		elif k == "dirt": name_str = "Lama"
-		parts.append("%d %s" % [cost[k], name_str])
+		parts.append(tr("%d %s") % [cost[k], tr(name_str)])
 	return ", ".join(parts)
 
 func toggle_equipment() -> void:
@@ -1573,11 +1577,11 @@ func update_equipment_ui() -> void:
 		var limit = _status_limit(lvl)
 		var spd = mini(int(round(inv.get_boots_speed_multiplier() * 10.0)), limit)
 		var jmp = mini(int(round(inv.get_boots_jump_multiplier() * 10.0)), limit)
-		stats_lbl.text = "%d\n%d/%d\n%d/%d" % [dmg, spd, limit, jmp, limit]
+		stats_lbl.text = tr("%d\n%d/%d\n%d/%d") % [dmg, spd, limit, jmp, limit]
 
 	var char_desc = equipment_panel.find_child("CharDesc", true, false)
 	if char_desc:
-		char_desc.text = "Nível: %d" % lvl
+		char_desc.text = tr("Nível: %d") % lvl
 
 	var char_rect = equipment_panel.find_child("CharTextureRect", true, false)
 	if char_rect and inv.has_method("get_skin_tint"):
@@ -1614,21 +1618,21 @@ func _update_single_slot_ui(slot_node: Node, def: Dictionary, slot: String) -> v
 	if icon:
 		icon.modulate = _equip_tint(def, lvl, inv.UPGRADE_MAX_LEVEL if inv else 5)
 	if name_lbl:
-		var nm = def.get("name", "")
+		var nm = tr(def.get("name", ""))
 		if lvl > 0:
-			nm += "  [Nivel %d/%d]" % [lvl, inv.UPGRADE_MAX_LEVEL]
+			nm += tr("  [Nivel %d/%d]") % [lvl, inv.UPGRADE_MAX_LEVEL]
 		name_lbl.text = nm
 	if desc_lbl:
-		var desc = def.get("desc", "")
+		var desc = tr(def.get("desc", ""))
 		if lvl > 0:
 			var bonus := ""
 			match slot:
-				"pickaxe": bonus = "+%d de dano e +%d%% de durabilidade/velocidade de mineracao" % [lvl * 2, lvl * 10]
-				"helmet": bonus = "+%d de alcance de luz na escuridao" % int(lvl * 60)
-				"armor": bonus = "+%d de carga maxima na mochila" % (lvl * 20)
-				"boots": bonus = "+%d%% de altura de pulo e +%d%% de velocidade" % [lvl * 20, lvl * 15]
-				"glove": bonus = "+%d de forca e +%d de dano de chute" % [lvl, lvl]
-			desc += "\nNivel %d: %s." % [lvl, bonus]
+				"pickaxe": bonus = tr("+%d de dano e +%d%% de durabilidade/velocidade de mineracao") % [lvl * 2, lvl * 10]
+				"helmet": bonus = tr("+%d de alcance de luz na escuridao") % int(lvl * 60)
+				"armor": bonus = tr("+%d de carga maxima na mochila") % (lvl * 20)
+				"boots": bonus = tr("+%d%% de altura de pulo e +%d%% de velocidade") % [lvl * 20, lvl * 15]
+				"glove": bonus = tr("+%d de forca e +%d de dano de chute") % [lvl, lvl]
+			desc += tr("\nNivel %d: %s.") % [lvl, bonus]
 		desc_lbl.text = desc
 
 func _equip_icon_tex(icon_type: String) -> Texture2D:
@@ -1751,11 +1755,11 @@ func _refresh_inventory_hotbar_setup() -> void:
 				selected_config_slot = i
 				_refresh_inventory_hotbar_setup()
 				if is_instance_valid(hotbar_setup_hint):
-					hotbar_setup_hint.text = "Atalho %d selecionado. Clique num item." % (i + 1)
+					hotbar_setup_hint.text = tr("Atalho %d selecionado. Clique num item.") % (i + 1)
 		)
 		hotbar_setup_hbox.add_child(panel)
 	if is_instance_valid(hotbar_setup_hint) and selected_config_slot < 0:
-		hotbar_setup_hint.text = "Selecione o atalho, depois o item."
+		hotbar_setup_hint.text = tr("Selecione o atalho, depois o item.")
 
 func close_inventory() -> void:
 	if inventory_panel:
@@ -1783,6 +1787,21 @@ func toggle_tutorial() -> void:
 	screen.name = "StartScreen"
 	screen.mode = screen.Mode.TUTORIAL
 	scene.add_child(screen)
+
+func _on_lang_toggled() -> void:
+	if not "Lang" in get_tree().root or not get_tree().root.get_node("Lang"):
+		return
+	get_tree().root.get_node("Lang").toggle()
+	_refresh_lang_button()
+	update_ui()
+
+func _refresh_lang_button() -> void:
+	if not lang_button: return
+	if not "Lang" in get_tree().root or not get_tree().root.get_node("Lang"):
+		return
+	var lang := get_tree().root.get_node("Lang")
+	lang_button.text = lang.get_short()
+	lang_button.tooltip_text = tr("Idioma: " + lang.get_short())
 
 func open_pause() -> void:
 	if pause_panel:
@@ -1908,7 +1927,7 @@ func update_shop_ui() -> void:
 	if not inv: return
 	
 	if shop_coins_label:
-		shop_coins_label.text = "[O] Moedas de Ouro: %d" % inv.coins
+		shop_coins_label.text = tr("[O] Moedas de Ouro: %d") % inv.coins
 		
 	# 1. Update BUY tab with purchasable equipment
 	var buy_container = find_child("BuyRowsContainer", true, false)
@@ -2005,13 +2024,13 @@ func _create_shop_buy_row(def: Dictionary) -> PanelContainer:
 	hbox.add_child(vbox)
 	
 	var title_lbl = Label.new()
-	title_lbl.text = "%s — Custo: %d Moedas" % [def.get("name", ""), def.get("cost_coins", 0)]
+	title_lbl.text = tr("%s — Custo: %d Moedas") % [tr(def.get("name", "")), def.get("cost_coins", 0)]
 	title_lbl.add_theme_font_size_override("font_size", 12)
 	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.9, 0.45, 1.0))
 	vbox.add_child(title_lbl)
 	
 	var desc_lbl = Label.new()
-	desc_lbl.text = def.get("desc", "")
+	desc_lbl.text = tr(def.get("desc", ""))
 	desc_lbl.add_theme_font_size_override("font_size", 10)
 	desc_lbl.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
 	vbox.add_child(desc_lbl)
@@ -2029,13 +2048,13 @@ func _create_shop_buy_row(def: Dictionary) -> PanelContainer:
 			already_owned = true
 			
 	if already_owned:
-		btn.text = "✓ Possui"
+		btn.text = tr("✓ Possui")
 		btn.disabled = true
 	elif inv and inv.level < req_lvl:
-		btn.text = "🔒 Nível %d" % req_lvl
+		btn.text = tr("🔒 Nível %d") % req_lvl
 		btn.disabled = true
 	else:
-		btn.text = "Comprar [Z]"
+		btn.text = tr("Comprar [Z]")
 		btn.disabled = (inv == null or inv.coins < cost)
 		btn.pressed.connect(func():
 			if inv and inv.buy_shop_item(item_id):
@@ -2083,7 +2102,7 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 	
 	var lbl = Label.new()
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.text = "%s (x%d) — Preço: %d moedas cada" % [item.name, item.count, item.price]
+	lbl.text = tr("%s (x%d) — Preço: %d moedas cada") % [tr(item.name), item.count, item.price]
 	lbl.add_theme_font_size_override("font_size", 12)
 	lbl.add_theme_color_override("font_color", Color(1.0, 0.94, 0.8, 1.0))
 	hbox.add_child(lbl)
@@ -2093,7 +2112,7 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 	var margin_vbox = VBoxContainer.new()
 	margin_vbox.add_theme_constant_override("separation", 4)
 	var btn_1 = Button.new()
-	btn_1.text = "Vender 1 (+%d)" % item.price
+	btn_1.text = tr("Vender 1 (+%d)") % item.price
 	btn_1.custom_minimum_size = Vector2(160, 26)
 	btn_1.size_flags_horizontal = Control.SIZE_SHRINK_END
 	var item_key = item.key
@@ -2107,7 +2126,7 @@ func _create_shop_sell_row(item: Dictionary) -> PanelContainer:
 	margin_vbox.add_child(btn_1)
 	
 	var btn_all = Button.new()
-	btn_all.text = "Vender Tudo (+%d)" % (item.price * item.count)
+	btn_all.text = tr("Vender Tudo (+%d)") % (item.price * item.count)
 	btn_all.custom_minimum_size = Vector2(160, 26)
 	btn_all.size_flags_horizontal = Control.SIZE_SHRINK_END
 	btn_all.pressed.connect(func():
@@ -2315,7 +2334,7 @@ func _on_slot_gui_input(event: InputEvent, idx: int) -> void:
 						inv.set_hotbar_slot(selected_config_slot, item_k)
 						update_ui()
 						_refresh_inventory_hotbar_setup()
-						show_toast("Atalho %d: %s" % [selected_config_slot + 1, def.get("name", item_k)], item_k)
+						show_toast(tr("Atalho %d: %s") % [selected_config_slot + 1, tr(def.get("name", item_k))], item_k)
 						selected_config_slot = -1
 				select_slot(idx)
 				drag_start_idx = idx
@@ -2350,17 +2369,17 @@ func select_slot(idx: int) -> void:
 	if selected_index >= 0 and selected_index < chest_items_def.size():
 		var def = chest_items_def[selected_index]
 		var inv = _get_inv()
-		if item_title: item_title.text = def.name
+		if item_title: item_title.text = tr(def.name)
 		if item_desc:
 			if def.key == "pickaxe" and inv:
-				item_desc.text = "%s
+				item_desc.text = tr("%s
 
-Durabilidade: %d/%d" % [def.desc, inv.pickaxe_durability, inv.max_pickaxe_durability]
+Durabilidade: %d/%d") % [tr(def.desc), inv.pickaxe_durability, inv.max_pickaxe_durability]
 			else:
-				item_desc.text = def.desc
+				item_desc.text = tr(def.desc)
 		if equip_button:
 			equip_button.visible = def.is_tool
-			equip_button.text = "Equipar [%s]" % def.shortcut
+			equip_button.text = tr("Equipar [%s]") % def.shortcut
 		if drop_button:
 			drop_button.visible = not def.is_tool or (def.key in ["plank", "lamp", "forge"])
 
@@ -2371,12 +2390,12 @@ func _on_equip_pressed() -> void:
 	if def.is_tool and inv:
 		var lamp_available = inv.can_place_lamp() if inv.has_method("can_place_lamp") else (inv.starter_lamps > 0 if "starter_lamps" in inv else false)
 		if def.key == "lamp" and not lamp_available:
-			show_toast("Sem postes disponíveis! Crie na Forja.", "lamp")
+			show_toast(tr("Sem postes disponíveis! Crie na Forja."), "lamp")
 			return
 		inv.active_slot = def.tool_slot
 		inv.inventory_changed.emit()
 		close_inventory()
-		show_toast("%s equipada!" % def.name, def.key)
+		show_toast(tr("%s equipada!") % tr(def.name), def.key)
 
 func _on_drop_pressed() -> void:
 	_drop_item_at_idx(selected_index)
@@ -2390,7 +2409,7 @@ func _drop_item_at_idx(idx: int) -> void:
 		inv.drop_item(def.key, 1)
 		_update_capacity_badge()
 	else:
-		show_toast("Sem unidades para dropar!", "chest")
+		show_toast(tr("Sem unidades para dropar!"), "chest")
 
 func _get_item_count(key: String) -> int:
 	var inv = _get_inv()
@@ -2423,7 +2442,7 @@ func update_ui() -> void:
 	if not is_instance_valid(level_badge_label):
 		level_badge_label = find_child("LevelBadgeLabel", true, false)
 	if is_instance_valid(level_badge_label):
-		level_badge_label.text = "Nv. %d" % (inv.level if "level" in inv else 0)
+		level_badge_label.text = tr("Nv. %d") % (inv.level if "level" in inv else 0)
 
 	if is_instance_valid(avatar_rect) and inv.has_method("get_skin_tint"):
 		avatar_rect.modulate = inv.get_skin_tint()
@@ -2520,7 +2539,7 @@ func update_ui() -> void:
 				else:
 					slot.modulate = Color.WHITE
 			else:
-				count_lbl.text = "QUEBR."
+				count_lbl.text = tr("QUEBR.")
 				slot.modulate = Color(1.0, 0.4, 0.4, 0.8)
 		elif key == "lamp":
 			count_lbl.text = "%d" % inv.starter_lamps
@@ -2558,7 +2577,7 @@ func update_ui() -> void:
 		if count_label:
 			var c = _get_item_count(def.key)
 			if def.key == "pickaxe":
-				count_label.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability] if inv.has_pickaxe else "QUEBRADA"
+				count_label.text = "%d/%d" % [inv.pickaxe_durability, inv.max_pickaxe_durability] if inv.has_pickaxe else tr("QUEBRADA")
 			else:
 				count_label.text = "%d" % c
 			
@@ -2691,23 +2710,23 @@ func update_chest_ui() -> void:
 	
 	if chest_coal_lbl:
 		chest_coal_lbl.visible = (c_coal > 0)
-		chest_coal_lbl.text = "• Carvão: %d" % c_coal
+		chest_coal_lbl.text = tr("• Carvão: %d") % c_coal
 	if chest_iron_lbl:
 		chest_iron_lbl.visible = (c_iron > 0)
-		chest_iron_lbl.text = "• Minério de Ferro: %d" % c_iron
+		chest_iron_lbl.text = tr("• Minério de Ferro: %d") % c_iron
 	if chest_gold_lbl:
 		chest_gold_lbl.visible = (c_gold > 0)
-		chest_gold_lbl.text = "• Minério de Ouro: %d" % c_gold
+		chest_gold_lbl.text = tr("• Minério de Ouro: %d") % c_gold
 		
 	if backpack_coal_lbl:
 		backpack_coal_lbl.visible = (inv.coal > 0)
-		backpack_coal_lbl.text = "• Carvão: %d" % inv.coal
+		backpack_coal_lbl.text = tr("• Carvão: %d") % inv.coal
 	if backpack_iron_lbl:
 		backpack_iron_lbl.visible = (inv.iron > 0)
-		backpack_iron_lbl.text = "• Minério de Ferro: %d" % inv.iron
+		backpack_iron_lbl.text = tr("• Minério de Ferro: %d") % inv.iron
 	if backpack_gold_lbl:
 		backpack_gold_lbl.visible = (inv.gold > 0)
-		backpack_gold_lbl.text = "• Minério de Ouro: %d" % inv.gold
+		backpack_gold_lbl.text = tr("• Minério de Ouro: %d") % inv.gold
 
 func _on_chest_deposit() -> void:
 	var inv = _get_inv()
@@ -2723,7 +2742,7 @@ func _on_chest_deposit() -> void:
 		
 		inv.inventory_changed.emit()
 		update_chest_ui()
-		show_toast("Recursos guardados no Baú!", "chest")
+		show_toast(tr("Recursos guardados no Baú!"), "chest")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
 
@@ -2734,7 +2753,7 @@ func _on_chest_retrieve() -> void:
 		var cur_load = inv.get_current_load() if inv.has_method("get_current_load") else (inv.iron + inv.gold + inv.coal)
 		var free_space = max(0, max_cap - cur_load)
 		if free_space <= 0:
-			show_toast("Sua mochila já está cheia!", "chest")
+			show_toast(tr("Sua mochila já está cheia!"), "chest")
 			return
 			
 		var take_coal = min(current_chest_node.stored_coal, free_space)
@@ -2754,6 +2773,6 @@ func _on_chest_retrieve() -> void:
 		current_chest_node.stored_load = current_chest_node.stored_coal + current_chest_node.stored_iron + current_chest_node.stored_gold
 		inv.inventory_changed.emit()
 		update_chest_ui()
-		show_toast("Recursos retirados do Baú!", "chest")
+		show_toast(tr("Recursos retirados do Baú!"), "chest")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
