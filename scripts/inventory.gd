@@ -4,6 +4,7 @@ signal inventory_changed
 signal notification_triggered(text: String, icon_type: String)
 signal level_up(new_level: int, exp_needed_next: int)
 signal pickaxe_broken
+signal player_hurt
 
 const BASE_CAPACITY: int = 60
 var iron: int = 0
@@ -38,6 +39,8 @@ func take_damage(amount: int) -> bool:
 	var mitigation = get_resistance()
 	var final_dmg = max(1, amount - mitigation)
 	current_health = max(0.0, current_health - final_dmg)
+	notify("-%d de Vida" % final_dmg, "pickaxe")
+	player_hurt.emit()
 	inventory_changed.emit()
 	if current_health <= 0.0:
 		die()

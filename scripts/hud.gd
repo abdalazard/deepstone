@@ -127,6 +127,7 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var health_bar = find_child("HealthBar", true, false)
 @onready var hud_health_label = find_child("HudHealthLabel", true, false)
 @onready var hud_res_label = find_child("HudResLabel", true, false)
+@onready var damage_flash = find_child("DamageFlash", true, false)
 @onready var death_panel = find_child("DeathPanel", true, false)
 @onready var death_restart_btn = find_child("RestartBtn", true, false)
 @onready var level_up_panel = find_child("LevelUpPanel", true, false)
@@ -333,6 +334,8 @@ func _ready() -> void:
 			inv.notification_triggered.connect(show_toast)
 		if inv.has_signal("level_up") and not inv.level_up.is_connected(_on_level_up):
 			inv.level_up.connect(_on_level_up)
+		if inv.has_signal("player_hurt") and not inv.player_hurt.is_connected(_on_player_hurt):
+			inv.player_hurt.connect(_on_player_hurt)
 	
 	setup_hotbar()
 	setup_chest_grid()
@@ -1472,6 +1475,14 @@ func _on_death_restart() -> void:
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").restart_run_to_surface()
 	update_ui()
+
+# Flash vermelho opaco na tela toda vez que o player recebe dano
+func _on_player_hurt() -> void:
+	if not is_instance_valid(damage_flash):
+		return
+	damage_flash.color = Color(0.85, 0, 0, 0.45)
+	var tween = damage_flash.create_tween()
+	tween.tween_property(damage_flash, "color:a", 0.0, 0.35)
 
 func _on_save_pressed() -> void:
 	if has_node("/root/SaveManager"):

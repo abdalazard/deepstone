@@ -27,6 +27,16 @@ var plank_drop_timer: float = 0.0
 var knockback_vel: Vector2 = Vector2.ZERO
 const KNOCKBACK_DECAY: float = 500.0
 
+# Janela global de dano por desabamento: evita que cada bloco de um desabamento
+# cobre o dano (multiplicado) separadamente — só o primeiro bloco aplica o dano.
+var fall_damage_timer: float = 0.0
+
+func can_take_fall_damage() -> bool:
+	if fall_damage_timer > 0.0:
+		return false
+	fall_damage_timer = 0.5
+	return true
+
 func apply_knockback(force: Vector2) -> void:
 	knockback_vel = force
 
@@ -356,6 +366,8 @@ func _physics_process(delta: float) -> void:
 	if knockback_vel != Vector2.ZERO:
 		velocity += knockback_vel
 		knockback_vel = knockback_vel.move_toward(Vector2.ZERO, KNOCKBACK_DECAY * delta)
+	if fall_damage_timer > 0.0:
+		fall_damage_timer -= delta
 
 	move_and_slide()
 

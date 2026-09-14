@@ -219,21 +219,52 @@ func _check_fall_hit_player() -> void:
 	for body in ha.get_overlapping_bodies():
 		if body is CharacterBody2D and body.name == "Player":
 			_hit_cd = 0.4
-			_hurt_player(body)
+			# Só o primeiro bloco do desabamento aplica o dano (multiplicado pelo
+			# tamanho da pilha); os demais, dentro da janela, não re-cobram.
+			if not body.has_method("can_take_fall_damage") or body.can_take_fall_damage():
+				_hurt_player(body)
 			return
 
 func _hurt_player(player: Node2D) -> void:
 	var inv = null
 	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
 		inv = get_tree().root.get_node("Inventory")
-	if inv and inv.has_method("take_damage"):
-		inv.take_damage(get_impact_damage())
+	if not inv or not inv.has_method("take_damage"):
+		return
+	# Dano = recurso do bloco que atinge * quantidade de blocos que caem juntos
+	var pile: int = 1 + _count_falling_blocks_above()
+	inv.take_damage(get_impact_damage() * pile)
 	# Empurra o player para a LATERAL, para fora do caminho do bloco (~1 bloco)
 	var push_dir := 1.0
 	if player.global_position.x < global_position.x:
 		push_dir = -1.0
 	if player.has_method("apply_knockback"):
 		player.apply_knockback(Vector2(push_dir * 180.0, -40.0))
+
+# Conta quantos blocos estão despencando em sequência logo acima deste bloco,
+# para multiplicar o dano pelo tamanho do desabamento.
+func _count_falling_blocks_above() -> int:
+	var space = get_world_2d().direct_space_state
+	if not space: return 0
+	var count := 0
+	var y := 32.0
+	while y <= 192.0:
+		var q := PhysicsPointQueryParameters2D.new()
+		q.position = global_position + Vector2(0, -y)
+		q.collision_mask = FALLING_LAYER
+		q.collide_with_bodies = true
+		q.collide_with_areas = false
+		var found := false
+		for r in space.intersect_point(q):
+			var col = r.collider
+			if is_instance_valid(col) and col != self and col.get("gravity_falling"):
+				count += 1
+				found = true
+				break
+		if not found:
+			break
+		y += 32.0
+	return count
 
 func _has_support_below() -> bool:
 	var space = get_world_2d().direct_space_state
