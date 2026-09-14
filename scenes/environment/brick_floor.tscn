@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://yth8wcflxyoh"]
 
-[ext_resource type="Script" uid="uid://gmexmjsso2ry" path="res://scripts/plank.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/brick_struct.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://c5skr7laqhxj7" path="res://assets/sprites/brick_platform.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_brick"]

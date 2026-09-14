@@ -602,22 +602,20 @@ func _spawn_decorative_columns(parent: Node) -> void:
 		return # Túnel aberto abaixo: sem chão, não cria coluna flutuante
 	var floor_y: float = hit.position.y
 	var top_y: float = slab_pos.y + 8.0
-	if floor_y - top_y < 24.0:
-		return # Laje praticamente encostada no chão: sem espaço para coluna
-	# Textura sólida branca 1x1 para desenhar uma linha fina de concreto
+	var gap: float = floor_y - top_y
+	if gap < 6.0:
+		return # Laje praticamente encostada no chão
+	# Linha única cinza (concreto) ligando a laje ao chão, filha da laje
 	var white := Image.create(1, 1, false, Image.FORMAT_RGBA8)
 	white.set_pixel(0, 0, Color.WHITE)
 	var line_tex: Texture2D = ImageTexture.create_from_image(white)
-	var y := top_y + 4.0
-	while y < floor_y - 16.0:
-		var sprite := Sprite2D.new()
-		sprite.texture = line_tex
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.position = Vector2(0, y - slab_pos.y)
-		sprite.scale = Vector2(3, 32)
-		sprite.modulate = Color(0.55, 0.6, 0.62, 0.9)
-		parent.add_child(sprite)
-		y += 32.0
+	var sprite := Sprite2D.new()
+	sprite.texture = line_tex
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.position = Vector2(0, top_y + gap * 0.5 - slab_pos.y)
+	sprite.scale = Vector2(3, gap)
+	sprite.modulate = Color(0.55, 0.6, 0.62, 0.9)
+	parent.add_child(sprite)
 
 func place_portable_forge() -> void:
 	var inv = _get_inv()
