@@ -62,10 +62,10 @@ func _process(delta: float) -> void:
 		if surface_light:
 			surface_light.visible = (py < 150.0)
 
-		# Na superfície o subsolo fica 100% oculto por uma camada escura.
+		# Na superfície o subsolo fica 100% oculto por uma camada escura (silhueta).
 		var shade = get_node_or_null("SubsurfaceShade")
 		if shade:
-			shade.visible = py < 112.0
+			shade.visible = py < 144.0
 
 		# Dinâmica de descoberta: na superfície a câmera sobe para mostrar mais
 		# céu e menos chão; ao descer para o primeiro andar do subsolo ela volta
@@ -87,11 +87,13 @@ func _process(delta: float) -> void:
 func _setup_subsurface_shade() -> void:
 	var shade := Polygon2D.new()
 	shade.name = "SubsurfaceShade"
-	shade.z_index = -6
+	shade.z_index = 2
 	shade.color = Color(0, 0, 0, 1)
+	# Cobrimos tudo a partir de 144 (abaixo da fileira do gramado), deixando o
+	# subsolo como silhueta preta quando o player está na superfície.
 	shade.polygon = PackedVector2Array([
-		Vector2(-10000, 112),
-		Vector2(10000, 112),
+		Vector2(-10000, 144),
+		Vector2(10000, 144),
 		Vector2(10000, 10000),
 		Vector2(-10000, 10000),
 	])
@@ -106,7 +108,7 @@ func _setup_surface_light() -> void:
 	light.texture = _build_surface_light_texture()
 	light.texture_scale = 2.0
 	light.position = Vector2(480, 128)
-	light.energy = 1.15
+	light.energy = 0.7
 	light.color = Color(1.0, 0.99, 0.93)
 	light.visible = false
 	add_child(light)
