@@ -22,12 +22,12 @@ func _ready() -> void:
 	add_child(_glow)
 	var light := PointLight2D.new()
 	light.texture = tex
-	light.scale = Vector2(1.5, 1.5)
+	light.scale = Vector2(1.2, 1.2)
 	light.color = Color(0.4, 0.75, 1.0)
 	light.energy = 1.1
 	add_child(light)
 	_start_pos = global_position
-	scale = Vector2(0.9, 0.9)
+	scale = Vector2(0.62, 0.62)
 
 func _process(delta: float) -> void:
 	match _phase:
@@ -84,7 +84,7 @@ func _build_glow_texture() -> Texture2D:
 		for x in range(size):
 			var dx := (float(x) - half) / half
 			var dy := (float(y) - half) / half
-			var d := clampf(1.0 - (dx * dx + dy * dy) * 1.4, 0.0, 1.0)
+			var d := clampf(1.0 - (dx * dx + dy * dy) * 1.9, 0.0, 1.0)
 			var a := d * d
 			img.set_pixel(x, y, Color(1, 1, 1, a))
 	return ImageTexture.create_from_image(img)

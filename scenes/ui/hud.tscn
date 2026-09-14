@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://huduidxxxx"]
+[gd_scene load_steps=41 format=3 uid="uid://huduidxxxx"]
 
 [ext_resource type="Script" uid="uid://c3d5rj1y1aat2" path="res://scripts/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" uid="uid://ckk0xveldm2s" path="res://assets/Caves and Mines/extras.png" id="2_extras"]
@@ -27,6 +27,10 @@ corner_radius_bottom_left = 6
 [sub_resource type="AtlasTexture" id="AtlasTexture_char_idle"]
 atlas = ExtResource("3_idle")
 region = Rect2(9, 11, 14, 10)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_char_full"]
+atlas = ExtResource("3_idle")
+region = Rect2(0, 0, 32, 30)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_capacity_badge"]
 bg_color = Color(0.12, 0.08, 0.04, 0.95)
@@ -512,7 +516,7 @@ theme_override_constants/separation = 8
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -210.0
+offset_left = -256.0
 offset_bottom = 65.0
 grow_horizontal = 0
 theme_override_constants/margin_top = 10
@@ -549,6 +553,21 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
 theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 text = "🏪 LOJA [L]"
+
+[node name="TutorialButton" type="Button" parent="TopRightContainer/TopRightHBox"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Ver tutorial rápido"
+theme_override_colors/font_hover_color = Color(1, 1, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 20
+theme_override_styles/hover = SubResource("StyleBoxFlat_shop_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_shop_btn")
+theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
+text = "?"
 
 [node name="ToastContainer" type="MarginContainer" parent="."]
 anchors_preset = 3
@@ -869,7 +888,7 @@ size_flags_vertical = 3
 texture_filter = 1
 custom_minimum_size = Vector2(130, 130)
 layout_mode = 2
-texture = SubResource("AtlasTexture_char_idle")
+texture = SubResource("AtlasTexture_char_full")
 expand_mode = 1
 stretch_mode = 5
 

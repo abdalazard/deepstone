@@ -583,6 +583,18 @@ func get_equipped_def(slot: String) -> Dictionary:
 		"glove": id = equipped_glove
 	return EQUIPMENT_DEFS.get(id, {})
 
+# Cor (tint) da skin do personagem, calculada a partir do traje, capacete,
+# botas e picareta equipados. Cada equipamento muda a aparência conforme o
+# recurso usado. Usado pelo sprite do player e pelo avatar do menu de
+# equipamentos.
+func get_skin_tint() -> Color:
+	var armor: Color = get_equipped_def("armor").get("color", Color.WHITE)
+	var helmet: Color = get_equipped_def("helmet").get("color", Color.WHITE)
+	var boots: Color = get_equipped_def("boots").get("color", Color.WHITE)
+	var pick: Color = get_equipped_def("pickaxe").get("color", Color.WHITE)
+	var avg: Color = (armor + helmet + boots + pick) / 4.0
+	return avg.lerp(Color.WHITE, 0.35)
+
 func get_boots_speed_multiplier() -> float:
 	var def = EQUIPMENT_DEFS.get(equipped_boots, {})
 	var base_m = def.get("speed_mult", 1.0)

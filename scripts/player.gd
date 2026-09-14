@@ -86,6 +86,9 @@ func _ready() -> void:
 	var inv = _get_inv()
 	if inv and not inv.level_up.is_connected(_on_level_up):
 		inv.level_up.connect(_on_level_up)
+	if inv and not inv.inventory_changed.is_connected(_apply_skin):
+		inv.inventory_changed.connect(_apply_skin)
+	_apply_skin()
 	
 	# Lanterna do capacete: cone de luz de 2 blocos (64px) apenas para a frente
 	helmet_light_tex = _build_helmet_light_texture()
@@ -136,6 +139,15 @@ func _update_helmet_light() -> void:
 func _on_level_up(new_lvl: int, _req_exp: int) -> void:
 	# In-world character Level Up VFX
 	_spawn_level_up_aura(new_lvl)
+
+func _apply_skin() -> void:
+	var inv = _get_inv()
+	if not inv or not inv.has_method("get_skin_tint"):
+		return
+	var tint: Color = inv.get_skin_tint()
+	var sprite = $Sprite2D
+	if sprite:
+		sprite.self_modulate = tint
 
 func _spawn_level_up_aura(lvl: int) -> void:
 	var particles = CPUParticles2D.new()

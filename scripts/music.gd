@@ -13,6 +13,7 @@ var current_biome: int = 0 # 0 terra/superfície, 1 gelo, 2 lava
 func _ready() -> void:
 	player = AudioStreamPlayer.new()
 	player.name = "MusicPlayer"
+	player.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(player)
 	# Loop em todas as músicas e início imediato (Valley of Singing Quartz)
 	music_earth.loop = true

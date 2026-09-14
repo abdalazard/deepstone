@@ -34,6 +34,7 @@ func is_some_panel_open() -> bool:
 @onready var shop_button = find_child("ShopButton", true, false)
 @onready var pause_button = find_child("PauseButton", true, false)
 @onready var toast_list = find_child("ToastList", true, false)
+@onready var tutorial_button = find_child("TutorialButton", true, false)
 
 # Equipment Menu nodes
 @onready var equipment_panel = find_child("EquipmentPanel", true, false)
@@ -394,6 +395,8 @@ func _ready() -> void:
 		drop_button.pressed.connect(_on_drop_pressed)
 	if shop_button and not shop_button.pressed.is_connected(_on_shop_pressed):
 		shop_button.pressed.connect(_on_shop_pressed)
+	if tutorial_button and not tutorial_button.pressed.is_connected(toggle_tutorial):
+		tutorial_button.pressed.connect(toggle_tutorial)
 	if shop_close_btn and not shop_close_btn.pressed.is_connected(close_shop):
 		shop_close_btn.pressed.connect(close_shop)
 	if shop_tab_buy_btn and not shop_tab_buy_btn.pressed.is_connected(_on_shop_tab_buy):
@@ -1576,6 +1579,10 @@ func update_equipment_ui() -> void:
 	if char_desc:
 		char_desc.text = "Nível: %d" % lvl
 
+	var char_rect = equipment_panel.find_child("CharTextureRect", true, false)
+	if char_rect and inv.has_method("get_skin_tint"):
+		char_rect.modulate = inv.get_skin_tint()
+
 	var health_badge = equipment_panel.find_child("HealthBadge", true, false)
 	if health_badge:
 		var hp_lbl = health_badge.find_child("HealthText", true, false)
@@ -1760,6 +1767,22 @@ func toggle_pause() -> void:
 		close_pause()
 	else:
 		open_pause()
+
+func toggle_tutorial() -> void:
+	var tree := get_tree()
+	if not tree: return
+	var scene := tree.current_scene
+	if not scene: return
+	var existing := scene.get_node_or_null("StartScreen")
+	if existing:
+		existing._close()
+		return
+	var screen_scene: PackedScene = load("res://scenes/ui/start_screen.tscn")
+	if not screen_scene: return
+	var screen := screen_scene.instantiate()
+	screen.name = "StartScreen"
+	screen.mode = screen.Mode.TUTORIAL
+	scene.add_child(screen)
 
 func open_pause() -> void:
 	if pause_panel:
@@ -2401,6 +2424,9 @@ func update_ui() -> void:
 		level_badge_label = find_child("LevelBadgeLabel", true, false)
 	if is_instance_valid(level_badge_label):
 		level_badge_label.text = "Nv. %d" % (inv.level if "level" in inv else 0)
+
+	if is_instance_valid(avatar_rect) and inv.has_method("get_skin_tint"):
+		avatar_rect.modulate = inv.get_skin_tint()
 		
 	if not is_instance_valid(exp_progress_bar):
 		exp_progress_bar = find_child("ExpProgressBar", true, false)

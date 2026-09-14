@@ -1,6 +1,26 @@
-[gd_scene load_steps=2 format=3 uid="uid://h7blsdptmv4t"]
+[gd_scene load_steps=5 format=3 uid="uid://h7blsdptmv4t"]
 
 [ext_resource type="Script" uid="uid://dppspxxb6hthp" path="res://scripts/start_screen.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
+bg_color = Color(0.04, 0.02, 0.01, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tutorial_panel"]
+bg_color = Color(0.2, 0.12, 0.06, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.7, 0.5, 0.22, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_sep"]
+bg_color = Color(0.7, 0.5, 0.22, 0.35)
+content_margin_top = 1.0
+content_margin_bottom = 1.0
 
 [node name="StartScreen" type="CanvasLayer"]
 process_mode = 3
@@ -12,48 +32,149 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.8)
+mouse_filter = 0
+color = Color(0, 0, 0, 0)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ColorRect"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -100.0
-offset_right = 150.0
-offset_bottom = 100.0
+[node name="Overlay" type="PanelContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 15
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
 
-[node name="Title" type="Label" parent="ColorRect/VBoxContainer"]
+[node name="CenterContainer" type="CenterContainer" parent="Overlay"]
 layout_mode = 2
+
+[node name="TutorialPanel" type="PanelContainer" parent="Overlay/CenterContainer"]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tutorial_panel")
+
+[node name="PanelMargin" type="MarginContainer" parent="Overlay/CenterContainer/TutorialPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 32
-text = "DEEPSTONE"
+text = "TUTORIAL RÁPIDO"
 horizontal_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="ColorRect/VBoxContainer"]
+[node name="TitleSep" type="HSeparator" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
 layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxFlat_header_sep")
 
-[node name="Controls" type="Label" parent="ColorRect/VBoxContainer"]
+[node name="MovHeader" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "COMANDOS:
-Z - Cavar / Coletar
-X (Segurar) - Arrastar Pedras Pesadas
-C - Coletar Items Próximos
-I - Abrir/Fechar Inventário
-Seta Cima - Pular / Subir Escada
-Setas Lado - Andar"
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
+theme_override_font_sizes/font_size = 17
+text = "MOVIMENTO"
+horizontal_alignment = 0
 
-[node name="StartInfo" type="Label" parent="ColorRect/VBoxContainer"]
+[node name="MovLeftRight" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "← →   Andar"
+horizontal_alignment = 0
+
+[node name="MovUp" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "↑   Pular / Subir Escada"
+horizontal_alignment = 0
+
+[node name="MovDown" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "↓ ↓   Descer Rápido da Escada"
+horizontal_alignment = 0
+
+[node name="ActionHeader" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
+theme_override_font_sizes/font_size = 17
+text = "AÇÃO"
+horizontal_alignment = 0
+
+[node name="ActionZ" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "Z   Cavar / Coletar"
+horizontal_alignment = 0
+
+[node name="ActionX" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "X (Segurar)   Arrastar Pedras Pesadas · Chutar"
+horizontal_alignment = 0
+
+[node name="ActionC" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "C   Coletar Itens Próximos"
+horizontal_alignment = 0
+
+[node name="MenuHeader" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
+theme_override_font_sizes/font_size = 17
+text = "MENUS"
+horizontal_alignment = 0
+
+[node name="MenuI" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "I   Abrir / Fechar Inventário"
+horizontal_alignment = 0
+
+[node name="MenuE" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "E   Equipamentos"
+horizontal_alignment = 0
+
+[node name="MenuL" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "L   Loja"
+horizontal_alignment = 0
+
+[node name="MenuP" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 16
+text = "P   Pausa / Configurações"
+horizontal_alignment = 0
+
+[node name="FootSep" type="HSeparator" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxFlat_header_sep")
+
+[node name="StartInfo" type="Label" parent="Overlay/CenterContainer/TutorialPanel/PanelMargin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 20
-text = "
-Pressione [ Z ] para Iniciar"
-horizontal_alignment = 1
+text = "Pressione [ Z ] para Iniciar"
+horizontal_alignment = 0
