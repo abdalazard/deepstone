@@ -20,7 +20,7 @@ func _ready() -> void:
 # Usa a sprite de caveira fornecida (skull.png), se existir; caso contrário,
 # gera uma caveirinha pixel art em código.
 func _load_or_build_texture() -> Texture2D:
-	var tex: Texture2D = load("res://assets/sprites/skull.png")
+	var tex: Texture2D = load("res://assets/sprites/skeleton.png")
 	if tex:
 		return tex
 	return _build_skull_texture()

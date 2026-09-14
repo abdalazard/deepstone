@@ -185,10 +185,13 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 var current_forge_node: Node = null
 var forge_tab_upgrade: bool = false
+var forge_tab_repair: bool = false
 var forge_tab_create_btn: Button = null
 var forge_tab_upgrade_btn: Button = null
+var forge_tab_repair_btn: Button = null
 var forge_create_view: VBoxContainer = null
 var forge_upgrade_view: VBoxContainer = null
+var forge_repair_view: VBoxContainer = null
 
 # Pause Menu Reset
 @onready var reset_mine_btn = find_child("ResetMineBtn", true, false)
@@ -740,6 +743,7 @@ func _setup_forge_tabs() -> void:
 		forge_tab_create_btn.add_theme_font_size_override("font_size", 13)
 		forge_tab_create_btn.pressed.connect(func():
 			forge_tab_upgrade = false
+			forge_tab_repair = false
 			_update_forge_tab_visibility()
 		)
 		tab_bar.add_child(forge_tab_create_btn)
@@ -751,9 +755,22 @@ func _setup_forge_tabs() -> void:
 		forge_tab_upgrade_btn.add_theme_font_size_override("font_size", 13)
 		forge_tab_upgrade_btn.pressed.connect(func():
 			forge_tab_upgrade = true
+			forge_tab_repair = false
 			_update_forge_tab_visibility()
 		)
 		tab_bar.add_child(forge_tab_upgrade_btn)
+
+		forge_tab_repair_btn = Button.new()
+		forge_tab_repair_btn.text = "🔧 REPARAR"
+		forge_tab_repair_btn.custom_minimum_size = Vector2(0, 32)
+		forge_tab_repair_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		forge_tab_repair_btn.add_theme_font_size_override("font_size", 13)
+		forge_tab_repair_btn.pressed.connect(func():
+			forge_tab_upgrade = false
+			forge_tab_repair = true
+			_update_forge_tab_visibility()
+		)
+		tab_bar.add_child(forge_tab_repair_btn)
 		
 		# Upgrade View container
 		forge_upgrade_view = VBoxContainer.new()
@@ -776,6 +793,41 @@ func _setup_forge_tabs() -> void:
 		
 		inner_vbox.add_child(forge_upgrade_view)
 
+		# Repair View container
+		forge_repair_view = VBoxContainer.new()
+		forge_repair_view.name = "ForgeRepairView"
+		forge_repair_view.custom_minimum_size = Vector2(0, 240)
+		forge_repair_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		forge_repair_view.add_theme_constant_override("separation", 8)
+		forge_repair_view.visible = false
+		
+		var repair_scroll = ScrollContainer.new()
+		repair_scroll.name = "RepairScroll"
+		repair_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		repair_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		forge_repair_view.add_child(repair_scroll)
+		
+		var repair_rows = VBoxContainer.new()
+		repair_rows.name = "RepairRowsContainer"
+		repair_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		repair_rows.add_theme_constant_override("separation", 8)
+		repair_scroll.add_child(repair_rows)
+		
+		var repair_all_btn = Button.new()
+		repair_all_btn.name = "RepairAllBtn"
+		repair_all_btn.text = "Reparar Tudo (0 moedas)"
+		repair_all_btn.custom_minimum_size = Vector2(0, 34)
+		repair_all_btn.add_theme_font_size_override("font_size", 12)
+		repair_all_btn.pressed.connect(func():
+			var inv = _get_inv()
+			if inv and inv.has_method("repair_all") and inv.repair_all():
+				update_forge_ui()
+				update_ui()
+		)
+		forge_repair_view.add_child(repair_all_btn)
+		
+		inner_vbox.add_child(forge_repair_view)
+
 func _update_forge_tab_visibility() -> void:
 	if not is_instance_valid(forge_panel): return
 	var content_margin = forge_panel.find_child("ContentMargin", true, false)
@@ -785,17 +837,29 @@ func _update_forge_tab_visibility() -> void:
 	
 	var recipes = inner_vbox.get_node_or_null("RecipesVBox")
 	var up_view = inner_vbox.get_node_or_null("ForgeUpgradeView")
+	var repair_view = inner_vbox.get_node_or_null("ForgeRepairView")
 	
 	if forge_tab_upgrade:
 		if recipes: recipes.visible = false
 		if up_view: up_view.visible = true
+		if repair_view: repair_view.visible = false
 		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
 		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
+		if forge_tab_repair_btn: forge_tab_repair_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+	elif forge_tab_repair:
+		if recipes: recipes.visible = false
+		if up_view: up_view.visible = false
+		if repair_view: repair_view.visible = true
+		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+		if forge_tab_repair_btn: forge_tab_repair_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
 	else:
 		if recipes: recipes.visible = true
 		if up_view: up_view.visible = false
+		if repair_view: repair_view.visible = false
 		if forge_tab_create_btn: forge_tab_create_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
 		if forge_tab_upgrade_btn: forge_tab_upgrade_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
+		if forge_tab_repair_btn: forge_tab_repair_btn.modulate = Color(0.7, 0.7, 0.7, 1.0)
 		
 	update_forge_ui()
 
@@ -1147,6 +1211,134 @@ func update_forge_ui() -> void:
 		for up in inv.build_forge_upgrade_rows():
 			var row = _create_forge_upgrade_row(up)
 			up_rows.add_child(row)
+	
+	# Update Repair view
+	update_repair_ui()
+
+func update_repair_ui() -> void:
+	if not is_instance_valid(forge_panel): return
+	var inv = _get_inv()
+	if not inv: return
+	var rows = find_child("RepairRowsContainer", true, false)
+	if not rows: return
+	for c in rows.get_children(): c.queue_free()
+	
+	var repairable := []
+	if inv.has_method("pickaxe_needs_repair") and inv.pickaxe_needs_repair():
+		repairable.append({
+			"slot": "pickaxe",
+			"name": inv.get_equipped_def("pickaxe").get("name", "Picareta"),
+			"state": ("Quebrada" if not inv.has_pickaxe else "Desgastada"),
+			"cost": inv.get_pickaxe_repair_cost(),
+			"icon": "pickaxe"
+		})
+	if inv.has_method("helmet_needs_repair") and inv.helmet_needs_repair():
+		repairable.append({
+			"slot": "helmet",
+			"name": inv.get_equipped_def("helmet").get("name", "Capacete"),
+			"state": "Desgastado",
+			"cost": inv.get_helmet_repair_cost(),
+			"icon": "helmet"
+		})
+	
+	if repairable.is_empty():
+		var empty_lbl = Label.new()
+		empty_lbl.text = "Nenhum equipamento precisa de reparo."
+		empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_lbl.add_theme_font_size_override("font_size", 12)
+		empty_lbl.add_theme_color_override("font_color", Color(0.8, 0.85, 0.7, 1))
+		rows.add_child(empty_lbl)
+		_update_repair_all_button(inv)
+		return
+	
+	for item in repairable:
+		rows.add_child(_create_repair_row(item))
+	_update_repair_all_button(inv)
+
+func _update_repair_all_button(inv: Node) -> void:
+	var btn = forge_repair_view.get_node_or_null("RepairAllBtn") if is_instance_valid(forge_repair_view) else null
+	if not btn: return
+	var cost: int = inv.get_repair_all_cost() if inv.has_method("get_repair_all_cost") else 0
+	var needs: bool = (inv.pickaxe_needs_repair() if inv.has_method("pickaxe_needs_repair") else false) or (inv.helmet_needs_repair() if inv.has_method("helmet_needs_repair") else false)
+	btn.text = "🔧 Reparar Tudo (%d moedas)" % cost
+	if not needs or cost <= 0:
+		btn.disabled = true
+		btn.add_theme_color_override("font_color", Color(0.8, 0.85, 0.7, 1.0))
+	elif inv.coins < cost:
+		btn.disabled = true
+		btn.add_theme_color_override("font_color", Color(1, 0.3, 0.3, 1)) # vermelho: insuficiente
+	else:
+		btn.disabled = false
+		btn.add_theme_color_override("font_color", Color(0.75, 1, 0.7, 1))
+
+func _create_repair_row(item: Dictionary) -> PanelContainer:
+	var inv = _get_inv()
+	var row = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.10, 0.05, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.5, 0.35, 0.18, 1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	row.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	row.add_child(margin)
+	
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	margin.add_child(hbox)
+	
+	var icon = TextureRect.new()
+	icon.custom_minimum_size = Vector2(28, 28)
+	icon.texture = _equip_icon_tex(item.icon)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	hbox.add_child(icon)
+	
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(vbox)
+	
+	var title_lbl = Label.new()
+	title_lbl.text = "%s  (%s)" % [item.name, item.state]
+	title_lbl.add_theme_font_size_override("font_size", 12)
+	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.4, 1.0))
+	vbox.add_child(title_lbl)
+	
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(170, 32)
+	btn.text = "🛠 Reparar (%d moedas)" % item.cost
+	if inv.coins < item.cost:
+		btn.disabled = true
+		btn.add_theme_color_override("font_color", Color(1, 0.3, 0.3, 1)) # vermelho
+	else:
+		btn.add_theme_color_override("font_color", Color(0.75, 1, 0.7, 1))
+	var slot = item.slot
+	btn.pressed.connect(func():
+		var inv2 = _get_inv()
+		var ok := false
+		if slot == "pickaxe" and inv2 and inv2.has_method("repair_pickaxe"):
+			ok = inv2.repair_pickaxe()
+		elif slot == "helmet" and inv2 and inv2.has_method("repair_helmet"):
+			ok = inv2.repair_helmet()
+		if ok:
+			update_forge_ui()
+			update_ui()
+	)
+	hbox.add_child(btn)
+	
+	return row
 
 func _make_ores_icon(kind: String) -> AtlasTexture:
 	var atlas = AtlasTexture.new()

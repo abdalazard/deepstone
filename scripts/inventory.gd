@@ -25,6 +25,7 @@ var portable_forges: int = 0 # Forjas portáteis (5 lama + 4 pedra + 2 ferro)
 # Saúde e Resistência do jogador
 var current_health: float = 30.0
 var current_resistance: float = 0.0
+var helmet_wear: int = 0 # Desgaste do capacete (reparado na forja com moedas)
 
 func reset_resistance() -> void:
 	current_resistance = float(get_resistance())
@@ -35,12 +36,14 @@ func get_max_health() -> int:
 func get_resistance() -> int:
 	return get_resistance_base() + get_resistance_bonus()
 
-# Resistência vinda só dos equipamentos equipados (sem upgrades)
+# Resistência vinda só dos equipamentos equipados (sem upgrades). O desgaste do
+# capacete (helmet_wear) reduz um pouco a proteção até ser reparado na forja.
 func get_resistance_base() -> int:
 	var armor_def = get_equipped_def("armor")
 	var helmet_def = get_equipped_def("helmet")
 	var armor_res = armor_def.get("capacity_bonus", 0) / 4
-	var helmet_res = int(helmet_def.get("light_radius", 110.0) / 40.0)
+	var helmet_eff = maxf(0.0, helmet_def.get("light_radius", 110.0) - helmet_wear * 8.0)
+	var helmet_res = int(helmet_eff / 40.0)
 	return armor_res + helmet_res
 
 # Resistência extra vinda dos upgrades da forja (capacete + traje)
@@ -59,10 +62,80 @@ func take_damage(amount: int) -> bool:
 	inventory_changed.emit()
 	if hit > 0.0:
 		current_health = maxf(0.0, current_health - hit)
+		helmet_wear = min(helmet_wear + 1, 12) # Dano de vida desgasta o capacete
 		if current_health <= 0.0:
 			die()
 			return true
 	return false
+
+# --- Reparo de equipamentos (Forja) ---
+func pickaxe_needs_repair() -> bool:
+	return not has_pickaxe or pickaxe_durability < max_pickaxe_durability
+
+func helmet_needs_repair() -> bool:
+	return helmet_wear > 0
+
+func get_pickaxe_repair_cost() -> int:
+	if not has_pickaxe:
+		return 30
+	if pickaxe_durability >= max_pickaxe_durability:
+		return 0
+	var missing = max_pickaxe_durability - pickaxe_durability
+	return max(1, int(ceil(missing / float(max_pickaxe_durability) * 30.0)))
+
+func get_helmet_repair_cost() -> int:
+	return helmet_wear * 4
+
+func get_repair_all_cost() -> int:
+	return get_pickaxe_repair_cost() + get_helmet_repair_cost()
+
+func _request_save_req() -> void:
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").request_save()
+
+func repair_pickaxe() -> bool:
+	var cost = get_pickaxe_repair_cost()
+	if cost <= 0: return true
+	if coins < cost:
+		notify("Moedas insuficientes para reparar (%d necessárias)!" % cost, "coin_gold")
+		return false
+	coins -= cost
+	has_pickaxe = true
+	pickaxe_durability = max_pickaxe_durability
+	inventory_changed.emit()
+	notify("Picareta reparada!", "pickaxe")
+	_request_save_req()
+	return true
+
+func repair_helmet() -> bool:
+	var cost = get_helmet_repair_cost()
+	if cost <= 0: return true
+	if coins < cost:
+		notify("Moedas insuficientes para reparar (%d necessárias)!" % cost, "coin_gold")
+		return false
+	coins -= cost
+	helmet_wear = 0
+	reset_resistance()
+	inventory_changed.emit()
+	notify("Capacete reparado!", "helmet")
+	_request_save_req()
+	return true
+
+func repair_all() -> bool:
+	var cost = get_repair_all_cost()
+	if cost <= 0: return true
+	if coins < cost:
+		notify("Moedas insuficientes (%d necessárias)!" % cost, "coin_gold")
+		return false
+	coins -= cost
+	has_pickaxe = true
+	pickaxe_durability = max_pickaxe_durability
+	helmet_wear = 0
+	reset_resistance()
+	inventory_changed.emit()
+	notify("Todos os equipamentos reparados!", "equip")
+	_request_save_req()
+	return true
 
 func die() -> void:
 	# Ao morrer perde-se SOMENTE os recursos brutos que não foram guardados no baú.
@@ -1131,6 +1204,7 @@ func reset_inventory() -> void:
 	boots_upgrade_level = 0
 	armor_upgrade_level = 0
 	glove_upgrade_level = 0
+	helmet_wear = 0
 	level = 0
 	current_exp = 0
 	active_slot = 0
