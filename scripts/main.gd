@@ -14,6 +14,7 @@ const STONE_SCENE = preload("res://scenes/cave/stone.tscn")
 const TREE_SCENE = preload("res://scenes/environment/tree.tscn")
 const FORGE_SCENE = preload("res://scenes/environment/forge.tscn")
 const BUSH_SCENE = preload("res://scenes/environment/bush.tscn")
+const DEATH_MARKER_SCENE = preload("res://scenes/markers/death_marker.tscn")
 
 @onready var player = $Player
 
@@ -114,6 +115,11 @@ func restore_placed_items() -> void:
 		forge.position = Vector2(f.x, f.y)
 		forge.add_to_group("placed_forges")
 		add_child(forge)
+
+	for dm in SaveManager.death_markers_data:
+		var mark = DEATH_MARKER_SCENE.instantiate()
+		mark.position = Vector2(dm.x, dm.y)
+		add_child(mark)
 
 func generate_world() -> void:
 	const GRID_W = 30

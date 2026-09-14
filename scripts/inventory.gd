@@ -61,9 +61,27 @@ func die() -> void:
 	inventory_changed.emit()
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
+	# Marca o ponto da morte com uma caveirinha no mapa (persistente e sem limite)
+	_spawn_death_marker()
 	var hud = _get_hud()
 	if hud and hud.has_method("show_death_screen"):
 		hud.show_death_screen()
+
+func _spawn_death_marker() -> void:
+	if not is_inside_tree() or not get_tree() or not get_tree().current_scene:
+		return
+	var scene = get_tree().current_scene
+	var player = scene.get_node_or_null("Player")
+	if not is_instance_valid(player):
+		return
+	var marker_pos: Vector2 = player.global_position + Vector2(0, 26)
+	if has_node("/root/SaveManager"):
+		get_node("/root/SaveManager").register_death(marker_pos)
+	var marker_scene = load("res://scenes/markers/death_marker.tscn")
+	if marker_scene:
+		var marker = marker_scene.instantiate()
+		marker.global_position = marker_pos
+		scene.add_child(marker)
 
 func heal_full() -> void:
 	current_health = float(get_max_health())

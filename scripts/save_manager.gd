@@ -9,6 +9,7 @@ var placed_torches_data: Array = []
 var placed_ropes_data: Array = []
 var placed_planks_data: Array = []
 var placed_forges_data: Array = []
+var death_markers_data: Array = []
 var player_saved_pos: Vector2 = Vector2.ZERO
 var chest_saved_load: int = 0
 var chest_saved_closed: bool = false
@@ -54,6 +55,7 @@ func clear_save() -> void:
 	placed_ropes_data.clear()
 	placed_planks_data.clear()
 	placed_forges_data.clear()
+	death_markers_data.clear()
 	has_loaded_save = false
 	world_seed = randi()
 	player_saved_pos = Vector2(640, 96)
@@ -201,7 +203,8 @@ func save_game(show_notify: bool = false) -> void:
 		"placed_torches": torches_list,
 		"placed_ropes": ropes_list,
 		"placed_planks": planks_list,
-		"placed_forges": forges_list
+		"placed_forges": forges_list,
+		"death_markers": death_markers_data
 	}
 	
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -330,6 +333,11 @@ func load_game() -> bool:
 	placed_ropes_data = data.get("placed_ropes", [])
 	placed_planks_data = data.get("placed_planks", [])
 	placed_forges_data = data.get("placed_forges", [])
+	death_markers_data = data.get("death_markers", [])
 	
 	has_loaded_save = true
 	return true
+
+func register_death(pos: Vector2) -> void:
+	death_markers_data.append({"x": pos.x, "y": pos.y})
+	request_save()
