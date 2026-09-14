@@ -89,6 +89,39 @@ var stone_tex = preload("res://assets/sprites/stone_drop.png")
 var dirt_tex = preload("res://assets/sprites/dirt_drop.png")
 var brick_tex = preload("res://assets/sprites/brick_platform.png")
 var column_tex: Texture2D = null
+var forge_tex: Texture2D = null
+
+func _get_forge_tex() -> Texture2D:
+	if forge_tex == null:
+		var rows := [
+			"................",
+			"................",
+			"..........XXX...",
+			".........XXX....",
+			"..XXXXXXX.......",
+			"..XXXXXXX.......",
+			"..XXXXX.........",
+			"..XXXXX.........",
+			"...XXXX.........",
+			"...XXXX.........",
+			"..XXXXXXX.......",
+			"..XXXXXXX.......",
+			"..XXXXXXX.......",
+			".XXXXXXXXXXX....",
+			".XXXXXXXXXXX....",
+			"................",
+		]
+		var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+		for y in range(16):
+			var line: String = rows[y]
+			for x in range(16):
+				match line[x]:
+					"X":
+						img.set_pixel(x, y, Color(0.62, 0.66, 0.72, 1))
+					_:
+						img.set_pixel(x, y, Color(0, 0, 0, 0))
+		forge_tex = ImageTexture.create_from_image(img)
+	return forge_tex
 
 func _get_column_tex() -> Texture2D:
 	if column_tex == null:
@@ -110,6 +143,10 @@ func _setup_forge_recipe_icons() -> void:
 	if slab_row:
 		var ic2 = slab_row.find_child("Icon", true, false)
 		if ic2: ic2.texture = brick_tex
+	var forge_row = find_child("PortableForgeRecipeRow", true, false)
+	if forge_row:
+		var ic3 = forge_row.find_child("Icon", true, false)
+		if ic3: ic3.texture = _get_forge_tex()
 var broken_pickaxe_tex = preload("res://assets/sprites/broken_pickaxe.png")
 var helmet_tex = preload("res://assets/sprites/equip_helmet.png")
 var armor_tex = preload("res://assets/sprites/equip_armor.png")
@@ -1475,7 +1512,7 @@ func _refresh_inventory_hotbar_setup() -> void:
 		elif key == "plank": icon.texture = plank_tex
 		elif key == "column": icon.texture = _get_column_tex()
 		elif key == "slab": icon.texture = brick_tex
-		elif key == "forge": icon.texture = stone_tex
+		elif key == "forge": icon.texture = _get_forge_tex()
 		elif key == "lamp":
 			var atlas = AtlasTexture.new()
 			atlas.atlas = lamp_tex
@@ -1916,7 +1953,7 @@ func _create_slot_panel(def: Dictionary, is_tool: bool) -> PanelContainer:
 	elif k == "plank": icon.texture = plank_tex
 	elif k == "column": icon.texture = _get_column_tex()
 	elif k == "slab": icon.texture = brick_tex
-	elif k == "forge": icon.texture = stone_tex
+	elif k == "forge": icon.texture = _get_forge_tex()
 	elif k == "lamp":
 		var atlas = AtlasTexture.new()
 		atlas.atlas = lamp_tex
@@ -1986,7 +2023,8 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	elif k == "column": icon.texture = _get_column_tex()
 	elif k == "slab": icon.texture = brick_tex
 	elif k == "wood": icon.texture = wood_tex
-	elif k == "stone" or k == "forge": icon.texture = stone_tex
+	elif k == "stone": icon.texture = stone_tex
+	elif k == "forge": icon.texture = _get_forge_tex()
 	elif k == "dirt": icon.texture = dirt_tex
 	elif k == "lamp":
 		var atlas = AtlasTexture.new()
@@ -2183,7 +2221,7 @@ func update_ui() -> void:
 			elif key == "plank": icon.texture = plank_tex
 			elif key == "column": icon.texture = _get_column_tex()
 			elif key == "slab": icon.texture = brick_tex
-			elif key == "forge": icon.texture = stone_tex
+			elif key == "forge": icon.texture = _get_forge_tex()
 			elif key == "lamp":
 				var atlas = AtlasTexture.new()
 				atlas.atlas = lamp_tex

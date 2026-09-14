@@ -92,17 +92,24 @@ func _spawn_death_marker() -> void:
 	if not is_instance_valid(player):
 		return
 	var marker_pos: Vector2 = player.global_position + Vector2(0, 26)
+	var death_lvl: int = level
 	if has_node("/root/SaveManager"):
-		get_node("/root/SaveManager").register_death(marker_pos)
+		get_node("/root/SaveManager").register_death(marker_pos, death_lvl)
 	var marker_scene = load("res://scenes/markers/death_marker.tscn")
 	if marker_scene:
 		var marker = marker_scene.instantiate()
+		marker.death_level = death_lvl
 		marker.global_position = marker_pos
 		scene.add_child(marker)
 
 func heal_full() -> void:
 	current_health = float(get_max_health())
 	reset_resistance()
+	inventory_changed.emit()
+
+func heal_amount(amount: int) -> void:
+	if amount <= 0: return
+	current_health = minf(current_health + float(amount), float(get_max_health()))
 	inventory_changed.emit()
 
 func _get_hud() -> Node:

@@ -338,6 +338,14 @@ func load_game() -> bool:
 	has_loaded_save = true
 	return true
 
-func register_death(pos: Vector2) -> void:
-	death_markers_data.append({"x": pos.x, "y": pos.y})
+func register_death(pos: Vector2, level: int = 0) -> void:
+	death_markers_data.append({"x": pos.x, "y": pos.y, "level": level})
+	request_save()
+
+func remove_death_marker(pos: Vector2) -> void:
+	var filtered: Array = []
+	for dm in death_markers_data:
+		if absf(float(dm.get("x", -9999)) - pos.x) > 1.0 or absf(float(dm.get("y", -9999)) - pos.y) > 1.0:
+			filtered.append(dm)
+	death_markers_data = filtered
 	request_save()

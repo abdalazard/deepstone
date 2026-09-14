@@ -118,6 +118,7 @@ func restore_placed_items() -> void:
 
 	for dm in SaveManager.death_markers_data:
 		var mark = DEATH_MARKER_SCENE.instantiate()
+		mark.death_level = int(dm.get("level", 0))
 		mark.position = Vector2(dm.x, dm.y)
 		add_child(mark)
 
