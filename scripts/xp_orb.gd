@@ -17,8 +17,8 @@ func _ready() -> void:
 	_glow = Sprite2D.new()
 	_glow.texture = tex
 	_glow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_glow.material = _make_additive_material()
 	_glow.modulate = Color(0.45, 0.78, 1.3)
-	_glow.blend_mode = CanvasItem.BLEND_MODE_ADD
 	add_child(_glow)
 	var light := PointLight2D.new()
 	light.texture = tex
@@ -58,8 +58,8 @@ func _release_glow_flash() -> void:
 	var flash := Sprite2D.new()
 	flash.texture = _build_glow_texture()
 	flash.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	flash.material = _make_additive_material()
 	flash.modulate = Color(0.5, 0.85, 1.5, 0.95)
-	flash.blend_mode = CanvasItem.BLEND_MODE_ADD
 	flash.position = global_position
 	get_parent().add_child(flash)
 	var tween := get_tree().create_tween()
@@ -70,6 +70,11 @@ func _release_glow_flash() -> void:
 		if is_instance_valid(flash):
 			flash.queue_free()
 	)
+
+func _make_additive_material() -> CanvasItemMaterial:
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	return mat
 
 func _build_glow_texture() -> Texture2D:
 	var size := 64
