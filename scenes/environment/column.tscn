@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://c5skr7laqhxj7" path="res://assets/sprites/brick_platform.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_column"]
-size = Vector2(16, 32)
+size = Vector2(16, 64)
 
 [node name="Column" type="StaticBody2D"]
 collision_layer = 1
@@ -16,5 +16,5 @@ shape = SubResource("RectangleShape2D_column")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture_filter = 1
-scale = Vector2(0.5, 4)
+scale = Vector2(0.5, 8)
 texture = ExtResource("2_tex")
