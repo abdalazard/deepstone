@@ -1269,6 +1269,20 @@ func update_equipment_ui() -> void:
 	var char_desc = equipment_panel.find_child("CharDesc", true, false)
 	if char_desc:
 		char_desc.text = "Nível: %d" % lvl
+
+	var health_badge = equipment_panel.find_child("HealthBadge", true, false)
+	if health_badge:
+		var hp_lbl = health_badge.find_child("HealthText", true, false)
+		if hp_lbl:
+			var max_hp = inv.get_max_health() if inv.has_method("get_max_health") else 100
+			var cur_hp = int(inv.current_health if "current_health" in inv else max_hp)
+			hp_lbl.text = "%d / %d" % [cur_hp, max_hp]
+
+	var res_badge = equipment_panel.find_child("ResBadge", true, false)
+	if res_badge:
+		var res_lbl = res_badge.find_child("ResText", true, false)
+		if res_lbl:
+			res_lbl.text = "%d" % (inv.get_resistance() if inv.has_method("get_resistance") else 0)
 func _status_limit(level: int) -> int:
 	var decades: int = level / 10
 	return 10 + level * 3 + decades * (decades + 1) / 2

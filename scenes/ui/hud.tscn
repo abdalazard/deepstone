@@ -849,6 +849,50 @@ text = "1
 10/10"
 horizontal_alignment = 1
 
+[node name="HealthBadge" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HealthIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "❤️"
+
+[node name="HealthText" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/HealthBadge/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.6, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 11
+text = "100/100"
+vertical_alignment = 1
+
+[node name="ResBadge" type="PanelContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_box")
+
+[node name="HBox" type="HBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ResIcon" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "🛡️"
+
+[node name="ResText" type="Label" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox/PreviewCard/PreviewMargin/PreviewVBox/ResBadge/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.8, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 11
+text = "0"
+vertical_alignment = 1
+
 [node name="SlotsVBox" type="VBoxContainer" parent="EquipmentPanel/VBoxContainer/ContentMargin/InnerVBox/EquipMainHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
