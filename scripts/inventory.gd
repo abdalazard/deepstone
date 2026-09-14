@@ -24,6 +24,10 @@ var portable_forges: int = 0 # Forjas portáteis (5 lama + 4 pedra + 2 ferro)
 
 # Saúde e Resistência do jogador
 var current_health: float = 30.0
+var current_resistance: float = 0.0
+
+func reset_resistance() -> void:
+	current_resistance = float(get_resistance())
 
 func get_max_health() -> int:
 	return 30 + level * 5
@@ -44,15 +48,20 @@ func get_resistance_bonus() -> int:
 	return (armor_upgrade_level + helmet_upgrade_level) * 5
 
 func take_damage(amount: int) -> bool:
-	var mitigation = get_resistance()
-	var final_dmg = max(1, amount - mitigation)
-	current_health = max(0.0, current_health - final_dmg)
-	notify("-%d de Vida" % final_dmg, "pickaxe")
+	# Escudo de resistência absorve o dano antes de afetar a vida.
+	# Quando a resistência zera, o badge fica vermelho (escudo quebrado).
+	var hit := float(amount)
+	var absorbed := minf(current_resistance, hit)
+	current_resistance = maxf(0.0, current_resistance - absorbed)
+	hit -= absorbed
+	notify("-%d de Dano (Recebido %d, Absorvido %d)" % [int(round(hit)), amount, int(absorbed)], "pickaxe")
 	player_hurt.emit()
 	inventory_changed.emit()
-	if current_health <= 0.0:
-		die()
-		return true
+	if hit > 0.0:
+		current_health = maxf(0.0, current_health - hit)
+		if current_health <= 0.0:
+			die()
+			return true
 	return false
 
 func die() -> void:
@@ -93,6 +102,7 @@ func _spawn_death_marker() -> void:
 
 func heal_full() -> void:
 	current_health = float(get_max_health())
+	reset_resistance()
 	inventory_changed.emit()
 
 func _get_hud() -> Node:
@@ -124,6 +134,7 @@ var hotbar_slots: Array = ["pickaxe", "lamp"]
 
 func _ready() -> void:
 	ensure_hotbar_slots()
+	reset_resistance()
 
 func ensure_hotbar_slots(count: int = 5) -> void:
 	# Garante pelo menos 2 slots iniciais (picareta + poste)
@@ -454,6 +465,7 @@ func add_exp(amount: int) -> void:
 		req = get_exp_required_for_level(level)
 		level_up.emit(level, req)
 		notify("Nível %d Alcançado!" % level, "coin_gold")
+		heal_full() # Vida (e escudo) recuperados ao subir de nível
 	inventory_changed.emit()
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
@@ -551,6 +563,7 @@ func equip_gear(item_id: String) -> bool:
 			equipped_glove = item_id
 	inventory_changed.emit()
 	notify("Equipado: %s" % def.name, def.get("icon", "equip"))
+	reset_resistance()
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").request_save()
 	return true
@@ -659,6 +672,7 @@ func execute_forge_upgrade_def(up_def: Dictionary) -> bool:
 		glove_upgrade_level = max(glove_upgrade_level, tier)
 			
 	add_exp(up_def.get("exp_gain", 40))
+	reset_resistance() # Novo teto de resistência com o upgrade
 	inventory_changed.emit()
 	notify("Equipamento Aprimorado!", "equip")
 	if has_node("/root/SaveManager"):

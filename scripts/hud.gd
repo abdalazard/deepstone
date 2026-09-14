@@ -1353,6 +1353,11 @@ func update_equipment_ui() -> void:
 		var res_lbl = res_badge.find_child("ResText", true, false)
 		if res_lbl:
 			res_lbl.text = _resistance_text()
+			var res_cur: float = inv.current_resistance if "current_resistance" in inv else 999.0
+			if res_cur <= 0.0:
+				res_lbl.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3, 1.0))
+			else:
+				res_lbl.add_theme_color_override("font_color", Color(0.6, 0.8, 0.95, 1.0))
 func _status_limit(level: int) -> int:
 	var decades: int = level / 10
 	return 10 + level * 3 + decades * (decades + 1) / 2
@@ -2154,7 +2159,14 @@ func update_ui() -> void:
 		var max_hp2 = inv.get_max_health() if inv.has_method("get_max_health") else 30
 		hud_health_label.text = "%d/%d" % [int(inv.current_health if "current_health" in inv else max_hp2), max_hp2]
 	if hud_res_label:
-		hud_res_label.text = _resistance_text()
+		var res_max: int = inv.get_resistance() if inv.has_method("get_resistance") else 0
+		var res_cur: float = inv.current_resistance if "current_resistance" in inv else float(res_max)
+		hud_res_label.text = "%d/%d" % [int(res_cur), res_max]
+		# Escudo quebrado: badge vermelho
+		if res_cur <= 0.0:
+			hud_res_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3, 1.0))
+		else:
+			hud_res_label.add_theme_color_override("font_color", Color(0.6, 0.8, 0.95, 1.0))
 	
 	# Update Hotbar Slots
 	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp"]
