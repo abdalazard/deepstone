@@ -29,11 +29,19 @@ func get_max_health() -> int:
 	return 30 + level * 5
 
 func get_resistance() -> int:
+	return get_resistance_base() + get_resistance_bonus()
+
+# Resistência vinda só dos equipamentos equipados (sem upgrades)
+func get_resistance_base() -> int:
 	var armor_def = get_equipped_def("armor")
 	var helmet_def = get_equipped_def("helmet")
-	var armor_res = armor_def.get("capacity_bonus", 0) / 4 + armor_upgrade_level * 5
-	var helmet_res = int(helmet_def.get("light_radius", 110.0) / 40.0) + helmet_upgrade_level * 5
+	var armor_res = armor_def.get("capacity_bonus", 0) / 4
+	var helmet_res = int(helmet_def.get("light_radius", 110.0) / 40.0)
 	return armor_res + helmet_res
+
+# Resistência extra vinda dos upgrades da forja (capacete + traje)
+func get_resistance_bonus() -> int:
+	return (armor_upgrade_level + helmet_upgrade_level) * 5
 
 func take_damage(amount: int) -> bool:
 	var mitigation = get_resistance()

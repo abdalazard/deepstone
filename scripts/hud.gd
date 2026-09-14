@@ -1013,6 +1013,15 @@ func close_forge() -> void:
 		forge_panel.visible = false
 	current_forge_node = null
 
+func _resistance_text() -> String:
+	var inv = _get_inv()
+	if not inv: return "0"
+	var base: int = inv.get_resistance_base() if inv.has_method("get_resistance_base") else 0
+	var bonus: int = inv.get_resistance_bonus() if inv.has_method("get_resistance_bonus") else 0
+	if bonus > 0:
+		return "%d(+%d)" % [base, bonus]
+	return "%d" % base
+
 func _resource_name(rk: String) -> String:
 	match rk:
 		"iron": return "Ferro"
@@ -1343,7 +1352,7 @@ func update_equipment_ui() -> void:
 	if res_badge:
 		var res_lbl = res_badge.find_child("ResText", true, false)
 		if res_lbl:
-			res_lbl.text = "%d" % (inv.get_resistance() if inv.has_method("get_resistance") else 0)
+			res_lbl.text = _resistance_text()
 func _status_limit(level: int) -> int:
 	var decades: int = level / 10
 	return 10 + level * 3 + decades * (decades + 1) / 2
@@ -2145,7 +2154,7 @@ func update_ui() -> void:
 		var max_hp2 = inv.get_max_health() if inv.has_method("get_max_health") else 30
 		hud_health_label.text = "%d/%d" % [int(inv.current_health if "current_health" in inv else max_hp2), max_hp2]
 	if hud_res_label:
-		hud_res_label.text = "%d" % (inv.get_resistance() if inv.has_method("get_resistance") else 0)
+		hud_res_label.text = _resistance_text()
 	
 	# Update Hotbar Slots
 	var h_slots = inv.hotbar_slots if "hotbar_slots" in inv else ["pickaxe", "lamp"]
