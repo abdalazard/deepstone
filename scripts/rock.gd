@@ -152,6 +152,22 @@ func _ready() -> void:
 		# para que blocos despencando descansem sobre estruturas e machuquem o player.
 		collision_mask = 1 | 2 | 32
 
+	if not is_unbreakable:
+		# Área de impacto: detecta o player mesmo quando o bloco está atravessando
+		# (camada 8 durante a queda), sem impedir a queda do bloco.
+		var hit_area := Area2D.new()
+		hit_area.name = "HitArea"
+		hit_area.collision_layer = 0
+		hit_area.collision_mask = 2 # Player
+		hit_area.monitoring = true
+		hit_area.monitorable = false
+		var hit_shape := CollisionShape2D.new()
+		var hit_rect := RectangleShape2D.new()
+		hit_rect.size = Vector2(34, 34)
+		hit_shape.shape = hit_rect
+		hit_area.add_child(hit_shape)
+		add_child(hit_area)
+
 	set_process(false)
 	set_physics_process(false)
 
@@ -161,11 +177,18 @@ var drag_timer: float = 0.0
 # Marca blocos que acabaram de ser destruídos e ainda ocupam a física; serve
 # para o bloco de cima NÃO enxergá-los como suporte durante a remoção.
 var leaving_world: bool = false
+# Bloco caindo por gravidade (perdeu suporte). Durante a queda ele muda para a
+# camada FALLING_LAYER para ATRAVESSAR o player (que por padrão só colide com a
+# camada 1), caindo conforme a gravidade, sem parar em cima dele.
+var gravity_falling: bool = false
+var _hit_cd: float = 0.0
+const FALLING_LAYER: int = 8
 
 func unfreeze_ore() -> void:
 	if is_ore() and freeze:
 		freeze = false
 		is_falling = true
+		gravity_falling = false
 		fall_timer = 0.0
 		set_physics_process(true)
 
@@ -179,10 +202,38 @@ func unfreeze_if_unsupported() -> void:
 		return
 	freeze = false
 	is_falling = true
+	gravity_falling = true
 	fall_timer = 0.0
+	# Durante a queda o bloco não colide com o player (camada 8 não está na máscara
+	# do player) e continua descendo pela gravidade até achar suporte sólido.
+	collision_layer = FALLING_LAYER
+	collision_mask = 1 | 32
 	set_physics_process(true)
 	# Cascata: o bloco acima também percebe que suportes se moveram e começa a cair.
 	_wake_block_above()
+
+func _check_fall_hit_player() -> void:
+	var ha = get_node_or_null("HitArea")
+	if not ha:
+		return
+	for body in ha.get_overlapping_bodies():
+		if body is CharacterBody2D and body.name == "Player":
+			_hit_cd = 0.4
+			_hurt_player(body)
+			return
+
+func _hurt_player(player: Node2D) -> void:
+	var inv = null
+	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
+		inv = get_tree().root.get_node("Inventory")
+	if inv and inv.has_method("take_damage"):
+		inv.take_damage(get_impact_damage())
+	# Empurra o player para a LATERAL, para fora do caminho do bloco
+	var push_dir := 1.0
+	if player.global_position.x < global_position.x:
+		push_dir = -1.0
+	if player.has_method("apply_knockback"):
+		player.apply_knockback(Vector2(push_dir * 380.0, -70.0))
 
 func _has_support_below() -> bool:
 	var space = get_world_2d().direct_space_state
@@ -210,23 +261,6 @@ func get_impact_damage() -> int:
 	if is_coal: return 2
 	if is_stone: return 2
 	return 3
-
-func _deal_impact_damage() -> void:
-	var inv = null
-	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
-		inv = get_tree().root.get_node("Inventory")
-	if not inv or not inv.has_method("take_damage"):
-		return
-	for body in get_colliding_bodies():
-		if body is CharacterBody2D and body.name == "Player":
-			inv.take_damage(get_impact_damage())
-			# Empurra o personagem para a lateral (para longe do centro do bloco)
-			var push_dir := 1.0
-			if body.global_position.x < global_position.x:
-				push_dir = -1.0
-			if body.has_method("apply_knockback"):
-				body.apply_knockback(Vector2(push_dir * 230.0, -70.0))
-			return
 
 # Atualiza a posição de grade após a queda do bloco (para persistência futura)
 func _refresh_grid_on_landing() -> void:
@@ -261,6 +295,10 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 		state.linear_velocity.x = clamp(state.linear_velocity.x, -240.0, 240.0)
 
 func _physics_process(delta: float) -> void:
+	if _hit_cd > 0.0:
+		_hit_cd -= delta
+	if is_falling and gravity_falling and _hit_cd <= 0.0:
+		_check_fall_hit_player()
 	if drag_timer > 0.0:
 		drag_timer -= delta
 		if drag_timer <= 0.0 and not is_falling:
@@ -274,13 +312,16 @@ func _physics_process(delta: float) -> void:
 		# After at least 0.2s of falling, if it has settled or stopped:
 		if fall_timer > 0.2 and linear_velocity.length_squared() < 100.0:
 			is_falling = false
+			gravity_falling = false
 			freeze = true
 			freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+			# Bloco assenta: volta a ser bloco sólido normal (colide com o player)
+			collision_layer = 1
+			collision_mask = 1 | 2 | 32
 			# Snap gently to nearest tile column
 			global_position.x = round((global_position.x - 16.0) / 32.0) * 32.0 + 16.0
 			set_physics_process(false)
 			_refresh_grid_on_landing()
-			_deal_impact_damage()
 			_wake_block_above()
 
 func is_ore() -> bool:
