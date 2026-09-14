@@ -335,8 +335,8 @@ func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, see
 	var below = Vector2i(coord.x, coord.y + 1)
 	if not unbreakable_blocks.has(below):
 		return
-	# Equilíbrio: apenas ~30% dos pontos elegíveis recebem pedra (não lotar)
-	if randf() > 0.30:
+	# Equilíbrio: ~45% dos pontos elegíveis recebem pedra (populado, não lotado)
+	if randf() > 0.45:
 		return
 	# Espaçamento: não colocar pedras coladas umas às outras (pelo menos 1 coluna de folga)
 	if seen_cols.has(below.x - 1) or seen_cols.has(below.x) or seen_cols.has(below.x + 1):
