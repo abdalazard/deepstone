@@ -158,6 +158,9 @@ func _ready() -> void:
 var is_falling: bool = false
 var fall_timer: float = 0.0
 var drag_timer: float = 0.0
+# Marca blocos que acabaram de ser destruídos e ainda ocupam a física; serve
+# para o bloco de cima NÃO enxergá-los como suporte durante a remoção.
+var leaving_world: bool = false
 
 func unfreeze_ore() -> void:
 	if is_ore() and freeze:
@@ -178,6 +181,8 @@ func unfreeze_if_unsupported() -> void:
 	is_falling = true
 	fall_timer = 0.0
 	set_physics_process(true)
+	# Cascata: o bloco acima também percebe que suportes se moveram e começa a cair.
+	_wake_block_above()
 
 func _has_support_below() -> bool:
 	var space = get_world_2d().direct_space_state
@@ -192,6 +197,8 @@ func _has_support_below() -> bool:
 		var col = r.collider
 		if is_instance_valid(col) and col != self:
 			if col.has_method("is_falling") and col.get("is_falling"):
+				continue
+			if col.get("leaving_world"):
 				continue
 			return true
 	return false
@@ -329,6 +336,8 @@ func hit(damage: int = 1) -> void:
 		destroy()
 
 func destroy() -> void:
+	# O bloco não serve mais de suporte para o bloco de cima durante a remoção.
+	leaving_world = true
 	if grid_pos != Vector2i(-1, -1) and has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").mark_block_mined(grid_pos)
 	spawn_particles()
