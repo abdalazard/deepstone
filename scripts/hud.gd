@@ -130,7 +130,7 @@ var pickaxe_tex = preload("res://assets/sprites/equip_pickaxe.png")
 @onready var hud_res_label = find_child("HudResLabel", true, false)
 @onready var damage_flash = find_child("DamageFlash", true, false)
 @onready var death_panel = find_child("DeathPanel", true, false)
-@onready var death_restart_btn = find_child("RestartBtn", true, false)
+@onready var death_restart_btn = find_child("DeathRestartBtn", true, false)
 @onready var level_up_panel = find_child("LevelUpPanel", true, false)
 @onready var level_up_title = find_child("LevelUpTitle", true, false)
 @onready var level_up_subtitle = find_child("LevelUpSubtitle", true, false)
@@ -1013,6 +1013,39 @@ func close_forge() -> void:
 		forge_panel.visible = false
 	current_forge_node = null
 
+func _resource_name(rk: String) -> String:
+	match rk:
+		"iron": return "Ferro"
+		"gold": return "Ouro"
+		"coal": return "Carvão"
+		"wood": return "Madeira"
+		"stone": return "Pedra"
+		"dirt": return "Lama"
+		"plank": return "Tábua"
+		_: return rk.capitalize()
+
+func _resource_amount(rk: String) -> int:
+	var inv = _get_inv()
+	if not inv: return 0
+	match rk:
+		"iron": return inv.iron
+		"gold": return inv.gold
+		"coal": return inv.coal
+		"wood": return inv.wood_logs
+		"stone": return inv.stone
+		"dirt": return inv.dirt
+		"plank": return inv.planks
+		_: return 0
+
+func _colored_cost(cost: Dictionary) -> String:
+	var parts := []
+	for rk in cost:
+		var amt = cost[rk]
+		var have = _resource_amount(rk)
+		var color = "#8ade8a" if have >= amt else "#ff6b6b"
+		parts.append("[color=%s]%d %s[/color]" % [color, amt, _resource_name(rk)])
+	return ", ".join(parts)
+
 func update_forge_ui() -> void:
 	var inv = _get_inv()
 	if not inv: return
@@ -1038,6 +1071,24 @@ func update_forge_ui() -> void:
 	if not craft_portable_forge_btn: craft_portable_forge_btn = find_child("CraftPortableForgeBtn", true, false)
 	if craft_portable_forge_btn:
 		craft_portable_forge_btn.disabled = not inv.can_craft_portable_forge()
+	
+	# Colorir custos dos itens de criação (vermelho = faltante, verde = disponível)
+	var recipe_costs: Dictionary = {
+		"PickaxeRecipeRow": {"iron": 1, "wood": 2, "stone": 1},
+		"LampRecipeRow": {"coal": 3, "iron": 2},
+		"LadderRecipeRow": {"wood": 1},
+		"PlankRecipeRow": {"wood": 1},
+		"ColumnRecipeRow": {"dirt": 3, "stone": 3},
+		"SlabRecipeRow": {"dirt": 2, "stone": 2},
+		"PortableForgeRecipeRow": {"dirt": 5, "stone": 4, "iron": 2},
+	}
+	for row_name in recipe_costs:
+		var row = find_child(row_name, true, false)
+		if row:
+			var cost_lbl = row.find_child("Cost", true, false)
+			if cost_lbl:
+				cost_lbl.bbcode_enabled = true
+				cost_lbl.text = "Custo: " + _colored_cost(recipe_costs[row_name])
 		
 	# Update Forge Upgrade View rows
 	var up_rows = find_child("UpgradeRowsContainer", true, false)
@@ -1170,8 +1221,12 @@ func _create_forge_upgrade_row(up: Dictionary) -> PanelContainer:
 	vbox.add_child(title_lbl)
 	
 	var desc_lbl = Label.new()
-	var cost_text = _format_upgrade_cost(up.get("cost", {}))
-	desc_lbl.text = up.get("desc", "") + (("\nCusto: " + cost_text) if not cost_text.is_empty() else "")
+	var cost = up.get("cost", {})
+	if not cost.is_empty():
+		desc_lbl.bbcode_enabled = true
+		desc_lbl.text = up.get("desc", "") + "\nCusto: [color=#9b6]Requer:[/color] " + _colored_cost(cost)
+	else:
+		desc_lbl.text = up.get("desc", "")
 	desc_lbl.add_theme_font_size_override("font_size", 10)
 	desc_lbl.add_theme_color_override("font_color", Color(0.8, 0.75, 0.7, 1.0))
 	vbox.add_child(desc_lbl)

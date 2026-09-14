@@ -2139,7 +2139,7 @@ text = "Todos os recursos coletados foram perdidos (o que estava guardado no ba√
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="RestartBtn" type="Button" parent="DeathPanel/Margin/VBox"]
+[node name="DeathRestartBtn" type="Button" parent="DeathPanel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
