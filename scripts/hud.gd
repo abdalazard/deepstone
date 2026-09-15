@@ -73,6 +73,11 @@ var current_chest_node: Node = null
 @onready var exit_btn = find_child("ExitBtn", true, false)
 @onready var config_btn = find_child("ConfigBtn", true, false)
 @onready var config_panel = find_child("ConfigPanel", true, false)
+@onready var cheat_panel = find_child("CheatPanel", true, false)
+@onready var cheat_btn = find_child("CheatBtn", true, false)
+@onready var tp_frost_btn = find_child("TpFrostBtn", true, false)
+@onready var tp_molten_btn = find_child("TpMoltenBtn", true, false)
+@onready var back_cheat_btn = find_child("BackCheatBtn", true, false)
 @onready var config_close_btn = find_child("ConfigCloseBtn", true, false)
 
 var slots: Array = []
@@ -416,6 +421,14 @@ func _ready() -> void:
 		pause_button.pressed.connect(toggle_pause)
 	if resume_btn and not resume_btn.pressed.is_connected(close_pause):
 		resume_btn.pressed.connect(close_pause)
+	if cheat_btn and not cheat_btn.pressed.is_connected(_open_cheat):
+		cheat_btn.pressed.connect(_open_cheat)
+	if back_cheat_btn and not back_cheat_btn.pressed.is_connected(_close_cheat):
+		back_cheat_btn.pressed.connect(_close_cheat)
+	if tp_frost_btn and not tp_frost_btn.pressed.is_connected(_tp_frost):
+		tp_frost_btn.pressed.connect(_tp_frost)
+	if tp_molten_btn and not tp_molten_btn.pressed.is_connected(_tp_molten):
+		tp_molten_btn.pressed.connect(_tp_molten)
 	if save_btn and not save_btn.pressed.is_connected(_on_save_pressed):
 		save_btn.pressed.connect(_on_save_pressed)
 	if restart_btn and not restart_btn.pressed.is_connected(_on_restart_pressed):
@@ -2859,3 +2872,25 @@ func _on_chest_retrieve() -> void:
 		show_toast(tr("Recursos retirados do Baú!"), "chest")
 		if has_node("/root/SaveManager"):
 			get_node("/root/SaveManager").request_save()
+
+# ─────────────────────── CHEATS ─────────────────────────────────────────────
+func _open_cheat() -> void:
+	if pause_panel: pause_panel.visible = false
+	if cheat_panel: cheat_panel.visible = true
+
+func _close_cheat() -> void:
+	if cheat_panel: cheat_panel.visible = false
+	if pause_panel: pause_panel.visible = true
+
+func _tp_frost() -> void:
+	_do_teleport(1)
+
+func _tp_molten() -> void:
+	_do_teleport(2)
+
+func _do_teleport(biome_id: int) -> void:
+	var main := get_tree().current_scene
+	if main and main.has_method("teleport_to_biome"):
+		main.teleport_to_biome(biome_id)
+	_close_cheat()
+	close_pause()

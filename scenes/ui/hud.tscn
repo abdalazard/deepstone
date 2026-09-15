@@ -1591,7 +1591,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_modal_overlay")
 layout_mode = 2
 
 [node name="ModalPanel" type="PanelContainer" parent="PausePanel/CenterContainer"]
-custom_minimum_size = Vector2(320, 290)
+custom_minimum_size = Vector2(320, 390)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pause_panel")
 
@@ -1655,6 +1655,83 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
 theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
 text = "🚪  Sair do Jogo ([Q])"
+
+[node name="CheatBtn" type="Button" parent="PausePanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+text = ">> Cheats (Dev) "
+
+[node name="CheatPanel" type="PanelContainer" parent="."]
+process_mode = 3
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal_overlay")
+
+[node name="CenterContainer" type="CenterContainer" parent="CheatPanel"]
+layout_mode = 2
+
+[node name="ModalPanel" type="PanelContainer" parent="CheatPanel/CenterContainer"]
+custom_minimum_size = Vector2(300, 220)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pause_panel")
+
+[node name="ModalMargin" type="MarginContainer" parent="CheatPanel/CenterContainer/ModalPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 18
+
+[node name="ModalVBox" type="VBoxContainer" parent="CheatPanel/CenterContainer/ModalPanel/ModalMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="CheatTitle" type="Label" parent="CheatPanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 16
+text = ">> CHEATS (DEV)"
+horizontal_alignment = 1
+
+[node name="TpFrostBtn" type="Button" parent="CheatPanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+text = "Alem das Neves Eternas (Gelo)"
+
+[node name="TpMoltenBtn" type="Button" parent="CheatPanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+text = "A Ascensao Ardente (Vulcao)"
+
+[node name="BackCheatBtn" type="Button" parent="CheatPanel/CenterContainer/ModalPanel/ModalMargin/ModalVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/focus = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_pause_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_pause_btn")
+text = "Voltar"
 
 [node name="ConfigPanel" type="PanelContainer" parent="."]
 process_mode = 3

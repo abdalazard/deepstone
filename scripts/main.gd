@@ -780,3 +780,41 @@ func _check_biome_change(world_y: float) -> void:
 		tw.tween_interval(1.8)
 		tw.tween_property(_biome_announcement, "modulate:a", 0.0, 0.55)
 	)
+
+# ─────────────────────── CHEAT: TELETRANSPORTE ──────────────────────────────
+func teleport_to_biome(biome_id: int) -> void:
+	# Encontra a primeira célula vazia no bioma e teletransporta o player
+	const GRID_W  := 30
+	const GRID_H  := 600
+	const TILE    := 32
+	const ORIGIN_Y:= 112.0
+
+	var start_row := 0
+	match biome_id:
+		1: start_row = int((WorldConfig.BIOME_TERRA_END - ORIGIN_Y) / TILE)  # Gelo
+		2: start_row = int((WorldConfig.BIOME_GELO_END  - ORIGIN_Y) / TILE)  # Vulcão
+		_: return
+
+	# Varre colunas centrais de cima pra baixo no bioma
+	var target_pos := Vector2.ZERO
+	var found := false
+	for row in range(start_row, mini(start_row + 80, GRID_H)):
+		for col in range(GRID_W / 2 - 4, GRID_W / 2 + 4):
+			var coord := Vector2i(col, row)
+			if _cave_cells.has(coord) and not _unbreakable_blocks.has(coord):
+				target_pos = Vector2(col * TILE + 16.0, row * TILE + ORIGIN_Y)
+				found = true
+				break
+		if found:
+			break
+
+	if not found:
+		# Fallback: primeira linha do bioma ao centro
+		target_pos = Vector2(15 * TILE + 16.0, start_row * TILE + ORIGIN_Y + 64.0)
+
+	var player := get_tree().root.get_node_or_null("Player")
+	if not player:
+		player = get_tree().current_scene.get_node_or_null("Player")
+	if player:
+		player.position = target_pos
+		get_node_or_null("Camera2D").position = target_pos if get_node_or_null("Camera2D") else Vector2.ZERO
