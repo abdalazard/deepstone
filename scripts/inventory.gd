@@ -144,6 +144,8 @@ func die() -> void:
 	# Ao morrer perde-se SOMENTE os recursos brutos que não foram guardados no baú.
 	# Itens forjados/colocáveis (escadas, tábuas, colunas, lajes, forjas, bombas,
 	# lampiões) e equipamentos NÃO são perdidos.
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("dying_voice", 0.0)
 	iron = 0
 	gold = 0
 	coal = 0

@@ -585,12 +585,12 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_shop_btn")
 text = "EN"
 
 [node name="ToastContainer" type="MarginContainer" parent="."]
-anchors_preset = 3
-anchor_left = 1.0
+anchors_preset = 2
+anchor_left = 0.0
 anchor_top = 1.0
-anchor_right = 1.0
+anchor_right = 0.0
 anchor_bottom = 1.0
-offset_left = -320.0
+offset_right = 320.0
 offset_top = -200.0
 grow_horizontal = 0
 grow_vertical = 0

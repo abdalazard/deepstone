@@ -69,3 +69,25 @@ func _fade_to(stream: AudioStream, label: String) -> void:
 				hud.show_toast("🎵 " + label, "wood")
 	)
 	tween.tween_property(player, "volume_db", -8.0, 1.6)
+func update_biome_from_id(biome: int) -> void:
+	# Versão direta: usa biome_id da cena em vez de posição Y
+	if biome == current_biome:
+		return
+	current_biome = biome
+	var stream: AudioStream = null
+	var label := ""
+	match biome:
+		1:
+			stream = music_ice
+			label = "Beneath the Frost"
+		2:
+			stream = music_lava
+			label = "Molten Ascent"
+		_:
+			stream = music_earth
+			label = "Valley of Singing Quartz"
+	_fade_to(stream, label)
+
+func set_biome_direct(biome: int) -> void:
+	# Força troca imediata (sem checagem de posição Y)
+	update_biome_from_id(biome)

@@ -7,7 +7,10 @@ const SFX: Dictionary = {
 	"drop_item":  "res://assets/sounds/SFX/drop-item.ogg",
 	"game_start": "res://assets/sounds/SFX/game-start.ogg",
 	"xp_points":  "res://assets/sounds/SFX/xp-points.ogg",
-	"level_up":   "res://assets/sounds/SFX/level-up.ogg",
+	"level_up":    "res://assets/sounds/SFX/level-up.ogg",
+	"walk":        "res://assets/sounds/SFX/walk.ogg",
+	"dying_voice": "res://assets/sounds/SFX/dying-voice.ogg",
+	"jump_voice":  "res://assets/sounds/SFX/jump-voice.ogg",
 }
 
 # Pool de players para permitir sobreposição (ex: picking em ritmo rápido)

@@ -1,12 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://b8mainuidxxxx"]
+[gd_scene load_steps=9 format=3 uid="uid://molten_biome_scene"]
 
 [ext_resource type="Script" uid="uid://bhxfm7hvwfny7" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://b0nhxf5kvw22x" path="res://scenes/player/player.tscn" id="2_player"]
-[ext_resource type="PackedScene" uid="uid://bskyuidxxxx" path="res://scenes/environment/sky.tscn" id="3_sky"]
 [ext_resource type="PackedScene" uid="uid://huduidxxxx" path="res://scenes/ui/hud.tscn" id="4_hud"]
-[ext_resource type="PackedScene" uid="uid://h7blsdptmv4t" path="res://scenes/ui/start_screen.tscn" id="6_start"]
-[ext_resource type="PackedScene" path="res://scenes/items/chest.tscn" id="7_chest"]
-[ext_resource type="PackedScene" uid="uid://bforgeuidxxxx" path="res://scenes/environment/forge.tscn" id="8_forge"]
 [ext_resource type="PackedScene" uid="uid://cavebg000001" path="res://scenes/environment/cave_background.tscn" id="9_cavebg"]
 [ext_resource type="PackedScene" path="res://scenes/environment/cave1_background.tscn" id="10_cave1bg"]
 [ext_resource type="Script" uid="uid://fcmsvtwv8vwx" path="res://scripts/mobile_controls.gd" id="99_mobile"]
@@ -15,64 +11,44 @@
 light_mode = 1
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
-size = Vector2(16, 5000)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor_h"]
-size = Vector2(1100, 64)
+size = Vector2(16, 7000)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
-
-[node name="Sky" parent="." instance=ExtResource("3_sky")]
+biome_id = 2
 
 [node name="CaveBackground" type="Polygon2D" parent="."]
 z_index = -8
 material = SubResource("CanvasItemMaterial_unshaded")
-color = Color(0.06, 0.05, 0.04, 1)
+color = Color(0.14, 0.03, 0.02, 1)
 polygon = PackedVector2Array(-300, 112, 1300, 112, 1300, 7000, -300, 7000)
 
 [node name="CaveParallax" parent="." instance=ExtResource("9_cavebg")]
 
 [node name="Cave1Background" parent="." instance=ExtResource("10_cave1bg")]
 
-[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
-rotation = 1.5708
-color = Color(0.9, 0.95, 1, 1)
-energy = 0.8
-shadow_enabled = true
-max_distance = 250.0
-
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
-color = Color(0.05, 0.05, 0.08, 1)
+color = Color(0.12, 0.05, 0.04, 1)
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="Cave" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(640, 96)
+position = Vector2(480, 200)
+speed = null
+jump_velocity = null
+sprite_scale = null
 
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(-8, 2100)
+position = Vector2(-8, 3500)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(968, 2100)
+position = Vector2(968, 3500)
 shape = SubResource("RectangleShape2D_wall_v")
-
-[node name="CollisionShape2D3" type="CollisionShape2D" parent="WorldBoundary"]
-position = Vector2(480, 4048)
-shape = SubResource("RectangleShape2D_floor_h")
-
-[node name="Forge" parent="." instance=ExtResource("8_forge")]
-position = Vector2(432, 96)
-
-[node name="Chest" parent="." instance=ExtResource("7_chest")]
-position = Vector2(496, 96)
-
-[node name="StartScreen" parent="." instance=ExtResource("6_start")]
 
 [node name="MobileControls" type="CanvasLayer" parent="."]
 script = ExtResource("99_mobile")

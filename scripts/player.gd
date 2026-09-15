@@ -30,6 +30,7 @@ const KNOCKBACK_DECAY: float = 500.0
 # Janela global de dano por desabamento: evita que cada bloco de um desabamento
 # cobre o dano (multiplicado) separadamente — só o primeiro bloco aplica o dano.
 var fall_damage_timer: float = 0.0
+var _walk_sfx_timer: float = 0.0
 
 # ── Sistema de Combo ──
 var _combo_count: int = 0
@@ -93,6 +94,8 @@ func _ready() -> void:
 		inv.level_up.connect(_on_level_up)
 	if inv and not inv.inventory_changed.is_connected(_apply_skin):
 		inv.inventory_changed.connect(_apply_skin)
+	if inv and not inv.player_hurt.is_connected(_on_player_hurt):
+		inv.player_hurt.connect(_on_player_hurt)
 	_apply_skin()
 	
 	# Lanterna do capacete: cone de luz de 2 blocos (64px) apenas para a frente
@@ -151,6 +154,10 @@ func _update_helmet_light() -> void:
 				helmet_light.rotation = PI * 0.5
 			else:
 				helmet_light.rotation = 0.0 if facing_x >= 0.0 else PI
+
+func _on_player_hurt() -> void:
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("dying_voice", 0.0)
 
 func _on_level_up(new_lvl: int, _req_exp: int) -> void:
 	# In-world character Level Up VFX
@@ -371,6 +378,8 @@ func _physics_process(delta: float) -> void:
 	
 		# Handle Jump.
 		if Input.is_action_just_pressed("ui_up") and is_on_floor():
+			if has_node("/root/SoundManager"):
+				get_node("/root/SoundManager").play("jump_voice", 0.0)
 			velocity.y = effective_jump
 
 	# Aiming logic (for mining)
@@ -418,6 +427,16 @@ func _physics_process(delta: float) -> void:
 		knockback_vel = knockback_vel.move_toward(Vector2.ZERO, KNOCKBACK_DECAY * delta)
 	if fall_damage_timer > 0.0:
 		fall_damage_timer -= delta
+
+	# Walk SFX – toca a cada ~0.35s quando no chão e em movimento
+	if is_on_floor() and abs(velocity.x) > 10.0:
+		_walk_sfx_timer -= delta
+		if _walk_sfx_timer <= 0.0:
+			_walk_sfx_timer = 0.35
+			if has_node("/root/SoundManager"):
+				get_node("/root/SoundManager").play("walk", -6.0)
+	else:
+		_walk_sfx_timer = 0.0
 
 	move_and_slide()
 
@@ -699,7 +718,7 @@ func place_portable_forge() -> void:
 	var forge_scene = load("res://scenes/environment/forge.tscn")
 	if not forge_scene: return
 	var forge = forge_scene.instantiate()
-	forge.position = rock.global_position
+	forge.position = rock.global_position + Vector2(0, -16)
 	forge.add_to_group("placed_forges")
 	get_tree().current_scene.add_child(forge)
 	inv.notify(tr("Forja Portátil Instalada!"), "forge")

@@ -4,7 +4,11 @@ extends Control
 # O vídeo é decodificado quadro a quadro (streaming), sem carregar frames
 # inteiros na memória nem travar a thread principal.
 
-const MAIN_SCENE := "res://scenes/main/main.tscn"
+const BIOME_SCENES: Array = [
+	"res://scenes/main/main.tscn",
+	"res://scenes/main/frost.tscn",
+	"res://scenes/main/molten.tscn"
+]
 const VIDEO_FILE := "res://assets/videos/title.ogv"
 
 var _started := false
@@ -56,4 +60,6 @@ func _start_game() -> void:
 	if _started:
 		return
 	_started = true
-	get_tree().change_scene_to_file(MAIN_SCENE)
+	var biome_idx := SaveManager.current_biome if has_node("/root/SaveManager") else 0
+	biome_idx = clampi(biome_idx, 0, BIOME_SCENES.size() - 1)
+	get_tree().change_scene_to_file(BIOME_SCENES[biome_idx])

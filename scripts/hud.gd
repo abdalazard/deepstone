@@ -595,8 +595,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 
 func toggle_hotbar_config() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if not is_instance_valid(hotbar_config_panel):
 		_build_hotbar_config_panel()
 	hotbar_config_panel.visible = not hotbar_config_panel.visible
@@ -1060,8 +1060,8 @@ func _open_equipment_swap(slot_type: String) -> void:
 
 # Forge Crafting Handlers
 func _on_craft_pickaxe() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_pickaxe():
@@ -1071,8 +1071,8 @@ func _on_craft_pickaxe() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 1 Ferro, 2 Madeiras e 1 Pedra."), "pickaxe")
 
 func _on_craft_lamp() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_lamp():
@@ -1082,8 +1082,8 @@ func _on_craft_lamp() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 3 Carvões e 2 Ferros."), "lamp")
 
 func _on_craft_ladder() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_ladders():
@@ -1093,8 +1093,8 @@ func _on_craft_ladder() -> void:
 			show_toast(tr("Sem madeira suficiente! Requer 1 Tronco de Madeira."), "wood")
 
 func _on_craft_plank() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_planks():
@@ -1104,8 +1104,8 @@ func _on_craft_plank() -> void:
 			show_toast(tr("Sem madeira suficiente! Requer 1 Tronco de Madeira."), "wood")
 
 func _on_craft_column() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_column():
@@ -1115,8 +1115,8 @@ func _on_craft_column() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 3 Lamas e 3 Pedras."), "plank")
 
 func _on_craft_slab() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_slab():
@@ -1126,8 +1126,8 @@ func _on_craft_slab() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 2 Lamas e 2 Pedras."), "plank")
 
 func _on_craft_portable_forge() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_portable_forge():
@@ -1137,8 +1137,8 @@ func _on_craft_portable_forge() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 5 Pedras e 3 Ferros."), "forge")
 
 func toggle_forge(forge_node: Node = null) -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if not forge_panel: return
 	if forge_panel.visible:
 		close_forge()
@@ -1559,8 +1559,8 @@ func _format_upgrade_cost(cost: Dictionary) -> String:
 	return ", ".join(parts)
 
 func toggle_equipment() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if not equipment_panel: return
 	if equipment_panel.visible:
 		close_equipment()
@@ -1801,8 +1801,8 @@ func close_inventory() -> void:
 		inventory_panel.visible = false
 
 func toggle_pause() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if not pause_panel: return
 	if pause_panel.visible:
 		close_pause()
@@ -1810,8 +1810,8 @@ func toggle_pause() -> void:
 		open_pause()
 
 func toggle_tutorial() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var tree := get_tree()
 	if not tree: return
 	var scene := tree.current_scene
@@ -1828,28 +1828,29 @@ func toggle_tutorial() -> void:
 	scene.add_child(screen)
 
 func _on_lang_toggled() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
-	var lang: Node = get_tree().root.get_node_or_null("Lang")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
+	var lang: Node = get_node_or_null("/root/Lang")
 	if not lang:
 		return
 	lang.toggle()
 	# Força todos os nós da cena a atualizarem seus textos traduzidos
-	get_tree().root.propagate_notification(NOTIFICATION_TRANSLATION_CHANGED)
+	if is_inside_tree() and get_tree() and get_tree().root:
+		get_tree().root.propagate_notification(NOTIFICATION_TRANSLATION_CHANGED)
 	_refresh_lang_button()
 	update_ui()
 
 func _refresh_lang_button() -> void:
 	if not lang_button: return
-	var lang := get_tree().root.get_node_or_null("Lang")
+	var lang := get_node_or_null("/root/Lang")
 	if not lang:
 		return
 	lang_button.text = lang.get_short()
 	lang_button.tooltip_text = tr("Idioma: " + lang.get_short())
 
 func open_pause() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if pause_panel:
 		pause_panel.visible = true
 		close_config()
@@ -1857,8 +1858,8 @@ func open_pause() -> void:
 			_safe_grab_focus(resume_btn)
 
 func close_pause() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if pause_panel:
 		pause_panel.visible = false
 	close_config()
@@ -1871,8 +1872,8 @@ func toggle_config() -> void:
 		open_config()
 
 func open_config() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if config_panel:
 		config_panel.visible = true
 		update_ui()
@@ -1880,8 +1881,8 @@ func open_config() -> void:
 			_safe_grab_focus(restart_btn)
 
 func close_config() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if config_panel:
 		config_panel.visible = false
 
@@ -1902,8 +1903,10 @@ func _surface_return_cost() -> int:
 	return maxi(30, depth_m)
 
 func _on_death_restart() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if not is_inside_tree() or not get_tree() or not get_tree().root:
+		return
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if death_panel:
 		death_panel.visible = false
 	var inv = _get_inv()
@@ -1922,15 +1925,19 @@ func _on_player_hurt() -> void:
 	tween.tween_property(damage_flash, "color:a", 0.0, 0.35)
 
 func _on_save_pressed() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if not is_inside_tree() or not get_tree() or not get_tree().root:
+		return
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").save_game(true)
 	close_pause()
 
 func _on_restart_pressed() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if not is_inside_tree() or not get_tree() or not get_tree().root:
+		return
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	var cost: int = _surface_return_cost()
 	if inv and inv.coins < cost:
@@ -1946,23 +1953,27 @@ func _on_restart_pressed() -> void:
 	close_pause()
 
 func _on_reset_mine_pressed() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if not is_inside_tree() or not get_tree() or not get_tree().root:
+		return
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").reset_mine_completely()
 	close_config()
 	close_pause()
 
 func _on_exit_pressed() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if not is_inside_tree() or not get_tree() or not get_tree().root:
+		return
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").save_game(false)
 	get_tree().quit()
 
 func toggle_shop() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if not shop_panel: return
 	if shop_panel.visible:
 		close_shop()
@@ -1985,8 +1996,8 @@ func _on_shop_pressed() -> void:
 	toggle_shop()
 
 func _on_shop_tab_buy() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if shop_buy_view: shop_buy_view.visible = true
 	if shop_sell_view: shop_sell_view.visible = false
 	if shop_tab_buy_btn: shop_tab_buy_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
@@ -1994,8 +2005,8 @@ func _on_shop_tab_buy() -> void:
 	update_shop_ui()
 
 func _on_shop_tab_sell() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if shop_buy_view: shop_buy_view.visible = false
 	if shop_sell_view: shop_sell_view.visible = true
 	if shop_tab_sell_btn: shop_tab_sell_btn.modulate = Color(1.2, 1.2, 0.8, 1.0)
@@ -2003,8 +2014,8 @@ func _on_shop_tab_sell() -> void:
 	update_shop_ui()
 
 func _on_sell_all_minerals() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv and inv.sell_all_minerals() > 0:
 		update_shop_ui()
@@ -2481,8 +2492,8 @@ Durabilidade: %d/%d") % [tr(def.desc), inv.pickaxe_durability, inv.max_pickaxe_d
 			drop_button.visible = not def.is_tool or (def.key in ["plank", "lamp", "forge"])
 
 func _on_equip_pressed() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if selected_index < 0 or selected_index >= chest_items_def.size(): return
 	var def = chest_items_def[selected_index]
 	var inv = _get_inv()
@@ -2497,8 +2508,8 @@ func _on_equip_pressed() -> void:
 		show_toast(tr("%s equipada!") % tr(def.name), def.key)
 
 func _on_drop_pressed() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	_drop_item_at_idx(selected_index)
 
 func _drop_item_at_idx(idx: int) -> void:
@@ -2782,8 +2793,8 @@ func show_toast(text: String, icon_type: String = "") -> void:
 
 # Chest Menu Handlers
 func toggle_chest(chest_node: Node = null) -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	if not chest_panel: return
 	if chest_panel.visible:
 		close_chest()
@@ -2832,8 +2843,8 @@ func update_chest_ui() -> void:
 		backpack_gold_lbl.text = tr("• Minério de Ouro: %d") % inv.gold
 
 func _on_chest_deposit() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if current_chest_node and inv:
 		current_chest_node.stored_coal += inv.coal
@@ -2852,8 +2863,8 @@ func _on_chest_deposit() -> void:
 			get_node("/root/SaveManager").request_save()
 
 func _on_chest_retrieve() -> void:
-	if get_tree().root.has_node("SoundManager"):
-		get_tree().root.get_node("SoundManager").play("game_start")
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("game_start")
 	var inv = _get_inv()
 	if current_chest_node and inv:
 		var max_cap = inv.get_max_capacity() if inv.has_method("get_max_capacity") else 60

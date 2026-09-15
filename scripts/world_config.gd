@@ -33,3 +33,17 @@ func biome_at(world_y: float) -> int:
 
 func is_underground(world_y: float) -> bool:
 	return world_y >= SURFACE_Y
+
+# ── Cenas por bioma ──
+const BIOME_SCENE_PATHS: Array[String] = [
+	"res://scenes/main/main.tscn",
+	"res://scenes/main/frost.tscn",
+	"res://scenes/main/molten.tscn"
+]
+
+# Nomes dos biomas
+const BIOME_NAMES: Array[String] = [
+	"Vale do Quartzo Cantante",
+	"Além das Neves Eternas",
+	"A Ascensão Ardente"
+]
