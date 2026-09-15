@@ -138,22 +138,22 @@ func _draw_joystick() -> void:
 
 func _update_joy(delta: Vector2) -> void:
 	if delta.x < -DEADZONE:
-		_set("ui_left",  true);  _set("ui_right", false)
+		_set_action("ui_left",  true);  _set_action("ui_right", false)
 	elif delta.x > DEADZONE:
-		_set("ui_right", true);  _set("ui_left",  false)
+		_set_action("ui_right", true);  _set_action("ui_left",  false)
 	else:
-		_set("ui_left",  false); _set("ui_right", false)
+		_set_action("ui_left",  false); _set_action("ui_right", false)
 
 	if delta.y < -DEADZONE:
-		_set("ui_up",   true);  _set("ui_down", false)
+		_set_action("ui_up",   true);  _set_action("ui_down", false)
 	elif delta.y > DEADZONE:
-		_set("ui_down", true);  _set("ui_up",   false)
+		_set_action("ui_down", true);  _set_action("ui_up",   false)
 	else:
-		_set("ui_up",   false); _set("ui_down", false)
+		_set_action("ui_up",   false); _set_action("ui_down", false)
 
 func _release_joy() -> void:
 	for a in ["ui_left", "ui_right", "ui_up", "ui_down"]:
-		_set(a, false)
+		_set_action(a, false)
 
 # ─────────────────────────── BUTTON HELPERS ────────────────────────────────
 
@@ -161,8 +161,8 @@ func _release_joy() -> void:
 func _add_hold_btn(parent: Control, label: String, center: Vector2,
 		size: float, action: String, color: Color) -> void:
 	var btn := _make_btn(parent, label, center, size, color)
-	btn.button_down.connect(func(): _set(action, true))
-	btn.button_up.connect(func():   _set(action, false))
+	btn.button_down.connect(func(): _set_action(action, true))
+	btn.button_up.connect(func():   _set_action(action, false))
 
 # Botão que dispara um pulso (just_pressed equivalent — 2 frames ligado)
 func _add_pulse_btn(parent: Control, label: String, center: Vector2,
@@ -217,7 +217,7 @@ func _pulse(action: String) -> void:
 			_pressed[action] = false
 	)
 
-func _set(action: String, pressed: bool) -> void:
+func _set_action(action: String, pressed: bool) -> void:
 	if not InputMap.has_action(action): return
 	if pressed:
 		if not _pressed.get(action, false):
