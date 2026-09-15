@@ -31,10 +31,15 @@ func _ready() -> void:
 	_build_ui()
 
 func _should_show() -> bool:
-	return DisplayServer.is_touchscreen_available() \
-		or OS.has_feature("mobile") \
-		or OS.has_feature("web_android") \
-		or OS.has_feature("web_ios")
+	if OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios"):
+		return true
+	if DisplayServer.is_touchscreen_available():
+		return true
+	if OS.has_feature("web"):
+		var has_touch = JavaScriptBridge.eval("('ontouchstart' in window) || (navigator.maxTouchPoints > 0)", true)
+		if has_touch:
+			return true
+	return false
 
 # ─────────────────────────── BUILD ─────────────────────────────────────────
 
