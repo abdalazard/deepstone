@@ -455,17 +455,21 @@ func destroy() -> void:
 	var inv = null
 	if is_inside_tree() and get_tree() and get_tree().root and get_tree().root.has_node("Inventory"):
 		inv = get_tree().root.get_node("Inventory")
+	var _combo_bonus: float = 0.0
+	var _combo_players: Array = get_tree().get_nodes_in_group("player") if get_tree() else []
+	if _combo_players.size() > 0 and _combo_players[0].has_method("get_combo_xp_bonus"):
+		_combo_bonus = _combo_players[0].get_combo_xp_bonus()
 	
 	if is_roots:
 		if inv:
-			inv.add_exp(3, global_position)
+			inv.add_exp(int(ceil(float(3) * (1.0 + _combo_bonus))), global_position)
 		var drop = DROP_SCENE.instantiate()
 		drop.type = 5 # WOOD
 		drop.global_position = global_position
 		get_parent().add_child(drop)
 	elif is_stone:
 		if inv:
-			inv.add_exp(2, global_position)
+			inv.add_exp(int(ceil(float(2) * (1.0 + _combo_bonus))), global_position)
 		var drop = DROP_SCENE.instantiate()
 		drop.type = 7 # STONE
 		drop.global_position = global_position
@@ -473,13 +477,13 @@ func destroy() -> void:
 	elif is_dirt:
 		if inv:
 			inv.dirt += 1
-			inv.add_exp(1, global_position)
+			inv.add_exp(int(ceil(float(1) * (1.0 + _combo_bonus))), global_position)
 			inv.inventory_changed.emit()
 	elif not is_unbreakable:
 		if inv:
-			if is_coal: inv.add_exp(3, global_position)
-			elif is_copper: inv.add_exp(15, global_position)
-			else: inv.add_exp(5, global_position)
+			if is_coal: inv.add_exp(int(ceil(float(3) * (1.0 + _combo_bonus))), global_position)
+			elif is_copper: inv.add_exp(int(ceil(float(15) * (1.0 + _combo_bonus))), global_position)
+			else: inv.add_exp(int(ceil(float(5) * (1.0 + _combo_bonus))), global_position)
 		var drop = DROP_SCENE.instantiate()
 		if is_coal:
 			drop.type = 2 # COAL

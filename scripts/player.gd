@@ -712,6 +712,9 @@ func _increment_combo() -> void:
 	if _combo_count >= 3:
 		_show_combo_label()
 
+func get_combo_xp_bonus() -> float:
+	return float(_combo_count) * 0.01
+
 func _reset_combo() -> void:
 	_combo_count = 0
 	var main = get_tree().current_scene if get_tree() else null
