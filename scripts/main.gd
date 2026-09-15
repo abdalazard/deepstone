@@ -467,32 +467,33 @@ func generate_world() -> void:
 	_block_queue.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.get("grid", Vector2i(-1, -1)).y > b.get("grid", Vector2i(-1, -1)).y)
 
-func _spawn_cave_rocks(cave_cells: Dictionary, excavated_cells: Dictionary, unbreakable_blocks: Dictionary) -> void:
-	var seen_cols := {}
-	for coord in cave_cells:
-		_place_rock_on_bedrock(coord, unbreakable_blocks, seen_cols)
-	for coord in excavated_cells:
-		_place_rock_on_bedrock(coord, unbreakable_blocks, seen_cols)
-
-func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, seen_cols: Dictionary) -> void:
-	var below := Vector2i(coord.x, coord.y + 1)
-	# Coloca pedra sobre qualquer piso sólido (inquebrável OU rocha/terra normal)
-	var has_solid_floor: bool = unbreakable_blocks.has(below) or \
-		(not _cave_cells.has(below) and not _excavated_cells.has(below) and \
-		 below.x > 0 and below.x < 29 and below.y > 0 and below.y < 599)
-	if not has_solid_floor:
-		return
-	# ~18%: espalha mais do que antes, mas sem exagero
-	if randf() > 0.18:
-		return
-	# Espaçamento mínimo de 2 colunas entre pedras decorativas
-	if seen_cols.has(below.x - 1) or seen_cols.has(below.x) or seen_cols.has(below.x + 1):
-		return
-	seen_cols[below.x] = true
-	var rock := RANDOM_ROCK_SCENE.instantiate()
-	rock.position = Vector2(below.x * 32.0 + 16.0, below.y * 32.0 + 112.0)
-	rock.z_index = 1
-	add_child(rock)
+func _spawn_cave_rocks(_cave_cells_unused: Dictionary, _excavated_unused: Dictionary, unbreakable_blocks: Dictionary) -> void:
+	# ── Random rocks só sobre blocos rígidos ─────────────────────────────────
+	# Agrupa posições elegíveis (topo livre) por linha de blocos inquebrávies.
+	var by_line: Dictionary = {} # y -> Array[int] de colunas livres
+	for coord in unbreakable_blocks:
+		var above := Vector2i(coord.x, coord.y - 1)
+		# Topo deve estar livre (não outro bloco inquebrável, não fora dos limites)
+		if above.y < 0 or unbreakable_blocks.has(above):
+			continue
+		if not by_line.has(coord.y):
+			by_line[coord.y] = []
+		(by_line[coord.y] as Array).append(coord.x)
+	# Por linha: embaralha colunas, tenta até 3 pedras com 55% de chance cada
+	for y_key in by_line:
+		var xs: Array = by_line[y_key]
+		xs.shuffle()
+		var placed: int = 0
+		for x_val in xs:
+			if placed >= 3:
+				break
+			if randf() > 0.55: # ~55% de chance por slot elegível
+				continue
+			var rock := RANDOM_ROCK_SCENE.instantiate()
+			rock.position = Vector2(float(x_val) * 32.0 + 16.0, float(y_key) * 32.0 + 112.0)
+			rock.z_index = 1
+			add_child(rock)
+			placed += 1
 
 # ── Minimapa ──────────────────────────────────────────────────────────────────
 func _setup_minimap() -> void:
