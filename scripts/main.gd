@@ -651,12 +651,14 @@ func _setup_hit_flash() -> void:
 	_hit_flash = cr
 
 func block_hit_feedback() -> void:
-	# Flash branco
+	# Flash branco em todo golpe
 	if is_instance_valid(_hit_flash):
 		_hit_flash.color = Color(1, 1, 1, 0.18)
 		var tfl := _hit_flash.create_tween()
 		tfl.tween_property(_hit_flash, "color:a", 0.0, 0.10)
-	# Shake horizontal na câmera do player
+
+func block_break_shake() -> void:
+	# Shake vertical só ao quebrar o bloco
 	if is_instance_valid(player):
 		var cam = player.get_node_or_null("Camera2D")
 		if is_instance_valid(cam):
