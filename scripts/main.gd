@@ -167,13 +167,6 @@ func _process(delta: float) -> void:
 		if show_minimap and is_instance_valid(_minimap_node):
 			_minimap_node.queue_redraw()
 
-		# Posiciona o HUD de combo acima do jogador (espaço de tela)
-		if is_instance_valid(_combo_hud_label) and _combo_hud_label.visible:
-			var vp := get_viewport()
-			if vp:
-				var screen_pos: Vector2 = vp.get_canvas_transform() * player.global_position
-				_combo_hud_label.position = screen_pos + Vector2(-80, -90)
-
 		# Dinâmica de descoberta: na superfície a câmera sobe para mostrar mais
 		# céu e menos chão; ao descer para o primeiro andar do subsolo ela volta
 		# a centralizar o personagem no meio da tela.
@@ -626,35 +619,77 @@ func _setup_combo_hud() -> void:
 	cl.layer = 15
 	add_child(cl)
 	_combo_hud_layer = cl
+	# Label e hide_combo_hud deixaram de usar label fixo —
+	# cada combo cria seu próprio label temporário em show_combo_hud()
+	_combo_hud_label = null
+
+func show_combo_hud(count: int) -> void:
+	if not is_instance_valid(_combo_hud_layer):
+		return
+	var vp := get_viewport()
+	if not vp or not is_instance_valid(player):
+		return
+
+	# Posição de tela acima do player no momento do disparo
+	var screen_pos: Vector2 = vp.get_canvas_transform() * player.global_position
+	var spawn_pos: Vector2 = screen_pos + Vector2(-60.0, -80.0)
+
+	# Cor: branco → laranja → vermelho
+	var t: float = clampf(float(count - 3) / 8.0, 0.0, 1.0)
+	var col := Color(1.0, maxf(1.0 - t * 0.65, 0.25), maxf(0.3 - t * 0.25, 0.05), 1.0)
+	var font_size: int = mini(22 + (count - 3) * 3, 44)
+
+	# Label temporário
 	var lbl := Label.new()
-	lbl.name = "ComboHudLabel"
+	lbl.text = "Combo %dx!" % count
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.size = Vector2(160, 50)
-	lbl.visible = false
+	lbl.position = spawn_pos
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.add_theme_color_override("font_color", col)
 	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
 	lbl.add_theme_constant_override("shadow_offset_x", 2)
 	lbl.add_theme_constant_override("shadow_offset_y", 2)
-	cl.add_child(lbl)
-	_combo_hud_label = lbl
+	_combo_hud_layer.add_child(lbl)
 
-func show_combo_hud(count: int) -> void:
-	if not is_instance_valid(_combo_hud_label):
-		return
-	_combo_hud_label.text = "Combo %dx!" % count
-	# Font size em pixels de tela: base 22 no combo 3, +3 por combo extra, máx 44
-	var font_size: int = mini(22 + (count - 3) * 3, 44)
-	_combo_hud_label.add_theme_font_size_override("font_size", font_size)
-	# Cor: branco → laranja → vermelho com self_modulate para ignorar iluminação
-	var t: float = clampf(float(count - 3) / 8.0, 0.0, 1.0)
-	var col := Color(1.0, maxf(1.0 - t * 0.65, 0.25), maxf(0.3 - t * 0.25, 0.05), 1.0)
-	_combo_hud_label.add_theme_color_override("font_color", col)
-	_combo_hud_label.modulate = Color(1, 1, 1, 1)
-	_combo_hud_label.visible = true
+	# Animação: flutua para cima, depois explode e some
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position", spawn_pos + Vector2(0.0, -55.0), 0.55).set_ease(Tween.EASE_OUT)
+	tw.tween_property(lbl, "scale", Vector2(1.0, 1.0), 0.0)  # garante escala inicial
+	# Fase de explosão: escala aumenta bruscamente e label some
+	var tw2 := create_tween()
+	tw2.tween_interval(0.55)
+	tw2.tween_callback(func() -> void:
+		if not is_instance_valid(lbl): return
+		var tw3 := create_tween()
+		tw3.set_parallel(true)
+		tw3.tween_property(lbl, "scale", Vector2(2.2, 2.2), 0.18).set_ease(Tween.EASE_OUT)
+		tw3.tween_property(lbl, "modulate", Color(col.r, col.g, col.b, 0.0), 0.18)
+		tw3.tween_callback(lbl.queue_free).set_delay(0.19)
+		# Partículas de explosão no centro do label
+		var px := CPUParticles2D.new()
+		px.emitting = false
+		px.one_shot = true
+		px.explosiveness = 1.0
+		px.amount = 10
+		px.lifetime = 0.35
+		px.spread = 180.0
+		px.initial_velocity_min = 30.0
+		px.initial_velocity_max = 70.0
+		px.scale_amount_min = 3.0
+		px.scale_amount_max = 5.0
+		px.color = col
+		px.position = lbl.position + Vector2(80.0, 25.0)
+		_combo_hud_layer.add_child(px)
+		px.emitting = true
+		get_tree().create_timer(0.6).timeout.connect(px.queue_free)
+	)
 
 func hide_combo_hud() -> void:
-	if is_instance_valid(_combo_hud_label):
-		_combo_hud_label.visible = false
+	# Labels temporários se destroem sozinhos; nada a fazer
+	pass
 
 func _check_biome_change(world_y: float) -> void:
 	var b: int = WorldConfig.biome_at(world_y)
