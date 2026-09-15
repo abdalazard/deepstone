@@ -30,6 +30,8 @@ var _active_combo_label: Label = null  # label flutuante atual (se ainda vive)
 var _depth_label: Label = null
 var _hit_flash: ColorRect = null
 var _last_biome: int = -99
+var _cam_base_offset: Vector2 = Vector2.ZERO   # offset base (superfície vs caverna)
+var _cam_shake_extra: float   = 0.0             # shake aditivo (não conflita com base)
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
 var earth_cave_color: Color = Color(0.06, 0.05, 0.04, 1.0) # Camada de Terra (Dark earth)
@@ -180,10 +182,12 @@ func _process(delta: float) -> void:
 		# a centralizar o personagem no meio da tela.
 		var cam = player.get_node_or_null("Camera2D")
 		if cam:
-			var target_offset := Vector2.ZERO
+			var target_base := Vector2.ZERO
 			if py < WorldConfig.SURFACE_Y:
-				target_offset.y = -64.0
-			cam.offset = cam.offset.lerp(target_offset, minf(1.0, 6.0 * delta))
+				target_base.y = -64.0
+			# Lerp suave na base; shake é aditivo e separado (sem conflito)
+			_cam_base_offset = _cam_base_offset.lerp(target_base, minf(1.0, 6.0 * delta))
+			cam.offset = _cam_base_offset + Vector2(0.0, _cam_shake_extra)
 
 		var current_color = RenderingServer.get_default_clear_color()
 		if not current_color.is_equal_approx(target_color):
@@ -561,26 +565,22 @@ func _draw_minimap() -> void:
 	const MAP_Y: float = 475.0
 	const MAP_W: float = 180.0
 	const MAP_H: float = 210.0
-	# Zoom: mostra VIEW_ROWS linhas e VIEW_COLS colunas centradas no player
-	const VIEW_ROWS: float = 100.0
-	const VIEW_COLS: float = 14.0
-	const GRID_W_F: float = 30.0
-	const GRID_H_F: float = 600.0
-	const CELL_W: float = MAP_W / VIEW_COLS
-	const CELL_H: float = MAP_H / VIEW_ROWS
+	# Mundo completo: 30 colunas, ~123 linhas (y=128 a y=4050)
+	const TOTAL_COLS: float = 30.0
+	const TOTAL_ROWS: float = 123.0
+	const CELL_W: float = MAP_W / TOTAL_COLS   # 6.0 px por coluna
+	const CELL_H: float = MAP_H / TOTAL_ROWS   # ~1.71 px por linha
 
-	# Centro do player no grid
+	# Posição do player no grid
 	var world_x: float = player.global_position.x
 	var world_y: float = player.global_position.y
 	var pcol: float = (world_x - 16.0) / 32.0
 	var prow: float = (world_y - 128.0) / 32.0
-	var col_min: float = pcol - VIEW_COLS * 0.5
-	var row_min: float = prow - VIEW_ROWS * 0.5
 
 	# Borda
 	_minimap_node.draw_rect(Rect2(MAP_X, MAP_Y, MAP_W, MAP_H), Color(0.55, 0.50, 0.42, 0.9), false, 1.5)
 
-	# Tuneis escavados (células mineiradas do SaveManager)
+	# Túneis escavados — mostra TODO o mapa explorado proporcional
 	var sm = get_node_or_null("/root/SaveManager")
 	if sm:
 		for key: String in sm.mined_blocks.keys():
@@ -589,27 +589,22 @@ func _draw_minimap() -> void:
 				continue
 			var cx: float = float(parts[0])
 			var cy: float = float(parts[1])
-			if cy < row_min or cy > row_min + VIEW_ROWS:
+			if cx < 0 or cx >= TOTAL_COLS or cy < 0 or cy >= TOTAL_ROWS:
 				continue
-			if cx < col_min or cx > col_min + VIEW_COLS:
-				continue
-			var px: float = MAP_X + (cx - col_min) * CELL_W
-			var py: float = MAP_Y + (cy - row_min) * CELL_H
+			var px: float = MAP_X + cx * CELL_W
+			var py: float = MAP_Y + cy * CELL_H
 			_minimap_node.draw_rect(
-				Rect2(px, py, maxf(CELL_W - 0.5, 1.0), maxf(CELL_H - 0.5, 1.0)),
-				Color(0.90, 0.90, 0.90, 0.75))
+				Rect2(px, py, maxf(CELL_W - 0.3, 1.0), maxf(CELL_H, 1.0)),
+				Color(0.90, 0.90, 0.90, 0.80))
 
-	# Linha da superfície (row 0 no grid = world_y 128)
-	var surf_row: float = 0.0
-	if surf_row >= row_min and surf_row <= row_min + VIEW_ROWS:
-		var surf_py: float = MAP_Y + (surf_row - row_min) * CELL_H
-		_minimap_node.draw_line(
-			Vector2(MAP_X, surf_py), Vector2(MAP_X + MAP_W, surf_py),
-			Color(0.5, 0.8, 0.3, 0.7), 1.0)
+	# Linha da superfície no topo do mapa (row 0)
+	_minimap_node.draw_line(
+		Vector2(MAP_X, MAP_Y), Vector2(MAP_X + MAP_W, MAP_Y),
+		Color(0.5, 0.8, 0.3, 0.8), 1.5)
 
-	# Posição do jogador (centro)
-	var dot_x: float = MAP_X + MAP_W * 0.5
-	var dot_y: float = MAP_Y + MAP_H * 0.5
+	# Posição do jogador proporcional ao mapa todo
+	var dot_x: float = MAP_X + clampf(pcol * CELL_W, 0.0, MAP_W)
+	var dot_y: float = MAP_Y + clampf(prow * CELL_H, 0.0, MAP_H)
 	_minimap_node.draw_circle(Vector2(dot_x, dot_y), 4.0, Color(1.0, 1.0, 1.0, 1.0))
 	_minimap_node.draw_circle(Vector2(dot_x, dot_y), 2.0, Color(0.25, 0.85, 1.0, 1.0))
 
@@ -658,16 +653,15 @@ func block_hit_feedback() -> void:
 		tfl.tween_property(_hit_flash, "color:a", 0.0, 0.10)
 
 func block_hit_shake(combo: int = 0) -> void:
-	# Shake vertical em todo golpe; intensidade escala com combo * 0.5
-	if is_instance_valid(player):
-		var cam = player.get_node_or_null("Camera2D")
-		if is_instance_valid(cam):
-			var tw := cam.create_tween()
-			var strength: float = 3.0 * max(1.0, float(combo) * 0.5)
-			tw.tween_property(cam, "offset", Vector2(0, strength), 0.03)
-			tw.tween_property(cam, "offset", Vector2(0, -strength), 0.03)
-			tw.tween_property(cam, "offset", Vector2(0, strength * 0.5), 0.03)
-			tw.tween_property(cam, "offset", Vector2.ZERO, 0.03)
+	# Shake aditivo: tweena _cam_shake_extra em self, não em cam.offset
+	# Assim não conflita com a lógica de base offset da superfície
+	if not is_instance_valid(player): return
+	var strength: float = 3.0 * max(1.0, float(combo) * 0.5)
+	var tw := create_tween()
+	tw.tween_property(self, "_cam_shake_extra", strength,        0.03)
+	tw.tween_property(self, "_cam_shake_extra", -strength,       0.06)
+	tw.tween_property(self, "_cam_shake_extra", strength * 0.5,  0.03)
+	tw.tween_property(self, "_cam_shake_extra", 0.0,             0.03)
 
 func _setup_combo_hud() -> void:
 	var cl := CanvasLayer.new()
