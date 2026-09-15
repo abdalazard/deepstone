@@ -14,9 +14,6 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
-env:
-  GODOT_VERSION: "4.4.1"
-
 jobs:
   export_web:
     runs-on: ubuntu-latest
@@ -34,11 +31,10 @@ jobs:
       - name: Godot Web Export
         uses: firebelley/godot-export@v6.0.0
         with:
-          godot_version: ${{ env.GODOT_VERSION }}
-          godot_channel: "stable"
+          godot_executable_download_url: "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip"
+          godot_export_templates_download_url: "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz"
           export_debug: false
           use_preset_export_path: true
-          create_release: false
           relative_project_path: ""
 
       - name: Ensure Cross-Origin Isolation for GitHub Pages
