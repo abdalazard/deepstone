@@ -872,8 +872,6 @@ func try_mine() -> void:
 		
 	is_mining = true
 	mine_timer = 0.70
-	if has_node("/root/SoundManager"):
-		get_node("/root/SoundManager").play("picking", -4.0)
 	
 	# Britadeira (Jackhammer action) when pressing DOWN and stuck inside a block
 	if Input.is_action_pressed("ui_down") and _is_overlapping_solid(global_position):
@@ -947,6 +945,8 @@ func try_mine() -> void:
 		if on_ladder and last_direction.x != 0 and _is_ladder_segment(target_collider):
 			return # Shield ladder rung from lateral swings
 		if target_collider.has_method("hit"):
+			if has_node("/root/SoundManager"):
+				get_node("/root/SoundManager").play("picking", -4.0)
 			var _main = get_tree().current_scene if get_tree() else null
 			if target_collider is Rock:
 				var pre_hp: int = int(target_collider.hp) if "hp" in target_collider else 1
