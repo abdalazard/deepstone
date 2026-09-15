@@ -662,9 +662,9 @@ func block_hit_feedback() -> void:
 		if is_instance_valid(cam):
 			var tw := cam.create_tween()
 			var strength: float = 3.0
-			tw.tween_property(cam, "offset", Vector2(strength, 0), 0.03)
-			tw.tween_property(cam, "offset", Vector2(-strength, 0), 0.03)
-			tw.tween_property(cam, "offset", Vector2(strength * 0.5, 0), 0.03)
+			tw.tween_property(cam, "offset", Vector2(0, strength), 0.03)
+			tw.tween_property(cam, "offset", Vector2(0, -strength), 0.03)
+			tw.tween_property(cam, "offset", Vector2(0, strength * 0.5), 0.03)
 			tw.tween_property(cam, "offset", Vector2.ZERO, 0.03)
 
 func _setup_combo_hud() -> void:
