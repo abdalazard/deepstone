@@ -158,12 +158,26 @@ func _on_level_up(new_lvl: int, _req_exp: int) -> void:
 
 func _apply_skin() -> void:
 	var inv = _get_inv()
-	if not inv or not inv.has_method("get_skin_tint"):
-		return
-	var tint: Color = inv.get_skin_tint()
 	var sprite = $Sprite2D
-	if sprite:
-		sprite.self_modulate = tint
+	if not sprite:
+		return
+	if not inv:
+		return
+	# Carrega ou reutiliza o ShaderMaterial de equipamento
+	var mat := sprite.material
+	if not (mat is ShaderMaterial):
+		var shader := load("res://assets/shaders/player_equipment.gdshader") as Shader
+		if not shader:
+			return
+		mat = ShaderMaterial.new()
+		(mat as ShaderMaterial).shader = shader
+		sprite.material = mat
+	var sm := mat as ShaderMaterial
+	# Cor de cada slot de equipamento
+	sm.set_shader_parameter("helmet_color",  inv.get_equipped_def("helmet").get("color", Color.WHITE))
+	sm.set_shader_parameter("armor_color",   inv.get_equipped_def("armor").get("color", Color.WHITE))
+	sm.set_shader_parameter("boots_color",   inv.get_equipped_def("boots").get("color", Color.WHITE))
+	sm.set_shader_parameter("pickaxe_color", inv.get_equipped_def("pickaxe").get("color", Color.WHITE))
 
 func _spawn_level_up_aura(lvl: int) -> void:
 	var particles = CPUParticles2D.new()
@@ -717,13 +731,13 @@ func _pickaxe_shock_effect() -> void:
 	var sprite = get_node_or_null("Sprite2D")
 	if not is_instance_valid(sprite):
 		return
-	var original_mod: Color = sprite.modulate
+	# Flash via self_modulate (sobrepõe o shader sem alterar os params)
 	var tw := create_tween()
-	tw.tween_property(sprite, "modulate", Color(0.3, 0.95, 1.0, 1.0), 0.04)
+	tw.tween_property(sprite, "self_modulate", Color(0.3, 0.95, 1.0, 1.0), 0.04)
 	tw.tween_property(sprite, "scale", Vector2(1.25, 1.25), 0.06).set_ease(Tween.EASE_OUT)
-	tw.tween_property(sprite, "modulate", Color(0.7, 1.0, 1.0, 1.0), 0.06)
+	tw.tween_property(sprite, "self_modulate", Color(0.7, 1.0, 1.0, 1.0), 0.06)
 	tw.tween_property(sprite, "scale", Vector2(1.0, 1.0), 0.10).set_ease(Tween.EASE_IN)
-	tw.tween_property(sprite, "modulate", original_mod, 0.08)
+	tw.tween_property(sprite, "self_modulate", Color.WHITE, 0.08)
 	# Partículas de choque na posição da picareta
 	var sparks := CPUParticles2D.new()
 	add_child(sparks)
