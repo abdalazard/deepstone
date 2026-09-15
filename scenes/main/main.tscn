@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://b8mainuidxxxx"]
+[gd_scene load_steps=14 format=3 uid="uid://b8mainuidxxxx"]
 
 [ext_resource type="Script" uid="uid://bhxfm7hvwfny7" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://b0nhxf5kvw22x" path="res://scenes/player/player.tscn" id="2_player"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://bforgeuidxxxx" path="res://scenes/environment/forge.tscn" id="8_forge"]
 [ext_resource type="PackedScene" uid="uid://cavebg000001" path="res://scenes/environment/cave_background.tscn" id="9_cavebg"]
 [ext_resource type="PackedScene" path="res://scenes/environment/cave1_background.tscn" id="10_cave1bg"]
+[ext_resource type="Script" path="res://scripts/mobile_controls.gd" id="99_mobile"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
 light_mode = 1
@@ -75,3 +76,6 @@ position = Vector2(432, 96)
 position = Vector2(496, 96)
 
 [node name="StartScreen" parent="." instance=ExtResource("6_start")]
+
+[node name="MobileControls" type="CanvasLayer" parent="."]
+script = ExtResource("99_mobile")

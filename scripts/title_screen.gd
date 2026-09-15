@@ -46,6 +46,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_game()
 	elif event is InputEventMouseButton and event.pressed:
 		_start_game()
+	elif event is InputEventScreenTouch and event.pressed:
+		_start_game()
 
 func _on_video_finished() -> void:
 	_start_game()
