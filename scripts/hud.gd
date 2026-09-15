@@ -1784,8 +1784,8 @@ func _refresh_inventory_hotbar_setup() -> void:
 		vbox.add_child(num_label)
 		
 		panel.gui_input.connect(func(event):
-			var is_click := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
-			var is_tap   := event is InputEventScreenTouch and event.pressed
+			var is_click: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+			var is_tap: bool   = event is InputEventScreenTouch and event.pressed
 			if is_click or is_tap:
 				selected_config_slot = i
 				_refresh_inventory_hotbar_setup()
@@ -2419,8 +2419,8 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	return card
 
 func _on_slot_gui_input(event: InputEvent, idx: int) -> void:
-	var is_click := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
-	var is_tap   := event is InputEventScreenTouch and event.pressed
+	var is_click: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	var is_tap: bool   = event is InputEventScreenTouch and event.pressed
 	if is_click or is_tap:
 		if idx >= 0 and idx < chest_items_def.size():
 			var def = chest_items_def[idx]
