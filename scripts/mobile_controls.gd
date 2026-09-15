@@ -120,8 +120,8 @@ func _on_joy_gui_input(event: InputEvent) -> void:
 			_joy_draw.queue_redraw()
 			_release_joy()
 	elif event is InputEventScreenDrag and _joy_active:
-		var delta := event.position - _joy_origin
-		var dist  := delta.length()
+		var delta: Vector2 = event.position - _joy_origin
+		var dist: float = delta.length()
 		if dist > JOY_RADIUS:
 			delta = delta.normalized() * JOY_RADIUS
 		_joy_knob_pos = _joy_origin + delta
