@@ -164,7 +164,7 @@ func _apply_skin() -> void:
 	if not inv:
 		return
 	# Carrega ou reutiliza o ShaderMaterial de equipamento
-	var mat := sprite.material
+	var mat: Material = sprite.material
 	if not (mat is ShaderMaterial):
 		var shader := load("res://assets/shaders/player_equipment.gdshader") as Shader
 		if not shader:
