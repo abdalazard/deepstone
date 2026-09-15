@@ -155,6 +155,8 @@ func _update_helmet_light() -> void:
 func _on_level_up(new_lvl: int, _req_exp: int) -> void:
 	# In-world character Level Up VFX
 	_spawn_level_up_aura(new_lvl)
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("level_up", 0.0)
 
 func _apply_skin() -> void:
 	var inv = _get_inv()

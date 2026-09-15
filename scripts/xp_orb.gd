@@ -72,6 +72,8 @@ func _process(delta: float) -> void:
 			_light.energy    = 1.1 + t * 1.5  # fica mais brilhante ao chegar
 			if t >= 1.0:
 				_release_glow_flash()
+				if has_node("/root/SoundManager"):
+					get_node("/root/SoundManager").play("xp_points", -3.0)
 				queue_free()
 
 func _target_point() -> Vector2:
