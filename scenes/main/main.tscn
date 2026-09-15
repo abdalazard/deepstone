@@ -50,6 +50,9 @@ color = Color(0.05, 0.05, 0.08, 1)
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(640, 96)
+speed = null
+jump_velocity = null
+sprite_scale = null
 
 [node name="WorldBoundary" type="StaticBody2D" parent="."]
 
