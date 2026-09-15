@@ -732,12 +732,28 @@ func _pickaxe_shock_effect() -> void:
 	if not is_instance_valid(sprite):
 		return
 	# Flash via self_modulate (sobrepõe o shader sem alterar os params)
+	# IMPORTANTE: restaura sprite_scale (Vector2(3,3)), não Vector2(1,1)
+	var target_scale := sprite_scale * 1.25
 	var tw := create_tween()
 	tw.tween_property(sprite, "self_modulate", Color(0.3, 0.95, 1.0, 1.0), 0.04)
-	tw.tween_property(sprite, "scale", Vector2(1.25, 1.25), 0.06).set_ease(Tween.EASE_OUT)
+	tw.tween_property(sprite, "scale", target_scale, 0.06).set_ease(Tween.EASE_OUT)
 	tw.tween_property(sprite, "self_modulate", Color(0.7, 1.0, 1.0, 1.0), 0.06)
-	tw.tween_property(sprite, "scale", Vector2(1.0, 1.0), 0.10).set_ease(Tween.EASE_IN)
+	tw.tween_property(sprite, "scale", sprite_scale, 0.10).set_ease(Tween.EASE_IN)
 	tw.tween_property(sprite, "self_modulate", Color.WHITE, 0.08)
+	# Partículas de choque: pequenas esferas coloridas emanando do player
+	for i in range(8):
+		var angle := (float(i) / 8.0) * TAU
+		var lbl := Label.new()
+		lbl.text = "⚡"
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.position = Vector2(-8, -16)
+		add_child(lbl)
+		var dir := Vector2(cos(angle), sin(angle))
+		var tw2 := create_tween()
+		tw2.set_parallel(true)
+		tw2.tween_property(lbl, "position", lbl.position + dir * 40.0, 0.40).set_ease(Tween.EASE_OUT)
+		tw2.tween_property(lbl, "modulate", Color(0.4, 0.9, 1.0, 0.0), 0.40)
+		tw2.chain().tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
 	# Partículas de choque na posição da picareta
 	var sparks := CPUParticles2D.new()
 	add_child(sparks)
