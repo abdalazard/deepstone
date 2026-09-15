@@ -10,14 +10,17 @@ config_version=5
 
 [application]
 
-config/name="Deepstone"
+config/name="Skip's Deepstone"
 run/main_scene="res://scenes/ui/title_screen.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
-config/icon="res://icon.svg"
+boot_splash/image="uid://cljxys0lv3mwl"
+boot_splash/fullscreen=false
+boot_splash/filter=false
+config/icon="uid://7lcksf31031s"
 
 [autoload]
-WorldConfig="*res://scripts/world_config.gd"
 
+WorldConfig="*res://scripts/world_config.gd"
 Inventory="*res://scripts/inventory.gd"
 SaveManager="*res://scripts/save_manager.gd"
 Music="*res://scripts/music.gd"
@@ -27,6 +30,7 @@ Lang="*res://scripts/language_manager.gd"
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/mode=3
 window/stretch/mode="canvas_items"
 
 [input]
