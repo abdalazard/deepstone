@@ -9,7 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://bforgeuidxxxx" path="res://scenes/environment/forge.tscn" id="8_forge"]
 [ext_resource type="PackedScene" uid="uid://cavebg000001" path="res://scenes/environment/cave_background.tscn" id="9_cavebg"]
 [ext_resource type="PackedScene" path="res://scenes/environment/cave1_background.tscn" id="10_cave1bg"]
-[ext_resource type="Script" path="res://scripts/mobile_controls.gd" id="99_mobile"]
+[ext_resource type="Script" uid="uid://fcmsvtwv8vwx" path="res://scripts/mobile_controls.gd" id="99_mobile"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_unshaded"]
 light_mode = 1
