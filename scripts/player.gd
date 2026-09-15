@@ -887,16 +887,16 @@ func try_mine() -> void:
 				target_collider.hit(inv.get_pickaxe_damage() if inv else 1)
 				if _main and _main.has_method("block_hit_feedback"):
 					_main.block_hit_feedback()
+				if _main and _main.has_method("block_hit_shake"):
+					_main.block_hit_shake(_combo_count)
 				if "hp" in target_collider and int(target_collider.hp) <= 0 and pre_hp > 0:
 					_increment_combo()
-					if _main and _main.has_method("block_break_shake"):
-						_main.block_break_shake()
 			else:
 				target_collider.hit()
 				if _main and _main.has_method("block_hit_feedback"):
 					_main.block_hit_feedback()
-				if _main and _main.has_method("block_break_shake"):
-					_main.block_break_shake()
+				if _main and _main.has_method("block_hit_shake"):
+					_main.block_hit_shake(_combo_count)
 		elif target_collider.has_method("collect"):
 			target_collider.collect()
 

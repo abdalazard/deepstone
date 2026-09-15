@@ -657,13 +657,13 @@ func block_hit_feedback() -> void:
 		var tfl := _hit_flash.create_tween()
 		tfl.tween_property(_hit_flash, "color:a", 0.0, 0.10)
 
-func block_break_shake() -> void:
-	# Shake vertical só ao quebrar o bloco
+func block_hit_shake(combo: int = 0) -> void:
+	# Shake vertical em todo golpe; intensidade escala com combo * 0.5
 	if is_instance_valid(player):
 		var cam = player.get_node_or_null("Camera2D")
 		if is_instance_valid(cam):
 			var tw := cam.create_tween()
-			var strength: float = 3.0
+			var strength: float = 3.0 * max(1.0, float(combo) * 0.5)
 			tw.tween_property(cam, "offset", Vector2(0, strength), 0.03)
 			tw.tween_property(cam, "offset", Vector2(0, -strength), 0.03)
 			tw.tween_property(cam, "offset", Vector2(0, strength * 0.5), 0.03)
