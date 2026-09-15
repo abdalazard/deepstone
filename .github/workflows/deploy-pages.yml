@@ -36,6 +36,7 @@ jobs:
           export_debug: false
           use_preset_export_path: true
           relative_project_path: ""
+          presets_to_export: "Web"
 
       - name: Ensure Cross-Origin Isolation for GitHub Pages
         run: |
