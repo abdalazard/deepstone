@@ -1,32 +1,27 @@
 extends CanvasLayer
 
-# ─── Mobile Virtual Controls ───────────────────────────────────────────────
-# Joystick esquerdo: movimento + subir/descer escada
-# Botões direita: Pulo, Minerar, Coletar, Arrastar
-# Botões topo: Inventário, Equipamentos, Próx. slot
-# ───────────────────────────────────────────────────────────────────────────
+# ── Mobile Controls (reescrito) ────────────────────────────────────────────
+# Usa Button nodes reais → Godot resolve automaticamente a transformação
+# de coordenadas touch/stretch/viewport.
+# Joystick usa _gui_input em um Panel (também resolve coordenadas).
+# Emoji substituídos por texto ASCII (Godot web não inclui fonte emoji).
+# ──────────────────────────────────────────────────────────────────────────
 
-const JOY_RADIUS     := 72.0
-const JOY_KNOB_R     := 28.0
-const DEADZONE       := 16.0
-const BTN_SIZE       := 64.0
-const BTN_SIZE_BIG   := 80.0
+const JOY_RADIUS    := 70.0
+const JOY_KNOB_R    := 26.0
+const DEADZONE      := 18.0
 
-# ── Touch tracking ──
-var _joy_finger   : int = -1
-var _joy_center   : Vector2
-var _joy_origin   : Vector2   # posição fixa do joystick
+# ── Estado do joystick ──
+var _joy_panel    : Panel          # área de toque do joystick
+var _joy_draw     : Node2D         # nó filho para desenhar o joystick
+var _joy_origin   : Vector2        # onde o dedo pousou
+var _joy_active   : bool = false
+var _joy_knob_pos : Vector2        # posição atual do knob (local ao panel)
 
-var _btn_fingers  : Dictionary = {}  # action_name -> finger_id
-var _btn_rects    : Dictionary = {}  # action_name -> Rect2 (em coords de viewport)
+# ── Ações atualmente pressionadas por este script ──
+var _pressed      : Dictionary = {}
 
-# ── Nodes ──
-var _joy_base  : Control
-var _joy_knob  : Control
-var _labels    : Dictionary = {}
-
-# ── Actions atualmente pressionadas por este script ──
-var _pressed   : Dictionary = {}
+# ─────────────────────────── INIT ──────────────────────────────────────────
 
 func _ready() -> void:
 	if not _should_show():
@@ -41,135 +36,188 @@ func _should_show() -> bool:
 		or OS.has_feature("web_android") \
 		or OS.has_feature("web_ios")
 
-# ─────────────────────────── BUILD UI ──────────────────────────────────────
+# ─────────────────────────── BUILD ─────────────────────────────────────────
 
 func _build_ui() -> void:
-	var vp := get_viewport().get_visible_rect().size
+	# Raiz Control que preenche a viewport inteira
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root)
 
-	# Fundo semitransparente dos botões (para debug/visualização)
-	# Joystick base — canto inferior esquerdo
-	_joy_origin = Vector2(vp.x * 0.15, vp.y * 0.78)
-	_joy_center = _joy_origin
+	var vw := 1280.0
+	var vh := 720.0
 
-	_joy_base = _make_circle_control(_joy_origin, JOY_RADIUS, Color(1,1,1,0.12))
-	add_child(_joy_base)
+	# ── Painel do joystick (metade esquerda da tela) ──────────────────────
+	var joy_panel := Panel.new()
+	joy_panel.position = Vector2(0, vh * 0.45)
+	joy_panel.size = Vector2(vw * 0.40, vh * 0.55)
+	joy_panel.self_modulate = Color(1, 1, 1, 0.0)  # invisível mas recebe input
+	joy_panel.gui_input.connect(_on_joy_gui_input)
+	root.add_child(joy_panel)
+	_joy_panel = joy_panel
 
-	_joy_knob = _make_circle_control(_joy_origin, JOY_KNOB_R, Color(1,1,1,0.35))
-	add_child(_joy_knob)
+	# Nó de desenho do joystick (filho do panel)
+	var jdraw := Node2D.new()
+	jdraw.draw.connect(_draw_joystick)
+	joy_panel.add_child(jdraw)
+	_joy_draw = jdraw
+	_joy_origin   = joy_panel.size * 0.5
+	_joy_knob_pos = _joy_origin
 
-	# ── Botões principais (direita) ──────────────────────────────────────
-	var bx := vp.x * 0.88
-	var by := vp.y * 0.72
+	# Hint visual estático (anel base)
+	var hint := ColorRect.new()
+	var hr := JOY_RADIUS
+	hint.size     = Vector2(hr * 2, hr * 2)
+	hint.position = Vector2(_joy_origin.x - hr, _joy_origin.y - hr)
+	hint.color    = Color(1, 1, 1, 0.07)
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	joy_panel.add_child(hint)
 
-	# Jump — grande, topo direito do cluster
-	_add_btn("ui_up",        Vector2(bx, by - 72),  BTN_SIZE_BIG, "↑", Color(0.3,0.6,1,0.7))
-	# Mine  — ação primária
-	_add_btn("action_mine",  Vector2(bx - 72, by),  BTN_SIZE,     "⛏", Color(0.9,0.6,0.1,0.75))
-	# Collect
-	_add_btn("action_collect",Vector2(bx + 72, by), BTN_SIZE,     "⬆", Color(0.2,0.8,0.4,0.7))
-	# Drag/Kick
-	_add_btn("action_drag",  Vector2(bx, by + 8),   BTN_SIZE,     "👊", Color(0.8,0.3,0.3,0.7))
+	# ── Botão DOWN separado (escada para baixo) ───────────────────────────
+	var joy_cx := vw * 0.12
+	var joy_cy := vh * 0.72 + JOY_RADIUS + 28.0
+	_add_hold_btn(root, "DWN", Vector2(joy_cx, joy_cy), 48.0,
+		"ui_down", Color(0.5, 0.5, 0.5, 0.55))
 
-	# ── Botões de UI (topo, menores) ────────────────────────────────────
-	var sm := 48.0
-	_add_btn("action_inventory",  Vector2(vp.x * 0.80, 28), sm, "🎒", Color(0.5,0.4,0.8,0.7))
-	_add_btn("action_equip_menu", Vector2(vp.x * 0.87, 28), sm, "🛡", Color(0.4,0.6,0.5,0.7))
-	_add_btn("action_pause",      Vector2(vp.x * 0.94, 28), sm, "⏸", Color(0.5,0.5,0.5,0.65))
+	# ── Botões de ação (canto inferior direito) ───────────────────────────
+	var bx := vw * 0.865
+	var by := vh * 0.68
 
-	# Prev / Next slot (ciclo de hotbar)
-	_add_btn("_slot_prev", Vector2(vp.x * 0.44, vp.y * 0.04), sm, "◀", Color(0.4,0.4,0.4,0.6))
-	_add_btn("_slot_next", Vector2(vp.x * 0.56, vp.y * 0.04), sm, "▶", Color(0.4,0.4,0.4,0.6))
+	# Pulo — grande, acima dos outros
+	_add_pulse_btn(root, "PULO", Vector2(bx, by - 80.0), 76.0,
+		"ui_up", Color(0.3, 0.55, 1.0, 0.75))
 
-	# Botão Down (escada / agachar) — pequeno, abaixo do joystick
-	_add_btn("ui_down", Vector2(_joy_origin.x, _joy_origin.y + JOY_RADIUS + 24), sm, "▼", Color(0.6,0.6,0.6,0.55))
+	# Mine — esquerda do cluster
+	_add_pulse_btn(root, "MIN", Vector2(bx - 76.0, by), 62.0,
+		"action_mine", Color(0.9, 0.6, 0.1, 0.78))
 
-# ─────────────────────────── INPUT ─────────────────────────────────────────
+	# Coletar — direita do cluster
+	_add_pulse_btn(root, "COL", Vector2(bx + 76.0, by), 62.0,
+		"action_collect", Color(0.25, 0.75, 0.35, 0.78))
 
-func _input(event: InputEvent) -> void:
+	# Arrastar/chute — centro baixo
+	_add_hold_btn(root, "ARR", Vector2(bx, by + 14.0), 62.0,
+		"action_drag", Color(0.75, 0.3, 0.3, 0.75))
+
+	# ── Slot prev / next (próximos ao hotbar no topo) ─────────────────────
+	_add_slot_btn(root, "<<", Vector2(vw * 0.395, 30.0), 44.0, -1)
+	_add_slot_btn(root, ">>", Vector2(vw * 0.605, 30.0), 44.0,  1)
+
+# ─────────────────────────── JOYSTICK ──────────────────────────────────────
+
+func _on_joy_gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
-		_on_touch(event)
-	elif event is InputEventScreenDrag:
-		_on_drag(event)
-
-func _on_touch(ev: InputEventScreenTouch) -> void:
-	var pos := ev.position
-	if ev.pressed:
-		# Joystick?
-		if _joy_finger < 0 and _dist(pos, _joy_origin) <= JOY_RADIUS * 1.5:
-			_joy_finger = ev.index
-			_joy_center = _joy_origin
-			return
-		# Botões?
-		for action in _btn_rects:
-			if _btn_rects[action].has_point(pos) and not _btn_fingers.has(action):
-				_btn_fingers[action] = ev.index
-				_press_action(action)
-				return
-	else:
-		# Soltou joystick?
-		if ev.index == _joy_finger:
-			_joy_finger = -1
-			_joy_center = _joy_origin
-			_joy_knob.position = _joy_origin - Vector2(JOY_KNOB_R, JOY_KNOB_R)
+		if event.pressed:
+			_joy_active   = true
+			_joy_origin   = event.position
+			_joy_knob_pos = event.position
+			_joy_draw.queue_redraw()
+		else:
+			_joy_active   = false
+			_joy_origin   = _joy_panel.size * 0.5
+			_joy_knob_pos = _joy_origin
+			_joy_draw.queue_redraw()
 			_release_joy()
-			return
-		# Soltou botão?
-		for action in _btn_fingers.keys():
-			if _btn_fingers[action] == ev.index:
-				_btn_fingers.erase(action)
-				_release_action(action)
-				return
+	elif event is InputEventScreenDrag and _joy_active:
+		var delta := event.position - _joy_origin
+		var dist  := delta.length()
+		if dist > JOY_RADIUS:
+			delta = delta.normalized() * JOY_RADIUS
+		_joy_knob_pos = _joy_origin + delta
+		_joy_draw.queue_redraw()
+		_update_joy(delta)
 
-func _on_drag(ev: InputEventScreenDrag) -> void:
-	if ev.index != _joy_finger:
-		return
-	var delta := ev.position - _joy_center
-	var dist  := delta.length()
-	if dist > JOY_RADIUS:
-		delta = delta.normalized() * JOY_RADIUS
-	_joy_knob.position = (_joy_center + delta) - Vector2(JOY_KNOB_R, JOY_KNOB_R)
+func _draw_joystick() -> void:
+	# Base ring
+	_joy_draw.draw_circle(_joy_origin, JOY_RADIUS,      Color(1, 1, 1, 0.14))
+	_joy_draw.draw_arc(_joy_origin, JOY_RADIUS, 0.0, TAU, 48, Color(0.8, 0.8, 0.8, 0.35), 2.0)
+	# Knob
+	var kc := Color(1, 1, 1, 0.55) if _joy_active else Color(0.7, 0.7, 0.7, 0.25)
+	_joy_draw.draw_circle(_joy_knob_pos, JOY_KNOB_R, kc)
 
-	# ── Horizontal ──
+func _update_joy(delta: Vector2) -> void:
 	if delta.x < -DEADZONE:
-		_set_action("ui_left",  true);  _set_action("ui_right", false)
+		_set("ui_left",  true);  _set("ui_right", false)
 	elif delta.x > DEADZONE:
-		_set_action("ui_right", true);  _set_action("ui_left",  false)
+		_set("ui_right", true);  _set("ui_left",  false)
 	else:
-		_set_action("ui_left",  false); _set_action("ui_right", false)
+		_set("ui_left",  false); _set("ui_right", false)
 
-	# ── Vertical ──
 	if delta.y < -DEADZONE:
-		_set_action("ui_up",   true);  _set_action("ui_down", false)
+		_set("ui_up",   true);  _set("ui_down", false)
 	elif delta.y > DEADZONE:
-		_set_action("ui_down", true);  _set_action("ui_up",   false)
+		_set("ui_down", true);  _set("ui_up",   false)
 	else:
-		_set_action("ui_up",   false); _set_action("ui_down", false)
+		_set("ui_up",   false); _set("ui_down", false)
 
 func _release_joy() -> void:
-	for a in ["ui_left","ui_right","ui_up","ui_down"]:
-		_set_action(a, false)
+	for a in ["ui_left", "ui_right", "ui_up", "ui_down"]:
+		_set(a, false)
 
-# ─────────────────────────── ACTION HELPERS ────────────────────────────────
+# ─────────────────────────── BUTTON HELPERS ────────────────────────────────
 
-func _press_action(action: String) -> void:
-	if action == "_slot_prev":
-		_cycle_slot(-1); return
-	if action == "_slot_next":
-		_cycle_slot(1);  return
-	_set_action(action, true)
-	# Botões que são "just_pressed": soltar no próximo frame
-	if action in ["action_mine","action_collect","action_drag","action_inventory","action_equip_menu","action_pause"]:
-		await get_tree().process_frame
-		await get_tree().process_frame
-		_set_action(action, false)
-		if _btn_fingers.has(action):
-			_btn_fingers.erase(action)
+# Botão que libera ao soltar (hold enquanto pressionado)
+func _add_hold_btn(parent: Control, label: String, center: Vector2,
+		size: float, action: String, color: Color) -> void:
+	var btn := _make_btn(parent, label, center, size, color)
+	btn.button_down.connect(func(): _set(action, true))
+	btn.button_up.connect(func():   _set(action, false))
 
-func _release_action(action: String) -> void:
-	if action in ["_slot_prev","_slot_next"]: return
-	_set_action(action, false)
+# Botão que dispara um pulso (just_pressed equivalent — 2 frames ligado)
+func _add_pulse_btn(parent: Control, label: String, center: Vector2,
+		size: float, action: String, color: Color) -> void:
+	var btn := _make_btn(parent, label, center, size, color)
+	btn.button_down.connect(func(): _pulse(action))
 
-func _set_action(action: String, pressed: bool) -> void:
+# Botão de slot (prev/next)
+func _add_slot_btn(parent: Control, label: String, center: Vector2,
+		size: float, dir: int) -> void:
+	var btn := _make_btn(parent, label, center, size, Color(0.4, 0.4, 0.4, 0.6))
+	btn.button_down.connect(func(): _cycle_slot(dir))
+
+func _make_btn(parent: Control, label: String, center: Vector2,
+		size: float, color: Color) -> Button:
+	var btn := Button.new()
+	btn.text = label
+	btn.size = Vector2(size, size)
+	btn.position = center - Vector2(size * 0.5, size * 0.5)
+
+	# Estilo flat com fundo colorido
+	var sn := StyleBoxFlat.new()
+	sn.bg_color = color
+	sn.corner_radius_top_left     = int(size * 0.4)
+	sn.corner_radius_top_right    = int(size * 0.4)
+	sn.corner_radius_bottom_left  = int(size * 0.4)
+	sn.corner_radius_bottom_right = int(size * 0.4)
+	var sp := sn.duplicate() as StyleBoxFlat
+	sp.bg_color = color.lightened(0.25)
+
+	btn.add_theme_stylebox_override("normal",   sn)
+	btn.add_theme_stylebox_override("hover",    sn)
+	btn.add_theme_stylebox_override("pressed",  sp)
+	btn.add_theme_stylebox_override("focus",    sn)
+	btn.add_theme_font_size_override("font_size", int(size * 0.28))
+	btn.add_theme_color_override("font_color",         Color(1, 1, 1, 1))
+	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+
+	parent.add_child(btn)
+	return btn
+
+# ─────────────────────────── ACTION ────────────────────────────────────────
+
+func _pulse(action: String) -> void:
+	if not InputMap.has_action(action): return
+	Input.action_press(action)
+	_pressed[action] = true
+	# Libera após 2 frames (suficiente para is_action_just_pressed detectar)
+	get_tree().create_timer(0.05).timeout.connect(func():
+		if _pressed.get(action, false):
+			Input.action_release(action)
+			_pressed[action] = false
+	)
+
+func _set(action: String, pressed: bool) -> void:
 	if not InputMap.has_action(action): return
 	if pressed:
 		if not _pressed.get(action, false):
@@ -181,73 +229,11 @@ func _set_action(action: String, pressed: bool) -> void:
 			_pressed[action] = false
 
 func _cycle_slot(dir: int) -> void:
-	# Aciona action_cycle_slot ou slot_X diretamente
-	var inv_node := get_tree().root.get_node_or_null("Inventory")
-	if inv_node and inv_node.has_method("get_active_slot_index"):
-		var cur : int = inv_node.get_active_slot_index()
+	var inv := get_tree().root.get_node_or_null("Inventory")
+	if inv and inv.has_method("get_active_slot_index"):
+		var cur  : int = inv.get_active_slot_index()
 		var next : int = wrapi(cur + dir, 0, 5)
-		var slot_action := "slot_%d" % (next + 1)
-		if InputMap.has_action(slot_action):
-			Input.action_press(slot_action)
-			await get_tree().process_frame
-			Input.action_release(slot_action)
+		var act  := "slot_%d" % (next + 1)
+		_pulse(act)
 	else:
-		# Fallback: cycle_slot toggle
-		Input.action_press("action_cycle_slot")
-		await get_tree().process_frame
-		Input.action_release("action_cycle_slot")
-
-# ─────────────────────────── UI HELPERS ────────────────────────────────────
-
-func _add_btn(action: String, center: Vector2, size: float, label: String, color: Color) -> void:
-	var half := size * 0.5
-	var rect  := Rect2(center - Vector2(half, half), Vector2(size, size))
-	_btn_rects[action] = rect
-
-	var ctrl := ColorRect.new()
-	ctrl.color = color
-	ctrl.size  = Vector2(size, size)
-	ctrl.position = rect.position
-	# Cantos arredondados via shader
-	ctrl.material = _rounded_material(size * 0.5)
-	add_child(ctrl)
-
-	var lbl := Label.new()
-	lbl.text = label
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lbl.add_theme_font_size_override("font_size", int(size * 0.38))
-	ctrl.add_child(lbl)
-	_labels[action] = lbl
-
-func _make_circle_control(center: Vector2, radius: float, color: Color) -> Control:
-	var ctrl := ColorRect.new()
-	ctrl.color    = color
-	ctrl.size     = Vector2(radius * 2, radius * 2)
-	ctrl.position = center - Vector2(radius, radius)
-	ctrl.material = _rounded_material(radius)
-	return ctrl
-
-func _rounded_material(radius: float) -> ShaderMaterial:
-	var mat  := ShaderMaterial.new()
-	var shdr := Shader.new()
-	shdr.code = """
-shader_type canvas_item;
-uniform float radius : hint_range(0,512) = 32.0;
-void fragment() {
-	vec2 size = 1.0 / TEXTURE_PIXEL_SIZE;
-	vec2 uv = UV * size;
-	vec2 center = size * 0.5;
-	vec2 d = abs(uv - center) - (center - vec2(radius));
-	float dist = length(max(d, vec2(0.0))) - radius;
-	float alpha = 1.0 - smoothstep(-1.0, 1.0, dist);
-	COLOR.a *= alpha;
-}
-"""
-	mat.shader = shdr
-	mat.set_shader_parameter("radius", radius)
-	return mat
-
-func _dist(a: Vector2, b: Vector2) -> float:
-	return (a - b).length()
+		_pulse("action_cycle_slot")
