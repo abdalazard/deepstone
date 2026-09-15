@@ -23,6 +23,8 @@ const XP_ORB_SCRIPT: GDScript = preload("res://scripts/xp_orb.gd")
 var _minimap_node: Node2D = null
 var _minimap_layer: CanvasLayer = null
 var _biome_announcement: Label = null
+var _combo_hud_layer: CanvasLayer = null
+var _combo_hud_label: Label = null
 var _last_biome: int = -99
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
@@ -55,6 +57,7 @@ func _ready() -> void:
 	_connect_exp_gained()
 	_setup_minimap()
 	_setup_biome_announcement()
+	_setup_combo_hud()
 
 # Geração do mundo em pedaços: os descritores são instanciados em lotes por
 # frame (linha a linha, superfície primeiro) para não travar a inicialização.
@@ -162,6 +165,13 @@ func _process(delta: float) -> void:
 			_minimap_layer.visible = show_minimap
 		if show_minimap and is_instance_valid(_minimap_node):
 			_minimap_node.queue_redraw()
+
+		# Posiciona o HUD de combo acima do jogador (espaço de tela)
+		if is_instance_valid(_combo_hud_label) and _combo_hud_label.visible:
+			var vp := get_viewport()
+			if vp:
+				var screen_pos: Vector2 = vp.get_canvas_transform() * player.global_position
+				_combo_hud_label.position = screen_pos + Vector2(-80, -90)
 
 		# Dinâmica de descoberta: na superfície a câmera sobe para mostrar mais
 		# céu e menos chão; ao descer para o primeiro andar do subsolo ela volta
@@ -592,6 +602,43 @@ func _setup_biome_announcement() -> void:
 	lbl.add_theme_constant_override("shadow_offset_y", 2)
 	cl.add_child(lbl)
 	_biome_announcement = lbl
+
+# ── Combo HUD (CanvasLayer — sempre iluminado, sem distorção) ────────────────
+func _setup_combo_hud() -> void:
+	var cl := CanvasLayer.new()
+	cl.name = "ComboHudLayer"
+	cl.layer = 15
+	add_child(cl)
+	_combo_hud_layer = cl
+	var lbl := Label.new()
+	lbl.name = "ComboHudLabel"
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.size = Vector2(160, 50)
+	lbl.visible = false
+	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	lbl.add_theme_constant_override("shadow_offset_x", 2)
+	lbl.add_theme_constant_override("shadow_offset_y", 2)
+	cl.add_child(lbl)
+	_combo_hud_label = lbl
+
+func show_combo_hud(count: int) -> void:
+	if not is_instance_valid(_combo_hud_label):
+		return
+	_combo_hud_label.text = "Combo %dx!" % count
+	# Font size em pixels de tela: base 22 no combo 3, +3 por combo extra, máx 44
+	var font_size: int = mini(22 + (count - 3) * 3, 44)
+	_combo_hud_label.add_theme_font_size_override("font_size", font_size)
+	# Cor: branco → laranja → vermelho com self_modulate para ignorar iluminação
+	var t: float = clampf(float(count - 3) / 8.0, 0.0, 1.0)
+	var col := Color(1.0, maxf(1.0 - t * 0.65, 0.25), maxf(0.3 - t * 0.25, 0.05), 1.0)
+	_combo_hud_label.add_theme_color_override("font_color", col)
+	_combo_hud_label.modulate = Color(1, 1, 1, 1)
+	_combo_hud_label.visible = true
+
+func hide_combo_hud() -> void:
+	if is_instance_valid(_combo_hud_label):
+		_combo_hud_label.visible = false
 
 func _check_biome_change(world_y: float) -> void:
 	var b: int = WorldConfig.biome_at(world_y)

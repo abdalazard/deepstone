@@ -34,7 +34,6 @@ var fall_damage_timer: float = 0.0
 # ── Sistema de Combo ──
 var _combo_count: int = 0
 var _combo_timer: float = 0.0
-var _combo_label: Label = null
 const COMBO_RESET_TIME: float = 2.0
 
 func can_take_fall_damage() -> bool:
@@ -106,17 +105,6 @@ func _ready() -> void:
 	helmet_light.visible = false
 	add_child(helmet_light)
 
-	# Label de combo (visível no mundo 2D sobre o personagem)
-	_combo_label = Label.new()
-	_combo_label.name = "ComboLabel"
-	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_combo_label.size = Vector2(128, 40)
-	_combo_label.position = Vector2(-64, -58)
-	_combo_label.visible = false
-	_combo_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
-	_combo_label.add_theme_constant_override("shadow_offset_x", 1)
-	_combo_label.add_theme_constant_override("shadow_offset_y", 1)
-	add_child(_combo_label)
 
 func _build_helmet_light_texture() -> Texture2D:
 	var w := 128
@@ -726,22 +714,14 @@ func _increment_combo() -> void:
 
 func _reset_combo() -> void:
 	_combo_count = 0
-	if is_instance_valid(_combo_label):
-		_combo_label.visible = false
+	var main = get_tree().current_scene if get_tree() else null
+	if main and main.has_method("hide_combo_hud"):
+		main.hide_combo_hud()
 
 func _show_combo_label() -> void:
-	if not is_instance_valid(_combo_label):
-		return
-	_combo_label.text = "Combo %dx!" % _combo_count
-	# Font size escala: 12 no combo 3, +2 por combo extra, máx 24 (em world-space, zoom x2 = 24-48px na tela)
-	var font_size: int = mini(12 + (_combo_count - 3) * 2, 24)
-	_combo_label.add_theme_font_size_override("font_size", font_size)
-	# Cor: branco → laranja → vermelho conforme o combo cresce
-	var t: float = clampf(float(_combo_count - 3) / 8.0, 0.0, 1.0)
-	var col := Color(1.0, maxf(1.0 - t * 0.6, 0.3), maxf(0.3 - t * 0.25, 0.05), 1.0)
-	_combo_label.add_theme_color_override("font_color", col)
-	_combo_label.modulate.a = 1.0
-	_combo_label.visible = true
+	var main = get_tree().current_scene if get_tree() else null
+	if main and main.has_method("show_combo_hud"):
+		main.show_combo_hud(_combo_count)
 
 func try_collect() -> void:
 	if has_node("PickupArea"):
