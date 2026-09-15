@@ -28,6 +28,8 @@ func _process(_delta) -> void:
 				queue_free()
 			return
 		if Input.is_action_just_pressed("action_mine"):
+			if get_tree().root.has_node("SoundManager"):
+				get_tree().root.get_node("SoundManager").play("game_start")
 			var main = get_tree().root.get_node_or_null("Main")
 			if main != null and not main.is_world_ready():
 				_waiting_for_world = true
@@ -43,6 +45,8 @@ func _process(_delta) -> void:
 				get_tree().reload_current_scene()
 	else:
 		if Input.is_action_just_pressed("action_mine") or Input.is_physical_key_pressed(KEY_ESCAPE):
+			if get_tree().root.has_node("SoundManager"):
+				get_tree().root.get_node("SoundManager").play("game_start")
 			get_tree().paused = false
 			queue_free()
 

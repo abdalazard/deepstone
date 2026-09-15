@@ -191,6 +191,8 @@ func _process(delta: float) -> void:
 
 func collect() -> void:
 	if not _can_be_collected(): return
+	if Engine.has_singleton("SoundManager") or (get_tree() and get_tree().root.has_node("SoundManager")):
+		get_tree().root.get_node("SoundManager").play("drop_item", -2.0)
 	var inv = _get_inv()
 	if not inv:
 		queue_free()

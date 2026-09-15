@@ -26,6 +26,7 @@ SaveManager="*res://scripts/save_manager.gd"
 Music="*res://scripts/music.gd"
 Lang="*res://scripts/language_manager.gd"
 
+SoundManager="*res://scripts/sound_manager.gd"
 [display]
 
 window/size/viewport_width=1280

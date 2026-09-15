@@ -1045,6 +1045,8 @@ func _open_equipment_swap(slot_type: String) -> void:
 
 # Forge Crafting Handlers
 func _on_craft_pickaxe() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_pickaxe():
@@ -1054,6 +1056,8 @@ func _on_craft_pickaxe() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 1 Ferro, 2 Madeiras e 1 Pedra."), "pickaxe")
 
 func _on_craft_lamp() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_lamp():
@@ -1063,6 +1067,8 @@ func _on_craft_lamp() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 3 Carvões e 2 Ferros."), "lamp")
 
 func _on_craft_ladder() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_ladders():
@@ -1072,6 +1078,8 @@ func _on_craft_ladder() -> void:
 			show_toast(tr("Sem madeira suficiente! Requer 1 Tronco de Madeira."), "wood")
 
 func _on_craft_plank() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_planks():
@@ -1081,6 +1089,8 @@ func _on_craft_plank() -> void:
 			show_toast(tr("Sem madeira suficiente! Requer 1 Tronco de Madeira."), "wood")
 
 func _on_craft_column() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_column():
@@ -1090,6 +1100,8 @@ func _on_craft_column() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 3 Lamas e 3 Pedras."), "plank")
 
 func _on_craft_slab() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_slab():
@@ -1099,6 +1111,8 @@ func _on_craft_slab() -> void:
 			show_toast(tr("Recursos insuficientes! Requer 2 Lamas e 2 Pedras."), "plank")
 
 func _on_craft_portable_forge() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv:
 		if inv.craft_portable_forge():
@@ -1853,6 +1867,8 @@ func _surface_return_cost() -> int:
 	return maxi(30, depth_m)
 
 func _on_death_restart() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	if death_panel:
 		death_panel.visible = false
 	var inv = _get_inv()
@@ -1876,6 +1892,8 @@ func _on_save_pressed() -> void:
 	close_pause()
 
 func _on_restart_pressed() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	var cost: int = _surface_return_cost()
 	if inv and inv.coins < cost:
@@ -1891,6 +1909,8 @@ func _on_restart_pressed() -> void:
 	close_pause()
 
 func _on_reset_mine_pressed() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").reset_mine_completely()
 	close_config()
@@ -1938,6 +1958,8 @@ func _on_shop_tab_sell() -> void:
 	update_shop_ui()
 
 func _on_sell_all_minerals() -> void:
+	if get_tree().root.has_node("SoundManager"):
+		get_tree().root.get_node("SoundManager").play("game_start")
 	var inv = _get_inv()
 	if inv and inv.sell_all_minerals() > 0:
 		update_shop_ui()

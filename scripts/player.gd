@@ -872,6 +872,8 @@ func try_mine() -> void:
 		
 	is_mining = true
 	mine_timer = 0.70
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play("picking", -4.0)
 	
 	# Britadeira (Jackhammer action) when pressing DOWN and stuck inside a block
 	if Input.is_action_pressed("ui_down") and _is_overlapping_solid(global_position):
