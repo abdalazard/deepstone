@@ -31,6 +31,12 @@ const KNOCKBACK_DECAY: float = 500.0
 # cobre o dano (multiplicado) separadamente — só o primeiro bloco aplica o dano.
 var fall_damage_timer: float = 0.0
 
+# ── Sistema de Combo ──
+var _combo_count: int = 0
+var _combo_timer: float = 0.0
+var _combo_label: Label = null
+const COMBO_RESET_TIME: float = 2.0
+
 func can_take_fall_damage() -> bool:
 	if fall_damage_timer > 0.0:
 		return false
@@ -99,6 +105,18 @@ func _ready() -> void:
 	helmet_light.energy = 1.3
 	helmet_light.visible = false
 	add_child(helmet_light)
+
+	# Label de combo (visível no mundo 2D sobre o personagem)
+	_combo_label = Label.new()
+	_combo_label.name = "ComboLabel"
+	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_combo_label.size = Vector2(128, 40)
+	_combo_label.position = Vector2(-64, -58)
+	_combo_label.visible = false
+	_combo_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
+	_combo_label.add_theme_constant_override("shadow_offset_x", 1)
+	_combo_label.add_theme_constant_override("shadow_offset_y", 1)
+	add_child(_combo_label)
 
 func _build_helmet_light_texture() -> Texture2D:
 	var w := 128
@@ -220,6 +238,12 @@ func _process(delta: float) -> void:
 		mine_timer -= delta
 		if mine_timer <= 0:
 			is_mining = false
+
+	# Decrementa timer do combo; reseta ao expirar
+	if _combo_timer > 0.0:
+		_combo_timer -= delta
+		if _combo_timer <= 0.0:
+			_reset_combo()
 	
 	if is_mining:
 		anim_state = "dig"
@@ -693,6 +717,32 @@ func _find_nearby_random_rock(tolerance: float) -> Node:
 			best = rock
 	return best
 
+# ── Combo system ──────────────────────────────────────────────────────────
+func _increment_combo() -> void:
+	_combo_count += 1
+	_combo_timer = COMBO_RESET_TIME
+	if _combo_count >= 3:
+		_show_combo_label()
+
+func _reset_combo() -> void:
+	_combo_count = 0
+	if is_instance_valid(_combo_label):
+		_combo_label.visible = false
+
+func _show_combo_label() -> void:
+	if not is_instance_valid(_combo_label):
+		return
+	_combo_label.text = "Combo %dx!" % _combo_count
+	# Font size escala: 12 no combo 3, +2 por combo extra, máx 24 (em world-space, zoom x2 = 24-48px na tela)
+	var font_size: int = mini(12 + (_combo_count - 3) * 2, 24)
+	_combo_label.add_theme_font_size_override("font_size", font_size)
+	# Cor: branco → laranja → vermelho conforme o combo cresce
+	var t: float = clampf(float(_combo_count - 3) / 8.0, 0.0, 1.0)
+	var col := Color(1.0, maxf(1.0 - t * 0.6, 0.3), maxf(0.3 - t * 0.25, 0.05), 1.0)
+	_combo_label.add_theme_color_override("font_color", col)
+	_combo_label.modulate.a = 1.0
+	_combo_label.visible = true
+
 func try_collect() -> void:
 	if has_node("PickupArea"):
 		for body in $PickupArea.get_overlapping_bodies():
@@ -846,7 +896,10 @@ func try_mine() -> void:
 			return # Shield ladder rung from lateral swings
 		if target_collider.has_method("hit"):
 			if target_collider is Rock:
+				var pre_hp: int = int(target_collider.hp) if "hp" in target_collider else 1
 				target_collider.hit(inv.get_pickaxe_damage() if inv else 1)
+				if "hp" in target_collider and int(target_collider.hp) <= 0 and pre_hp > 0:
+					_increment_combo()
 			else:
 				target_collider.hit()
 		elif target_collider.has_method("collect"):

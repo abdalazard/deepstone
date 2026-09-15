@@ -328,6 +328,19 @@ func generate_world() -> void:
 			_unbreakable_blocks[Vector2i(lx, line_y)] = true
 		line_y += randi_range(8, 13)
 
+	# ══════════════════════════════════════════════════════════════════
+	#  Pilares verticais de blocos rígidos (obstáculos perpendiculares)
+	#  Dispersos pelo mundo inteiro para forçar desvios laterais.
+	# ══════════════════════════════════════════════════════════════════
+	for _pi in range(90):
+		var px: int = randi_range(2, GRID_W - 3)
+		var py_top: int = randi_range(5, GRID_H - 8)
+		var ph: int = randi_range(3, 7)
+		for pdy in range(ph):
+			var pcoord := Vector2i(px, py_top + pdy)
+			if pcoord.y < GRID_H - 1:
+				_unbreakable_blocks[pcoord] = true
+
 	# ── Cavernas naturais ──
 	for chamber in cave_chambers:
 		var cx2 = int(chamber.center.x)
@@ -462,18 +475,22 @@ func _spawn_cave_rocks(cave_cells: Dictionary, excavated_cells: Dictionary, unbr
 		_place_rock_on_bedrock(coord, unbreakable_blocks, seen_cols)
 
 func _place_rock_on_bedrock(coord: Vector2i, unbreakable_blocks: Dictionary, seen_cols: Dictionary) -> void:
-	var below = Vector2i(coord.x, coord.y + 1)
-	if not unbreakable_blocks.has(below):
+	var below := Vector2i(coord.x, coord.y + 1)
+	# Coloca pedra sobre qualquer piso sólido (inquebrável OU rocha/terra normal)
+	var has_solid_floor: bool = unbreakable_blocks.has(below) or \
+		(not _cave_cells.has(below) and not _excavated_cells.has(below) and \
+		 below.x > 0 and below.x < 29 and below.y > 0 and below.y < 599)
+	if not has_solid_floor:
 		return
-	# Equilíbrio: ~45% dos pontos elegíveis recebem pedra (populado, não lotado)
-	if randf() > 0.45:
+	# ~18%: espalha mais do que antes, mas sem exagero
+	if randf() > 0.18:
 		return
-	# Espaçamento: não colocar pedras coladas umas às outras (pelo menos 1 coluna de folga)
+	# Espaçamento mínimo de 2 colunas entre pedras decorativas
 	if seen_cols.has(below.x - 1) or seen_cols.has(below.x) or seen_cols.has(below.x + 1):
 		return
 	seen_cols[below.x] = true
-	var rock = RANDOM_ROCK_SCENE.instantiate()
-	rock.position = Vector2(below.x * 32.0 + 16.0, below.y * 32.0 + 112.0) # base do nó = topo do bloco
+	var rock := RANDOM_ROCK_SCENE.instantiate()
+	rock.position = Vector2(below.x * 32.0 + 16.0, below.y * 32.0 + 112.0)
 	rock.z_index = 1
 	add_child(rock)
 
@@ -490,8 +507,8 @@ func _setup_minimap() -> void:
 	var bg := ColorRect.new()
 	bg.name = "MinimapBg"
 	bg.color = Color(0.05, 0.05, 0.05, 0.80)
-	bg.size = Vector2(102, 242)
-	bg.position = Vector2(1162, 78)
+	bg.size = Vector2(182, 422)
+	bg.position = Vector2(1082, 78)
 	cl.add_child(bg)
 
 	var mm := Node2D.new()
@@ -503,14 +520,14 @@ func _setup_minimap() -> void:
 func _draw_minimap() -> void:
 	if not is_instance_valid(player):
 		return
-	const MAP_X: float = 1163.0
+	const MAP_X: float = 1083.0
 	const MAP_Y: float = 79.0
-	const MAP_W: float = 100.0
-	const MAP_H: float = 240.0
+	const MAP_W: float = 180.0
+	const MAP_H: float = 420.0
 	const GRID_W_F: float = 30.0
 	const GRID_H_F: float = 600.0
-	const CELL_W: float = MAP_W / GRID_W_F  # ~3.33 px por coluna
-	const CELL_H: float = MAP_H / GRID_H_F  # ~0.67 px por linha
+	const CELL_W: float = MAP_W / GRID_W_F  # 6.0 px por coluna
+	const CELL_H: float = MAP_H / GRID_H_F  # 0.70 px por linha
 
 	# Borda
 	_minimap_node.draw_rect(Rect2(MAP_X, MAP_Y, MAP_W, MAP_H), Color(0.55, 0.50, 0.42, 0.9), false, 1.5)
@@ -579,20 +596,26 @@ func _check_biome_change(world_y: float) -> void:
 	_last_biome = b
 	if b < 0:
 		return # Superfície — sem anúncio
-	var names := [
-		tr("Vale do Quartzo Cantante"),
-		tr("Além das Neves Eternas"),
-		tr("A Ascensão Ardente")
-	]
-	var colors := [Color(0.92, 0.78, 0.48), Color(0.55, 0.88, 1.0), Color(1.0, 0.52, 0.22)]
-	if b >= names.size():
-		return
-	if not is_instance_valid(_biome_announcement):
-		return
-	_biome_announcement.text = names[b]
-	_biome_announcement.add_theme_color_override("font_color", colors[b])
-	# Mata tween anterior e anima
-	var tw := create_tween()
-	tw.tween_property(_biome_announcement, "modulate:a", 1.0, 0.45)
-	tw.tween_interval(1.8)
-	tw.tween_property(_biome_announcement, "modulate:a", 0.0, 0.55)
+	# Aguarda 1 segundo; não mostra se o tutorial (StartScreen) estiver aberto
+	var capture_b: int = b
+	get_tree().create_timer(1.0).timeout.connect(func() -> void:
+		var scene = get_tree().current_scene if get_tree() else null
+		if scene and scene.get_node_or_null("StartScreen") != null:
+			return # Tutorial aberto — suprime anúncio
+		if not is_instance_valid(_biome_announcement):
+			return
+		var names2 := [
+			tr("Vale do Quartzo Cantante"),
+			tr("Além das Neves Eternas"),
+			tr("A Ascensão Ardente")
+		]
+		var colors2 := [Color(0.92, 0.78, 0.48), Color(0.55, 0.88, 1.0), Color(1.0, 0.52, 0.22)]
+		if capture_b >= names2.size():
+			return
+		_biome_announcement.text = names2[capture_b]
+		_biome_announcement.add_theme_color_override("font_color", colors2[capture_b])
+		var tw := create_tween()
+		tw.tween_property(_biome_announcement, "modulate:a", 1.0, 0.45)
+		tw.tween_interval(1.8)
+		tw.tween_property(_biome_announcement, "modulate:a", 0.0, 0.55)
+	)
