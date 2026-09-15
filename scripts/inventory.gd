@@ -295,6 +295,7 @@ const EQUIPMENT_DEFS = {
 		"level_req": 0,
 		"max_durability": 100,
 		"mine_speed_mult": 1.0,
+		"reach": 32.0,
 		"color": Color(0.86, 0.55, 0.3),
 		"icon": "pickaxe"
 	},
@@ -307,6 +308,7 @@ const EQUIPMENT_DEFS = {
 		"level_req": 6,
 		"max_durability": 160,
 		"mine_speed_mult": 1.25,
+		"reach": 48.0,
 		"color": Color(0.68, 0.72, 0.8),
 		"icon": "pickaxe"
 	},
@@ -319,6 +321,7 @@ const EQUIPMENT_DEFS = {
 		"level_req": 11,
 		"max_durability": 250,
 		"mine_speed_mult": 1.6,
+		"reach": 64.0,
 		"color": Color(1.0, 0.82, 0.25),
 		"icon": "pickaxe"
 	},
@@ -619,6 +622,11 @@ func get_pickaxe_speed_multiplier() -> float:
 func get_pickaxe_damage() -> int:
 	if not has_pickaxe: return 1
 	return 1 + pickaxe_upgrade_level
+
+func get_pickaxe_reach() -> float:
+	var def = EQUIPMENT_DEFS.get(equipped_pickaxe, {})
+	var base: float = def.get("reach", 32.0)
+	return base + float(pickaxe_upgrade_level) * 2.0
 
 func get_strength() -> int:
 	return get_pickaxe_damage() + get_glove_def().get("strength_bonus", 0) + glove_upgrade_level

@@ -833,7 +833,8 @@ func try_mine() -> void:
 				if is_instance_valid(r):
 					excludes.append(r.get_rid())
 	
-	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * MINE_DISTANCE)
+	var _mine_reach: float = inv.get_pickaxe_reach() if (inv and inv.has_method("get_pickaxe_reach")) else 32.0
+	var query = PhysicsRayQueryParameters2D.create(global_position, global_position + last_direction * _mine_reach)
 	query.collide_with_bodies = true
 	query.collide_with_areas = true
 	query.hit_from_inside = true
@@ -850,9 +851,9 @@ func try_mine() -> void:
 		# Pontos de busca: apenas na direção pretendida
 		# Checks verticais (pés/cabeça) só quando cima/baixo foi pressionado
 		var check_points: Array[Vector2] = [
-			global_position + last_direction * 24.0,
-			global_position + last_direction * 36.0,
-			global_position + last_direction * 14.0,
+			global_position + last_direction * (_mine_reach * 0.75),
+			global_position + last_direction * _mine_reach,
+			global_position + last_direction * (_mine_reach * 0.44),
 		]
 		if has_dir and dir.y != 0:
 			check_points.append(global_position + Vector2(0.0, 16.0 * sign(dir.y)))
