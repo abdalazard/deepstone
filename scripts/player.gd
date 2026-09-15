@@ -881,13 +881,18 @@ func try_mine() -> void:
 		if on_ladder and last_direction.x != 0 and _is_ladder_segment(target_collider):
 			return # Shield ladder rung from lateral swings
 		if target_collider.has_method("hit"):
+			var _main = get_tree().current_scene if get_tree() else null
 			if target_collider is Rock:
 				var pre_hp: int = int(target_collider.hp) if "hp" in target_collider else 1
 				target_collider.hit(inv.get_pickaxe_damage() if inv else 1)
+				if _main and _main.has_method("block_hit_feedback"):
+					_main.block_hit_feedback()
 				if "hp" in target_collider and int(target_collider.hp) <= 0 and pre_hp > 0:
 					_increment_combo()
 			else:
 				target_collider.hit()
+				if _main and _main.has_method("block_hit_feedback"):
+					_main.block_hit_feedback()
 		elif target_collider.has_method("collect"):
 			target_collider.collect()
 

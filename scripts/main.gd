@@ -28,6 +28,7 @@ var _combo_hud_layer: CanvasLayer = null
 var _combo_hud_label: Label = null
 var _active_combo_label: Label = null  # label flutuante atual (se ainda vive)
 var _depth_label: Label = null
+var _hit_flash: ColorRect = null
 var _last_biome: int = -99
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
@@ -61,6 +62,7 @@ func _ready() -> void:
 	_setup_minimap()
 	_setup_biome_announcement()
 	_setup_combo_hud()
+	_setup_hit_flash()
 
 # Geração do mundo em pedaços: os descritores são instanciados em lotes por
 # frame (linha a linha, superfície primeiro) para não travar a inicialização.
@@ -634,6 +636,37 @@ func _setup_biome_announcement() -> void:
 	_biome_announcement = lbl
 
 # ── Combo HUD (CanvasLayer — sempre iluminado, sem distorção) ────────────────
+func _setup_hit_flash() -> void:
+	var cl := CanvasLayer.new()
+	cl.name = "HitFlashLayer"
+	cl.layer = 20
+	add_child(cl)
+	var cr := ColorRect.new()
+	cr.name = "HitFlash"
+	cr.color = Color(1, 1, 1, 0.0)
+	cr.size = Vector2(1280, 720)
+	cr.position = Vector2.ZERO
+	cr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cl.add_child(cr)
+	_hit_flash = cr
+
+func block_hit_feedback() -> void:
+	# Flash branco
+	if is_instance_valid(_hit_flash):
+		_hit_flash.color = Color(1, 1, 1, 0.18)
+		var tfl := _hit_flash.create_tween()
+		tfl.tween_property(_hit_flash, "color:a", 0.0, 0.10)
+	# Shake horizontal na câmera do player
+	if is_instance_valid(player):
+		var cam = player.get_node_or_null("Camera2D")
+		if is_instance_valid(cam):
+			var tw := cam.create_tween()
+			var strength: float = 3.0
+			tw.tween_property(cam, "offset", Vector2(strength, 0), 0.03)
+			tw.tween_property(cam, "offset", Vector2(-strength, 0), 0.03)
+			tw.tween_property(cam, "offset", Vector2(strength * 0.5, 0), 0.03)
+			tw.tween_property(cam, "offset", Vector2.ZERO, 0.03)
+
 func _setup_combo_hud() -> void:
 	var cl := CanvasLayer.new()
 	cl.name = "ComboHudLayer"
