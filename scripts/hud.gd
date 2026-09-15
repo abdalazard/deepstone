@@ -1784,7 +1784,9 @@ func _refresh_inventory_hotbar_setup() -> void:
 		vbox.add_child(num_label)
 		
 		panel.gui_input.connect(func(event):
-			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			var is_click := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+			var is_tap   := event is InputEventScreenTouch and event.pressed
+			if is_click or is_tap:
 				selected_config_slot = i
 				_refresh_inventory_hotbar_setup()
 				if is_instance_valid(hotbar_setup_hint):
@@ -2243,6 +2245,15 @@ func setup_hotbar() -> void:
 		var slot = _create_slot_panel(def, true)
 		hotbar.add_child(slot)
 		slots.append(slot)
+		# Touch: tap seleciona slot; long-press abre config de atalho
+		var slot_idx := i
+		slot.gui_input.connect(func(event: InputEvent):
+			if event is InputEventScreenTouch and event.pressed:
+				Input.action_press("slot_%d" % (slot_idx + 1))
+				get_tree().create_timer(0.05).timeout.connect(func():
+					Input.action_release("slot_%d" % (slot_idx + 1))
+				)
+		)
 
 func setup_chest_grid() -> void:
 	chest_slots.clear()
@@ -2408,20 +2419,20 @@ func _create_chest_slot_card(def: Dictionary, idx: int) -> PanelContainer:
 	return card
 
 func _on_slot_gui_input(event: InputEvent, idx: int) -> void:
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				if idx >= 0 and idx < chest_items_def.size():
-					var def = chest_items_def[idx]
-					var item_k = def.get("key", "")
-					var inv = _get_inv()
-					if item_k != "" and selected_config_slot >= 0 and inv \
-							and "hotbar_slots" in inv and selected_config_slot < inv.hotbar_slots.size():
-						inv.set_hotbar_slot(selected_config_slot, item_k)
-						update_ui()
-						_refresh_inventory_hotbar_setup()
-						show_toast(tr("Atalho %d: %s") % [selected_config_slot + 1, tr(def.get("name", item_k))], item_k)
-						selected_config_slot = -1
+	var is_click := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	var is_tap   := event is InputEventScreenTouch and event.pressed
+	if is_click or is_tap:
+		if idx >= 0 and idx < chest_items_def.size():
+			var def = chest_items_def[idx]
+			var item_k = def.get("key", "")
+			var inv = _get_inv()
+			if item_k != "" and selected_config_slot >= 0 and inv \
+					and "hotbar_slots" in inv and selected_config_slot < inv.hotbar_slots.size():
+				inv.set_hotbar_slot(selected_config_slot, item_k)
+				update_ui()
+				_refresh_inventory_hotbar_setup()
+				show_toast(tr("Atalho %d: %s") % [selected_config_slot + 1, tr(def.get("name", item_k))], item_k)
+				selected_config_slot = -1
 				select_slot(idx)
 				drag_start_idx = idx
 			else:

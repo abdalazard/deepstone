@@ -812,9 +812,9 @@ func teleport_to_biome(biome_id: int) -> void:
 		# Fallback: primeira linha do bioma ao centro
 		target_pos = Vector2(15 * TILE + 16.0, start_row * TILE + ORIGIN_Y + 64.0)
 
-	var player := get_tree().root.get_node_or_null("Player")
-	if not player:
-		player = get_tree().current_scene.get_node_or_null("Player")
-	if player:
+	# player é filho direto de Main ($Player)
+	if is_instance_valid(player):
 		player.position = target_pos
-		get_node_or_null("Camera2D").position = target_pos if get_node_or_null("Camera2D") else Vector2.ZERO
+		var cam = get_node_or_null("Camera2D")
+		if cam:
+			cam.global_position = target_pos
