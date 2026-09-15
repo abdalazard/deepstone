@@ -8,6 +8,7 @@ var mined_blocks: Dictionary = {}
 var placed_torches_data: Array = []
 var placed_ropes_data: Array = []
 var placed_planks_data: Array = []
+var placed_slabs_data: Array = []
 var placed_forges_data: Array = []
 var death_markers_data: Array = []
 var player_saved_pos: Vector2 = Vector2.ZERO
@@ -54,6 +55,7 @@ func clear_save() -> void:
 	placed_torches_data.clear()
 	placed_ropes_data.clear()
 	placed_planks_data.clear()
+	placed_slabs_data.clear()
 	placed_forges_data.clear()
 	death_markers_data.clear()
 	has_loaded_save = false
@@ -154,6 +156,13 @@ func save_game(show_notify: bool = false) -> void:
 				planks_list.append({"x": p.global_position.x, "y": p.global_position.y})
 	if planks_list.is_empty() and not placed_planks_data.is_empty():
 		planks_list = placed_planks_data
+	var slabs_list = []
+	if tree:
+		for s in tree.get_nodes_in_group("placed_slabs"):
+			if is_instance_valid(s):
+				slabs_list.append({"x": s.global_position.x, "y": s.global_position.y})
+	if slabs_list.is_empty() and not placed_slabs_data.is_empty():
+		slabs_list = placed_slabs_data
 		
 	var forges_list = []
 	if tree:
@@ -203,6 +212,7 @@ func save_game(show_notify: bool = false) -> void:
 		"placed_torches": torches_list,
 		"placed_ropes": ropes_list,
 		"placed_planks": planks_list,
+		"placed_slabs": slabs_list,
 		"placed_forges": forges_list,
 		"death_markers": death_markers_data
 	}
@@ -332,6 +342,7 @@ func load_game() -> bool:
 	placed_torches_data = data.get("placed_torches", [])
 	placed_ropes_data = data.get("placed_ropes", [])
 	placed_planks_data = data.get("placed_planks", [])
+	placed_slabs_data = data.get("placed_slabs", [])
 	placed_forges_data = data.get("placed_forges", [])
 	death_markers_data = data.get("death_markers", [])
 	

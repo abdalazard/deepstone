@@ -556,7 +556,7 @@ func place_plank() -> void:
 	elif Input.is_action_pressed("ui_up"): grid_y -= 1
 	var place_y = grid_y * 32.0 + 117.0
 	platform.position = Vector2(place_x, place_y)
-	platform.add_to_group("placed_planks")
+	platform.add_to_group("placed_slabs")
 	get_tree().current_scene.add_child(platform)
 	var sm = _get_save()
 	if sm:
@@ -625,7 +625,7 @@ func place_slab() -> void:
 	
 	var platform = platform_scene.instantiate()
 	platform.position = Vector2(place_x, place_y)
-	platform.add_to_group("placed_planks")
+	platform.add_to_group("placed_slabs")
 	get_tree().current_scene.add_child(platform)
 	# Barra de apoio ilustrativa filha da laje (some junto quando a laje é quebrada)
 	_spawn_slab_bar(platform)

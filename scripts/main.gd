@@ -10,6 +10,7 @@ const ROPE_SCENE = preload("res://scenes/environment/rope_segment.tscn")
 const SIGNPOST_SCENE = preload("res://scenes/environment/signpost.tscn")
 const UNBREAKABLE_SCENE = preload("res://scenes/cave/unbreakable_rock.tscn")
 const PLANK_SCENE = preload("res://scenes/environment/plank.tscn")
+const SLAB_SCENE = preload("res://scenes/environment/brick_floor.tscn")
 const STONE_SCENE = preload("res://scenes/cave/stone.tscn")
 const TREE_SCENE = preload("res://scenes/environment/tree.tscn")
 const FORGE_SCENE = preload("res://scenes/environment/forge.tscn")
@@ -279,6 +280,12 @@ func restore_placed_items() -> void:
 		plank.position = Vector2(p.x, p.y)
 		plank.add_to_group("placed_planks")
 		add_child(plank)
+
+	for sl in SaveManager.placed_slabs_data:
+		var slab = SLAB_SCENE.instantiate()
+		slab.position = Vector2(sl.x, sl.y)
+		slab.add_to_group("placed_slabs")
+		add_child(slab)
 
 	for f in SaveManager.placed_forges_data:
 		var forge = FORGE_SCENE.instantiate()

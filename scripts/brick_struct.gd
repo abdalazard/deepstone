@@ -3,7 +3,7 @@ extends StaticBody2D
 var hp: int = 1
 
 func _ready() -> void:
-	add_to_group("placed_planks")
+	add_to_group("placed_slabs")
 
 func hit() -> void:
 	hp -= 1
