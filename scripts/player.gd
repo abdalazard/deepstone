@@ -709,6 +709,40 @@ func _increment_combo() -> void:
 	_combo_timer = COMBO_RESET_TIME
 	if _combo_count >= 3:
 		_show_combo_label()
+	if _combo_count > 0 and _combo_count % 10 == 0:
+		_pickaxe_shock_effect()
+
+func _pickaxe_shock_effect() -> void:
+	# Flash elétrico ciano no sprite + pop de escala a cada 10 combos
+	var sprite = get_node_or_null("Sprite2D")
+	if not is_instance_valid(sprite):
+		return
+	var original_mod: Color = sprite.modulate
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate", Color(0.3, 0.95, 1.0, 1.0), 0.04)
+	tw.tween_property(sprite, "scale", Vector2(1.25, 1.25), 0.06).set_ease(Tween.EASE_OUT)
+	tw.tween_property(sprite, "modulate", Color(0.7, 1.0, 1.0, 1.0), 0.06)
+	tw.tween_property(sprite, "scale", Vector2(1.0, 1.0), 0.10).set_ease(Tween.EASE_IN)
+	tw.tween_property(sprite, "modulate", original_mod, 0.08)
+	# Partículas de choque na posição da picareta
+	var sparks := CPUParticles2D.new()
+	add_child(sparks)
+	sparks.position = Vector2(12.0 * sign(velocity.x if velocity.x != 0 else 1.0), -8.0)
+	sparks.emitting = true
+	sparks.one_shot = true
+	sparks.explosiveness = 0.95
+	sparks.amount = 14
+	sparks.lifetime = 0.35
+	sparks.spread = 70.0
+	sparks.initial_velocity_min = 40.0
+	sparks.initial_velocity_max = 90.0
+	sparks.gravity = Vector2(0, 120)
+	sparks.scale_amount_min = 1.5
+	sparks.scale_amount_max = 3.0
+	sparks.color = Color(0.4, 0.9, 1.0, 1.0)
+	var tw2 := create_tween()
+	tw2.tween_interval(0.6)
+	tw2.tween_callback(func(): if is_instance_valid(sparks): sparks.queue_free())
 
 func get_combo_xp_bonus() -> float:
 	return float(_combo_count) * 0.01

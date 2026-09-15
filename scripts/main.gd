@@ -171,7 +171,7 @@ func _process(delta: float) -> void:
 		if show_minimap and is_instance_valid(_minimap_node):
 			_minimap_node.queue_redraw()
 		if is_instance_valid(_depth_label):
-			var _depth_m: int = maxi(0, int((py - WorldConfig.SURFACE_Y) / 32.0 / 2.0))
+			var _depth_m: int = maxi(0, int((py - WorldConfig.SURFACE_Y) / 32.0))
 			_depth_label.text = "%d m" % _depth_m
 			_depth_label.visible = show_minimap
 
