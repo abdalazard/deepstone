@@ -844,13 +844,17 @@ func try_mine() -> void:
 		
 	# If raycast didn't find a minable/collectible target, check point queries along aim direction and at player position
 	if not target_collider or (not target_collider.has_method("hit") and not target_collider.has_method("collect")):
-		var check_points = [
+		# Pontos de busca: apenas na direção pretendida
+		# Checks verticais (pés/cabeça) só quando cima/baixo foi pressionado
+		var check_points: Array[Vector2] = [
 			global_position + last_direction * 24.0,
 			global_position + last_direction * 36.0,
-			global_position + Vector2(0, 16.0), # Feet / ground
-			global_position + Vector2(0, -8.0), # Torso/head
-			global_position # Exact center
+			global_position + last_direction * 14.0,
 		]
+		if has_dir and dir.y != 0:
+			check_points.append(global_position + Vector2(0.0, 16.0 * sign(dir.y)))
+			check_points.append(global_position + Vector2(0.0, 8.0 * sign(dir.y)))
+		check_points.append(global_position) # Centro (bloco sobreposto / jackhammer)
 		for pt in check_points:
 			var pt_query = PhysicsPointQueryParameters2D.new()
 			pt_query.position = pt
