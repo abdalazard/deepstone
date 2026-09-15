@@ -26,6 +26,8 @@ var _minimap_layer: CanvasLayer = null
 var _biome_announcement: Label = null
 var _combo_hud_layer: CanvasLayer = null
 var _combo_hud_label: Label = null
+var _active_combo_label: Label = null  # label flutuante atual (se ainda vive)
+var _depth_label: Label = null
 var _last_biome: int = -99
 
 var sky_color: Color = Color(0.4, 0.65, 0.9, 1.0)
@@ -166,6 +168,10 @@ func _process(delta: float) -> void:
 			_minimap_layer.visible = show_minimap
 		if show_minimap and is_instance_valid(_minimap_node):
 			_minimap_node.queue_redraw()
+		if is_instance_valid(_depth_label):
+			var _depth_m: int = maxi(0, int((py - WorldConfig.SURFACE_Y) / 32.0 / 2.0))
+			_depth_label.text = "%d m" % _depth_m
+			_depth_label.visible = show_minimap
 
 		# Dinâmica de descoberta: na superfície a câmera sobe para mostrar mais
 		# céu e menos chão; ao descer para o primeiro andar do subsolo ela volta
@@ -517,13 +523,28 @@ func _setup_minimap() -> void:
 	add_child(cl)
 	_minimap_layer = cl
 
-	# Fundo sólido
+	# Fundo sólido — minimapa sobe 25px para caber o label de profundidade
 	var bg := ColorRect.new()
 	bg.name = "MinimapBg"
 	bg.color = Color(0.05, 0.05, 0.05, 0.80)
 	bg.size = Vector2(182, 212)
-	bg.position = Vector2(1089, 499)
+	bg.position = Vector2(1089, 474)
 	cl.add_child(bg)
+
+	# Label de profundidade abaixo do minimapa
+	var dl := Label.new()
+	dl.name = "DepthLabel"
+	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dl.size = Vector2(182, 20)
+	dl.position = Vector2(1089, 689)
+	dl.add_theme_font_size_override("font_size", 12)
+	dl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 0.9))
+	dl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	dl.add_theme_constant_override("shadow_offset_x", 1)
+	dl.add_theme_constant_override("shadow_offset_y", 1)
+	dl.text = "0 m"
+	cl.add_child(dl)
+	_depth_label = dl
 
 	var mm := Node2D.new()
 	mm.name = "MinimapNode"
@@ -535,7 +556,7 @@ func _draw_minimap() -> void:
 	if not is_instance_valid(player):
 		return
 	const MAP_X: float = 1090.0
-	const MAP_Y: float = 500.0
+	const MAP_Y: float = 475.0
 	const MAP_W: float = 180.0
 	const MAP_H: float = 210.0
 	# Zoom: mostra VIEW_ROWS linhas e VIEW_COLS colunas centradas no player
@@ -630,16 +651,22 @@ func show_combo_hud(count: int) -> void:
 	if not vp or not is_instance_valid(player):
 		return
 
-	# Posição de tela acima do player no momento do disparo
-	var screen_pos: Vector2 = vp.get_canvas_transform() * player.global_position
-	var spawn_pos: Vector2 = screen_pos + Vector2(-60.0, -80.0)
-
-	# Cor: branco → laranja → vermelho
+	# Cor e tamanho escalados pelo count
 	var t: float = clampf(float(count - 3) / 8.0, 0.0, 1.0)
 	var col := Color(1.0, maxf(1.0 - t * 0.65, 0.25), maxf(0.3 - t * 0.25, 0.05), 1.0)
 	var font_size: int = mini(22 + (count - 3) * 3, 44)
 
-	# Label temporário
+	# Se já existe um label flutuando, apenas atualiza texto/cor no lugar
+	if is_instance_valid(_active_combo_label):
+		_active_combo_label.text = "Combo %dx!" % count
+		_active_combo_label.add_theme_font_size_override("font_size", font_size)
+		_active_combo_label.add_theme_color_override("font_color", col)
+		return
+
+	# Nenhum label ativo: cria um novo fixo na posição atual de tela
+	var screen_pos: Vector2 = vp.get_canvas_transform() * player.global_position
+	var spawn_pos: Vector2 = screen_pos + Vector2(-60.0, -80.0)
+
 	var lbl := Label.new()
 	lbl.text = "Combo %dx!" % count
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -652,39 +679,42 @@ func show_combo_hud(count: int) -> void:
 	lbl.add_theme_constant_override("shadow_offset_x", 2)
 	lbl.add_theme_constant_override("shadow_offset_y", 2)
 	_combo_hud_layer.add_child(lbl)
+	_active_combo_label = lbl
 
-	# Animação: flutua para cima, depois explode e some
+	# Flutua para cima
 	var tw := create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(lbl, "position", spawn_pos + Vector2(0.0, -55.0), 0.55).set_ease(Tween.EASE_OUT)
-	tw.tween_property(lbl, "scale", Vector2(1.0, 1.0), 0.0)  # garante escala inicial
-	# Fase de explosão: escala aumenta bruscamente e label some
+	tw.tween_property(lbl, "position", spawn_pos + Vector2(0.0, -55.0), 0.75).set_ease(Tween.EASE_OUT)
+
+	# Depois explode e some
 	var tw2 := create_tween()
-	tw2.tween_interval(0.55)
+	tw2.tween_interval(0.75)
 	tw2.tween_callback(func() -> void:
 		if not is_instance_valid(lbl): return
-		var tw3 := create_tween()
-		tw3.set_parallel(true)
-		tw3.tween_property(lbl, "scale", Vector2(2.2, 2.2), 0.18).set_ease(Tween.EASE_OUT)
-		tw3.tween_property(lbl, "modulate", Color(col.r, col.g, col.b, 0.0), 0.18)
-		tw3.tween_callback(lbl.queue_free).set_delay(0.19)
-		# Partículas de explosão no centro do label
+		var burst_col: Color = lbl.get_theme_color("font_color") if lbl.has_theme_color_override("font_color") else col
+		# Partículas de explosão
 		var px := CPUParticles2D.new()
 		px.emitting = false
 		px.one_shot = true
 		px.explosiveness = 1.0
-		px.amount = 10
-		px.lifetime = 0.35
+		px.amount = 12
+		px.lifetime = 0.4
 		px.spread = 180.0
-		px.initial_velocity_min = 30.0
-		px.initial_velocity_max = 70.0
+		px.initial_velocity_min = 40.0
+		px.initial_velocity_max = 90.0
 		px.scale_amount_min = 3.0
-		px.scale_amount_max = 5.0
-		px.color = col
+		px.scale_amount_max = 6.0
+		px.color = burst_col
 		px.position = lbl.position + Vector2(80.0, 25.0)
 		_combo_hud_layer.add_child(px)
 		px.emitting = true
-		get_tree().create_timer(0.6).timeout.connect(px.queue_free)
+		get_tree().create_timer(0.7).timeout.connect(func(): if is_instance_valid(px): px.queue_free())
+		# Expande e some
+		var tw3 := create_tween()
+		tw3.set_parallel(true)
+		tw3.tween_property(lbl, "scale", Vector2(2.2, 2.2), 0.2).set_ease(Tween.EASE_OUT)
+		tw3.tween_property(lbl, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.2)
+		tw3.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free()).set_delay(0.21)
+		_active_combo_label = null
 	)
 
 func hide_combo_hud() -> void:

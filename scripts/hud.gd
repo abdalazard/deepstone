@@ -1843,6 +1843,15 @@ func show_death_screen() -> void:
 	if death_restart_btn:
 		_safe_grab_focus(death_restart_btn)
 
+func _surface_return_cost() -> int:
+	var tree = get_tree() if is_inside_tree() else null
+	var scene = tree.current_scene if tree else null
+	var p = scene.get_node_or_null("Player") if scene else null
+	if not is_instance_valid(p):
+		return 30
+	var depth_m: int = maxi(0, int((p.global_position.y - 112.0) / 32.0 / 2.0))
+	return maxi(30, depth_m)
+
 func _on_death_restart() -> void:
 	if death_panel:
 		death_panel.visible = false
@@ -1867,6 +1876,15 @@ func _on_save_pressed() -> void:
 	close_pause()
 
 func _on_restart_pressed() -> void:
+	var inv = _get_inv()
+	var cost: int = _surface_return_cost()
+	if inv and inv.coins < cost:
+		if inv.has_method("notify"):
+			inv.notify(tr("Precisa de %d moedas para voltar à superfície!") % cost, "coins")
+		return
+	if inv:
+		inv.coins -= cost
+		inv.inventory_changed.emit()
 	if has_node("/root/SaveManager"):
 		get_node("/root/SaveManager").restart_run_to_surface()
 	close_config()
