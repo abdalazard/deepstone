@@ -122,13 +122,23 @@ func _build_helmet_light_texture() -> Texture2D:
 func _update_helmet_light() -> void:
 	var inv = _get_inv()
 	var has_lamp := false
+	var broken := false
 	if inv and inv.has_method("get_equipped_def"):
 		var hdef = inv.get_equipped_def("helmet")
 		has_lamp = hdef.get("id", "") in ["helmet_lamp", "helmet_iron_lamp"]
+		# Capacete quebrado: lanterna para de funcionar até reparo na forja
+		broken = inv.helmet_wear >= 12
 	if helmet_light:
-		helmet_light.visible = has_lamp
-		if has_lamp:
-			helmet_light.scale = Vector2.ONE
+		helmet_light.visible = has_lamp and not broken
+		if has_lamp and not broken:
+			# Escala com o nível de upgrade (mais forte/mais longe, mas limitado
+			# para não substituir totalmente os postes no nível máximo).
+			var lvl := 0
+			if inv and inv.has_method("get_upgrade_level"):
+				lvl = inv.get_upgrade_level("helmet")
+			var light_scale := clampf(1.0 + lvl * 0.15, 1.0, 2.0)
+			helmet_light.scale = Vector2(light_scale, light_scale * 0.55 + 0.45)
+			helmet_light.energy = clampf(1.3 + lvl * 0.1, 1.3, 1.8)
 			if Input.is_action_pressed("ui_up"):
 				helmet_light.rotation = -PI * 0.5
 			elif Input.is_action_pressed("ui_down"):
@@ -650,14 +660,19 @@ func place_portable_forge() -> void:
 	if not inv or inv.portable_forges <= 0:
 		if inv: inv.notify(tr("Sem forjas portáteis! Crie na Forja com 5 lama, 4 pedra e 2 ferro."), "forge")
 		return
+	# A forja portátil só pode ser armada sobre uma rocha do cenário.
+	var rock := _find_nearby_random_rock(64.0)
+	if rock == null:
+		inv.notify(tr("Só é possível criar uma forja sobre uma rocha! Procure uma pedra por perto."), "forge")
+		return
 	inv.portable_forges -= 1
 	inv.inventory_changed.emit()
 	
 	var forge_scene = load("res://scenes/environment/forge.tscn")
 	if not forge_scene: return
 	var forge = forge_scene.instantiate()
-	var place_x = floor((global_position.x + facing_x * 24.0) / 32.0) * 32.0 + 16.0
-	var place_y = round(global_position.y / 32.0) * 32.0
+	var place_x = floor((rock.global_position.x) / 32.0) * 32.0 + 16.0
+	var place_y = round(rock.global_position.y / 32.0) * 32.0
 	forge.position = Vector2(place_x, place_y)
 	forge.add_to_group("placed_forges")
 	get_tree().current_scene.add_child(forge)
@@ -665,6 +680,18 @@ func place_portable_forge() -> void:
 	var sm = _get_save()
 	if sm:
 		sm.request_save()
+
+func _find_nearby_random_rock(tolerance: float) -> Node:
+	var best: Node = null
+	var best_d := tolerance
+	for rock in get_tree().get_nodes_in_group("random_rocks"):
+		if not rock or not is_instance_valid(rock):
+			continue
+		var d: float = (rock.global_position - global_position).length()
+		if d < best_d:
+			best_d = d
+			best = rock
+	return best
 
 func try_collect() -> void:
 	if has_node("PickupArea"):
@@ -749,7 +776,7 @@ func try_mine() -> void:
 		last_direction = Vector2(facing_x, 0)
 		
 	is_mining = true
-	mine_timer = 0.5
+	mine_timer = 0.70
 	
 	# Britadeira (Jackhammer action) when pressing DOWN and stuck inside a block
 	if Input.is_action_pressed("ui_down") and _is_overlapping_solid(global_position):

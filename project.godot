@@ -16,6 +16,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
+WorldConfig="*res://scripts/world_config.gd"
 
 Inventory="*res://scripts/inventory.gd"
 SaveManager="*res://scripts/save_manager.gd"

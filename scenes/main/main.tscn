@@ -27,7 +27,7 @@ script = ExtResource("1_main")
 [node name="CaveBackground" type="Polygon2D" parent="."]
 z_index = -8
 material = SubResource("CanvasItemMaterial_unshaded")
-color = Color(0.005, 0.105, 0.21, 1)
+color = Color(0.06, 0.05, 0.04, 1)
 polygon = PackedVector2Array(-300, 112, 1300, 112, 1300, 4200, -300, 4200)
 
 [node name="CaveParallax" parent="." instance=ExtResource("9_cavebg")]

@@ -5,7 +5,7 @@ signal notification_triggered(text: String, icon_type: String)
 signal level_up(new_level: int, exp_needed_next: int)
 signal pickaxe_broken
 signal player_hurt
-signal exp_gained(amount: int)
+signal exp_gained(amount: int, origin: Vector2)
 
 const BASE_CAPACITY: int = 60
 var iron: int = 0
@@ -64,6 +64,8 @@ func take_damage(amount: int) -> bool:
 	if hit > 0.0:
 		current_health = maxf(0.0, current_health - hit)
 		helmet_wear = min(helmet_wear + 1, 12) # Dano de vida desgasta o capacete
+		if helmet_wear >= 12 and equipped_helmet in ["helmet_lamp", "helmet_iron_lamp"]:
+			notify(tr("Sua lanterna quebrou! Repare o capacete na forja."), "helmet")
 		if current_health <= 0.0:
 			die()
 			return true
@@ -536,10 +538,10 @@ func get_exp_required_for_level(lvl: int) -> int:
 func get_current_level_max_exp() -> int:
 	return get_exp_required_for_level(level)
 
-func add_exp(amount: int) -> void:
+func add_exp(amount: int, origin: Vector2 = Vector2.ZERO) -> void:
 	if amount <= 0: return
 	current_exp += amount
-	exp_gained.emit(amount)
+	exp_gained.emit(amount, origin)
 	var req = get_exp_required_for_level(level)
 	while current_exp >= req:
 		current_exp -= req
@@ -616,7 +618,7 @@ func get_pickaxe_speed_multiplier() -> float:
 
 func get_pickaxe_damage() -> int:
 	if not has_pickaxe: return 1
-	return 1 + pickaxe_upgrade_level * 2
+	return 1 + pickaxe_upgrade_level
 
 func get_strength() -> int:
 	return get_pickaxe_damage() + get_glove_def().get("strength_bonus", 0) + glove_upgrade_level

@@ -27,9 +27,9 @@ func _ready() -> void:
 
 func update_biome(py: float) -> void:
 	var biome := 0
-	if py >= 2560.0:
+	if py >= WorldConfig.BIOME_GELO_END:
 		biome = 2 # Lava
-	elif py >= 1280.0:
+	elif py >= WorldConfig.BIOME_TERRA_END:
 		biome = 1 # Gelo
 	# Superfície e caverna de terra compartilham a mesma música (Valley)
 	if biome == current_biome:

@@ -1,6 +1,7 @@
 extends Node2D
 
 func _ready() -> void:
+	add_to_group("random_rocks")
 	var sprite = get_node_or_null("Sprite2D")
 	if not sprite:
 		return

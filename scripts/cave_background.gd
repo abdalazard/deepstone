@@ -17,8 +17,8 @@ extends Node2D
 
 const TILE_W: float = 384.0
 const TILE_H: float = 216.0
-const ROOF_Y: float = 112.0      # topo do submundo (coincide com o poligono CaveBackground)
-const BOTTOM_Y: float = 4300.0   # abaixo da linha do bedrock (~3968)
+const ROOF_Y:    float = WorldConfig.SURFACE_Y
+const BOTTOM_Y:  float = WorldConfig.BIOME_VULCAO_END
 
 var textures: Array = []
 

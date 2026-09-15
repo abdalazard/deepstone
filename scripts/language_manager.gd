@@ -405,16 +405,33 @@ const EN: Dictionary = {
 	"Caveira Nv. 0": "Skull Lv. 0",
 	"Pressione [ Z ] para Continuar\n[ R ] para Novo Jogo": "Press [ Z ] to Continue\n[ R ] for New Game",
 	"Pressione [ Z ] ou [ Esc ] para Fechar": "Press [ Z ] or [ Esc ] to Close",
+	# --- Forja portátil / capacete quebrado ---
+	"Sua lanterna quebrou! Repare o capacete na forja.": "Your headlamp broke! Repair your helmet at the forge.",
+	"Só é possível criar uma forja sobre uma rocha! Procure uma pedra por perto.": "A portable forge can only be placed on a rock! Look for a boulder nearby.",
+	# --- Nomes dos biomas ---
+	"Vale do Quartzo Cantante": "Valley of Singing Quartz",
+	"Além das Neves Eternas": "Beneath the Frost",
+	"A Ascensão Ardente": "Molten Ascent",
 }
 
 var current_code: String = CODE_EN
 
 func _ready() -> void:
-	var translation := Translation.new()
-	translation.locale = CODE_EN
+	# Tabela EN: PT -> EN
+	var translation_en := Translation.new()
+	translation_en.locale = CODE_EN
 	for key in EN:
-		translation.add_message(key, EN[key])
-	TranslationServer.add_translation(translation)
+		translation_en.add_message(key, EN[key])
+	TranslationServer.add_translation(translation_en)
+
+	# Tabela PT: chave -> propria chave (o texto-fonte do jogo ja e PT)
+	# Sem isso, o fallback do Godot vai usar "en" e exibir ingles mesmo com locale PT
+	var translation_pt := Translation.new()
+	translation_pt.locale = CODE_PT
+	for key in EN:
+		translation_pt.add_message(key, key)
+	TranslationServer.add_translation(translation_pt)
+
 	_load_saved()
 	apply_code(current_code)
 

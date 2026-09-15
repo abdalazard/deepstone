@@ -1789,17 +1789,20 @@ func toggle_tutorial() -> void:
 	scene.add_child(screen)
 
 func _on_lang_toggled() -> void:
-	if not "Lang" in get_tree().root or not get_tree().root.get_node("Lang"):
+	var lang: Node = get_tree().root.get_node_or_null("Lang")
+	if not lang:
 		return
-	get_tree().root.get_node("Lang").toggle()
+	lang.toggle()
+	# Força todos os nós da cena a atualizarem seus textos traduzidos
+	get_tree().root.propagate_notification(NOTIFICATION_TRANSLATION_CHANGED)
 	_refresh_lang_button()
 	update_ui()
 
 func _refresh_lang_button() -> void:
 	if not lang_button: return
-	if not "Lang" in get_tree().root or not get_tree().root.get_node("Lang"):
+	var lang := get_tree().root.get_node_or_null("Lang")
+	if not lang:
 		return
-	var lang := get_tree().root.get_node("Lang")
 	lang_button.text = lang.get_short()
 	lang_button.tooltip_text = tr("Idioma: " + lang.get_short())
 

@@ -25,6 +25,7 @@ var sparkle_alpha: float = 0.0
 var sparkle_points: Array[Vector2] = []
 var grid_pos: Vector2i = Vector2i(-1, -1)
 var base_modulate: Color = Color(1, 1, 1, 1)
+var _decoration: Node2D = null
 
 func set_grid_pos(pos: Vector2i) -> void:
 	grid_pos = pos
@@ -46,30 +47,38 @@ func apply_biome(b: int) -> void:
 	elif is_coal: base_hp = 2 # Coal (easy)
 	elif is_copper: base_hp = 6 # Gold (demora mais tempo)
 	
-	if biome == 1: # Gelo (+1 HP)
+	if biome == 1: # Gelo (+1 HP) — paleta azul fria
 		max_hp = base_hp + 1
 		hp = max_hp
 		if sprite_2d:
-			if is_dirt or is_roots: sprite_2d.modulate = Color(0.42, 0.65, 0.88, 1.0)
-			elif is_stone: sprite_2d.modulate = Color(0.65, 0.85, 1.1, 1.0)
-			else: sprite_2d.modulate = Color(0.72, 0.88, 1.1, 1.0)
-	elif biome == 2: # Lava (+2 HP)
+			if is_dirt or is_roots: sprite_2d.modulate = Color(0.42, 0.62, 0.88, 1.0)  # terra gelada
+			elif is_stone:          sprite_2d.modulate = Color(0.65, 0.85, 1.10, 1.0)  # pedra azul-gelo
+			elif is_coal:           sprite_2d.modulate = Color(0.38, 0.52, 0.82, 1.0)  # carvão azul-escuro
+			elif is_copper:         sprite_2d.modulate = Color(0.60, 1.00, 0.88, 1.0)  # ouro → jade gelado
+			else:                   sprite_2d.modulate = Color(0.70, 0.90, 1.15, 1.0)  # ferro azul-metálico
+	elif biome == 2: # Lava (+2 HP) — paleta laranja/vermelho
 		max_hp = base_hp + 2
 		hp = max_hp
 		if sprite_2d:
-			if is_dirt or is_roots: sprite_2d.modulate = Color(0.45, 0.22, 0.16, 1.0)
-			elif is_stone: sprite_2d.modulate = Color(1.15, 0.5, 0.35, 1.0)
-			else: sprite_2d.modulate = Color(1.15, 0.55, 0.35, 1.0)
-	else: # Terra
+			if is_dirt or is_roots: sprite_2d.modulate = Color(0.45, 0.22, 0.16, 1.0)  # terra vulcânica
+			elif is_stone:          sprite_2d.modulate = Color(1.15, 0.50, 0.35, 1.0)  # pedra incandescente
+			elif is_coal:           sprite_2d.modulate = Color(0.72, 0.18, 0.12, 1.0)  # carvão vermelho-brasa
+			elif is_copper:         sprite_2d.modulate = Color(1.20, 0.90, 0.15, 1.0)  # ouro dourado ardente
+			else:                   sprite_2d.modulate = Color(1.20, 0.55, 0.28, 1.0)  # ferro laranja-metálico
+	else: # Terra — paleta roxo/violeta
 		max_hp = base_hp
 		hp = max_hp
 		if sprite_2d:
-			if is_dirt or is_roots: sprite_2d.modulate = Color(0.5, 0.35, 0.2, 1.0)
-			elif is_stone: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
-			else: sprite_2d.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			if is_dirt or is_roots: sprite_2d.modulate = Color(0.52, 0.38, 0.58, 1.0)  # terra roxo-escuro
+			elif is_stone:          sprite_2d.modulate = Color(0.80, 0.72, 0.95, 1.0)  # pedra violeta
+			elif is_coal:           sprite_2d.modulate = Color(0.55, 0.40, 0.78, 1.0)  # carvão roxo-escuro
+			elif is_copper:         sprite_2d.modulate = Color(0.95, 0.82, 0.45, 1.0)  # ouro dourado-suave
+			else:                   sprite_2d.modulate = Color(0.78, 0.65, 1.05, 1.0)  # ferro lilás-metálico
 			
 	if sprite_2d:
 		base_modulate = sprite_2d.modulate
+	if _decoration:
+		_decoration.queue_redraw()
 
 func _ready() -> void:
 	if is_unbreakable:
@@ -142,6 +151,14 @@ func _ready() -> void:
 			Vector2(randf_range(-8, 8), randf_range(-8, 8))
 		]
 		shine_timer = randf_range(0.2, 1.2)
+	
+	# Decoração de borda: musgo/cristais/brasas entre os blocos
+	if not is_unbreakable and not is_dirt and not is_roots:
+		_decoration = Node2D.new()
+		_decoration.name = "Decoration"
+		_decoration.z_index = 1
+		add_child(_decoration)
+		_decoration.draw.connect(_on_decoration_draw)
 	
 	if self is RigidBody2D:
 		lock_rotation = true
@@ -377,7 +394,7 @@ func hit(damage: int = 1) -> void:
 		if sprite_2d:
 			sprite_2d.modulate = Color(1.8, 1.8, 2.0, 1.0)
 			var tween = create_tween()
-			tween.tween_property(sprite_2d, "modulate", Color(1, 1, 1, 1), 0.15)
+			tween.tween_property(sprite_2d, "modulate", base_modulate, 0.15)
 			var offset = Vector2(randf_range(-2, 2), randf_range(-2, 2))
 			sprite_2d.position = offset
 			tween.parallel().tween_property(sprite_2d, "position", Vector2.ZERO, 0.1)
@@ -441,14 +458,14 @@ func destroy() -> void:
 	
 	if is_roots:
 		if inv:
-			inv.add_exp(3)
+			inv.add_exp(3, global_position)
 		var drop = DROP_SCENE.instantiate()
 		drop.type = 5 # WOOD
 		drop.global_position = global_position
 		get_parent().add_child(drop)
 	elif is_stone:
 		if inv:
-			inv.add_exp(2)
+			inv.add_exp(2, global_position)
 		var drop = DROP_SCENE.instantiate()
 		drop.type = 7 # STONE
 		drop.global_position = global_position
@@ -456,13 +473,13 @@ func destroy() -> void:
 	elif is_dirt:
 		if inv:
 			inv.dirt += 1
-			inv.add_exp(1)
+			inv.add_exp(1, global_position)
 			inv.inventory_changed.emit()
 	elif not is_unbreakable:
 		if inv:
-			if is_coal: inv.add_exp(3)
-			elif is_copper: inv.add_exp(15)
-			else: inv.add_exp(5)
+			if is_coal: inv.add_exp(3, global_position)
+			elif is_copper: inv.add_exp(15, global_position)
+			else: inv.add_exp(5, global_position)
 		var drop = DROP_SCENE.instantiate()
 		if is_coal:
 			drop.type = 2 # COAL
@@ -540,6 +557,19 @@ func spawn_particles() -> void:
 	particles.add_child(timer)
 	timer.start()
 
+func _on_decoration_draw() -> void:
+	var col: Color
+	match biome:
+		1: col = Color(0.22, 0.26, 0.30, 0.88)   # Gelo — lama congelada / permafrost
+		2: col = Color(0.18, 0.09, 0.05, 0.88)    # Lava — cinza vulcânico / fuligem
+		_: col = Color(0.28, 0.15, 0.07, 0.88)    # Terra — terra suja / lodo escuro
+	# Pontos na borda superior (sugerindo musgo/lore nas fendas entre blocos)
+	for dx: float in [-9.0, -4.0, 1.0, 6.0]:
+		_decoration.draw_rect(Rect2(dx, -14.0, 2.0, 2.0), col)
+	# Pontos na borda inferior (deslocados para parecer natural)
+	for dx: float in [-11.0, -6.0, -1.0, 4.0]:
+		_decoration.draw_rect(Rect2(dx, 12.0, 2.0, 2.0), col)
+
 func _on_cracks_draw() -> void:
 	if hp >= max_hp: return
 	var ratio = float(hp) / float(max_hp)
@@ -576,7 +606,7 @@ func _trigger_sparkle() -> void:
 	var flash_color = Color(1.8, 1.6, 0.9, 1.0) if is_copper else Color(1.4, 1.5, 1.7, 1.0)
 	var tween = create_tween()
 	tween.tween_property(sprite_2d, "modulate", flash_color, 0.15)
-	tween.tween_property(sprite_2d, "modulate", Color(1, 1, 1, 1), 0.25)
+	tween.tween_property(sprite_2d, "modulate", base_modulate, 0.25)
 	
 	if sparkle_overlay:
 		sparkle_alpha = 1.0
@@ -608,6 +638,6 @@ func set_illuminated(active: bool, source: Node2D) -> void:
 			sparkle_alpha = 0.0
 			if sparkle_overlay: sparkle_overlay.queue_redraw()
 			if sprite_2d and hp > 0:
-				sprite_2d.modulate = Color(1, 1, 1, 1)
+				sprite_2d.modulate = base_modulate
 		else:
 			_trigger_sparkle()
