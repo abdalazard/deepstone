@@ -3,9 +3,9 @@ extends Node
 # jogo abre (tela de título) e persiste entre cenas. As trocas de ambiente
 # têm transição suave com alerta no HUD.
 
-var music_earth: AudioStreamMP3 = preload("res://assets/sounds/Valley_of_Singing_Quartz.mp3")
-var music_ice: AudioStreamMP3 = preload("res://assets/sounds/Beneath_the_Frost.mp3")
-var music_lava: AudioStreamMP3 = preload("res://assets/sounds/Molten_Ascent.mp3")
+var music_earth: AudioStreamOggVorbis = preload("res://assets/sounds/Valley_of_Singing_Quartz.ogg")
+var music_ice: AudioStreamOggVorbis = preload("res://assets/sounds/Beneath_the_Frost.ogg")
+var music_lava: AudioStreamOggVorbis = preload("res://assets/sounds/Molten_Ascent.ogg")
 
 var player: AudioStreamPlayer
 var current_biome: int = 0 # 0 terra/superfície, 1 gelo, 2 lava
