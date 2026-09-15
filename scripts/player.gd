@@ -683,9 +683,7 @@ func place_portable_forge() -> void:
 	var forge_scene = load("res://scenes/environment/forge.tscn")
 	if not forge_scene: return
 	var forge = forge_scene.instantiate()
-	var place_x = floor((rock.global_position.x) / 32.0) * 32.0 + 16.0
-	var place_y = round(rock.global_position.y / 32.0) * 32.0
-	forge.position = Vector2(place_x, place_y)
+	forge.position = rock.global_position
 	forge.add_to_group("placed_forges")
 	get_tree().current_scene.add_child(forge)
 	inv.notify(tr("Forja Portátil Instalada!"), "forge")
