@@ -528,8 +528,8 @@ func _setup_minimap() -> void:
 	var bg := ColorRect.new()
 	bg.name = "MinimapBg"
 	bg.color = Color(0.05, 0.05, 0.05, 0.80)
-	bg.size = Vector2(182, 422)
-	bg.position = Vector2(1082, 78)
+	bg.size = Vector2(182, 212)
+	bg.position = Vector2(1089, 499)
 	cl.add_child(bg)
 
 	var mm := Node2D.new()
@@ -541,14 +541,25 @@ func _setup_minimap() -> void:
 func _draw_minimap() -> void:
 	if not is_instance_valid(player):
 		return
-	const MAP_X: float = 1083.0
-	const MAP_Y: float = 79.0
+	const MAP_X: float = 1090.0
+	const MAP_Y: float = 500.0
 	const MAP_W: float = 180.0
-	const MAP_H: float = 420.0
+	const MAP_H: float = 210.0
+	# Zoom: mostra VIEW_ROWS linhas e VIEW_COLS colunas centradas no player
+	const VIEW_ROWS: float = 100.0
+	const VIEW_COLS: float = 14.0
 	const GRID_W_F: float = 30.0
 	const GRID_H_F: float = 600.0
-	const CELL_W: float = MAP_W / GRID_W_F  # 6.0 px por coluna
-	const CELL_H: float = MAP_H / GRID_H_F  # 0.70 px por linha
+	const CELL_W: float = MAP_W / VIEW_COLS
+	const CELL_H: float = MAP_H / VIEW_ROWS
+
+	# Centro do player no grid
+	var world_x: float = player.global_position.x
+	var world_y: float = player.global_position.y
+	var pcol: float = (world_x - 16.0) / 32.0
+	var prow: float = (world_y - 128.0) / 32.0
+	var col_min: float = pcol - VIEW_COLS * 0.5
+	var row_min: float = prow - VIEW_ROWS * 0.5
 
 	# Borda
 	_minimap_node.draw_rect(Rect2(MAP_X, MAP_Y, MAP_W, MAP_H), Color(0.55, 0.50, 0.42, 0.9), false, 1.5)
@@ -562,29 +573,27 @@ func _draw_minimap() -> void:
 				continue
 			var cx: float = float(parts[0])
 			var cy: float = float(parts[1])
-			if cy < 0.0 or cy >= GRID_H_F:
+			if cy < row_min or cy > row_min + VIEW_ROWS:
 				continue
-			var px: float = MAP_X + cx * CELL_W
-			var py: float = MAP_Y + cy * CELL_H
-			# Retângulo de 1 célula — visível mesmo quando CELL_H < 1
+			if cx < col_min or cx > col_min + VIEW_COLS:
+				continue
+			var px: float = MAP_X + (cx - col_min) * CELL_W
+			var py: float = MAP_Y + (cy - row_min) * CELL_H
 			_minimap_node.draw_rect(
-				Rect2(px, py, maxf(CELL_W - 0.3, 1.0), maxf(CELL_H, 1.5)),
+				Rect2(px, py, maxf(CELL_W - 0.5, 1.0), maxf(CELL_H - 0.5, 1.0)),
 				Color(0.90, 0.90, 0.90, 0.75))
 
-	# Linha da superfície
-	var surf_y: float = MAP_Y + (1.0 / GRID_H_F) * MAP_H
-	_minimap_node.draw_line(
-		Vector2(MAP_X, surf_y), Vector2(MAP_X + MAP_W, surf_y),
-		Color(0.5, 0.8, 0.3, 0.7), 1.0)
+	# Linha da superfície (row 0 no grid = world_y 128)
+	var surf_row: float = 0.0
+	if surf_row >= row_min and surf_row <= row_min + VIEW_ROWS:
+		var surf_py: float = MAP_Y + (surf_row - row_min) * CELL_H
+		_minimap_node.draw_line(
+			Vector2(MAP_X, surf_py), Vector2(MAP_X + MAP_W, surf_py),
+			Color(0.5, 0.8, 0.3, 0.7), 1.0)
 
-	# Posição do jogador
-	var world_y: float = player.global_position.y
-	var grid_y: float = (world_y - 128.0) / 32.0
-	var ratio: float = clampf(grid_y / GRID_H_F, 0.0, 1.0)
-	var dot_y: float = MAP_Y + ratio * MAP_H
-	var world_x: float = player.global_position.x
-	var grid_x: float = (world_x - 16.0) / 32.0
-	var dot_x: float = MAP_X + clampf(grid_x / GRID_W_F, 0.0, 1.0) * MAP_W
+	# Posição do jogador (centro)
+	var dot_x: float = MAP_X + MAP_W * 0.5
+	var dot_y: float = MAP_Y + MAP_H * 0.5
 	_minimap_node.draw_circle(Vector2(dot_x, dot_y), 4.0, Color(1.0, 1.0, 1.0, 1.0))
 	_minimap_node.draw_circle(Vector2(dot_x, dot_y), 2.0, Color(0.25, 0.85, 1.0, 1.0))
 
