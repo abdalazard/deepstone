@@ -153,11 +153,14 @@ func _process(delta: float) -> void:
 		if shade:
 			shade.visible = py < 144.0
 
-		# Atualiza minimapa (só no subsolo)
+		# Atualiza minimapa (só no subsolo e fora do tutorial)
 		var underground: bool = py >= WorldConfig.SURFACE_Y
+		var _scene := get_tree().current_scene if get_tree() else null
+		var tutorial_open: bool = _scene != null and _scene.get_node_or_null("StartScreen") != null
+		var show_minimap: bool = underground and not tutorial_open
 		if is_instance_valid(_minimap_layer):
-			_minimap_layer.visible = underground
-		if underground and is_instance_valid(_minimap_node):
+			_minimap_layer.visible = show_minimap
+		if show_minimap and is_instance_valid(_minimap_node):
 			_minimap_node.queue_redraw()
 
 		# Dinâmica de descoberta: na superfície a câmera sobe para mostrar mais
